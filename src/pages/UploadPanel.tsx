@@ -1,6 +1,8 @@
 
 import React, { useState } from "react";
 import { AlertCircle, Download, FileSpreadsheet, Upload, X } from "lucide-react";
+import { useToast } from "../hooks/use-toast";
+import { useActivityLogger } from "../hooks/useActivityLogger";
 
 interface TableData {
   id: number;
@@ -19,6 +21,8 @@ const UploadPanel: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   
   // Sample data for preview
   const [previewData, setPreviewData] = useState<TableData[]>([
@@ -83,6 +87,8 @@ const UploadPanel: React.FC = () => {
       setFileName(file.name);
       // In a real app, you would parse the CSV here
       setShowPreview(true);
+      
+      logActivity("Uploaded File", `Uploaded ${file.name} in ${activeTab} section`);
     }
   };
 
@@ -96,6 +102,8 @@ const UploadPanel: React.FC = () => {
       setFileName(file.name);
       // In a real app, you would parse the CSV here
       setShowPreview(true);
+      
+      logActivity("Uploaded File", `Uploaded ${file.name} in ${activeTab} section via drag and drop`);
     }
   };
   
@@ -109,8 +117,39 @@ const UploadPanel: React.FC = () => {
   };
 
   const handleDownloadTemplate = () => {
-    // In a real app, this would download a CSV template
-    alert('Downloading template...');
+    let csvContent = '';
+    let filename = '';
+    
+    if (activeTab === 'students') {
+      // Create student template
+      const headers = "ID,Name,Grade,Section,DateOfBirth,Gender,ParentName,ContactNumber\n";
+      const sampleData = "1,John Doe,8,A,2009-01-15,Male,Jane Doe,123-456-7890\n";
+      csvContent = headers + sampleData;
+      filename = 'student_template.csv';
+    } else {
+      // Create teacher template
+      const headers = "ID,Name,Email,Department,JoinDate,Subjects\n";
+      const sampleData = "1,Jane Smith,janesmith@adventistcollege.mu,Science,2020-08-15,\"Biology, Chemistry\"\n";
+      csvContent = headers + sampleData;
+      filename = 'teacher_template.csv';
+    }
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Template Downloaded",
+      description: `${activeTab === 'students' ? 'Student' : 'Teacher'} data template has been downloaded.`,
+    });
+    
+    logActivity("Downloaded Template", `Downloaded ${filename} template`);
   };
 
   return (
@@ -258,10 +297,28 @@ const UploadPanel: React.FC = () => {
             </div>
             
             <div className="mt-6 flex justify-end gap-4">
-              <button className="px-4 py-2 rounded-lg glass">
+              <button 
+                className="px-4 py-2 rounded-lg glass"
+                onClick={() => {
+                  setFileName(null);
+                  setShowPreview(false);
+                }}
+              >
                 Cancel
               </button>
-              <button className="btn-primary">
+              <button 
+                className="btn-primary"
+                onClick={() => {
+                  toast({
+                    title: "Data Uploaded",
+                    description: "Your data has been successfully uploaded and processed.",
+                  });
+                  setFileName(null);
+                  setShowPreview(false);
+                  
+                  logActivity("Processed Data", `Processed ${activeTab} data from CSV`);
+                }}
+              >
                 Upload Data
               </button>
             </div>
