@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { BookOpen, Check, ChevronDown, Edit, Filter, Save } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { BookOpen, Check, ChevronDown, Edit, Filter, Save, Settings, CheckCheck, MessageSquare } from "lucide-react";
 
 interface Student {
   id: number;
@@ -8,13 +8,30 @@ interface Student {
   marks: number | null;
   grade: string;
   remarks: string;
+  hasSpellingErrors?: boolean;
 }
+
+// Grade conversion chart
+const gradeConversion = [
+  { min: 90, max: 100, grade: 'A', remarks: ['Excellent performance', 'Outstanding work', 'Exceptional understanding'] },
+  { min: 80, max: 89, grade: 'B+', remarks: ['Very good progress', 'Strong understanding', 'Above average work'] },
+  { min: 70, max: 79, grade: 'B', remarks: ['Good performance', 'Consistent work', 'Shows potential'] },
+  { min: 60, max: 69, grade: 'C+', remarks: ['Satisfactory work', 'Fair understanding', 'Average performance'] },
+  { min: 50, max: 59, grade: 'C', remarks: ['Basic understanding', 'Needs more practice', 'Passing, but needs improvement'] },
+  { min: 40, max: 49, grade: 'D', remarks: ['Needs improvement', 'Minimum passing grade', 'Requires additional support'] },
+  { min: 0, max: 39, grade: 'F', remarks: ['Below passing standards', 'Significant improvement needed', 'Requires remedial work'] }
+];
 
 const TeacherPanel: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState("Grade 8");
   const [selectedSection, setSelectedSection] = useState("A");
   const [selectedSubject, setSelectedSubject] = useState("Mathematics");
   const [editingStudent, setEditingStudent] = useState<number | null>(null);
+  const [useAutoRemarks, setUseAutoRemarks] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [checkGrammar, setCheckGrammar] = useState(true);
+  const [customPassingCriteria, setCustomPassingCriteria] = useState(35);
+  const remarksRef = useRef<HTMLInputElement | null>(null);
   
   const [students, setStudents] = useState<Student[]>([
     { id: 1, name: "John Smith", marks: 78, grade: "B+", remarks: "Good performance" },
@@ -27,14 +44,37 @@ const TeacherPanel: React.FC = () => {
     { id: 8, name: "Olivia Martin", marks: 94, grade: "A", remarks: "Outstanding work" },
   ]);
 
+  // Focus on the remarks field when editing
+  useEffect(() => {
+    if (editingStudent !== null && remarksRef.current) {
+      remarksRef.current.focus();
+    }
+  }, [editingStudent]);
+
+  // Generate auto remarks based on marks
+  const getAutoRemark = (marks: number | null): string => {
+    if (marks === null) return "";
+    
+    const gradeInfo = gradeConversion.find(g => marks >= g.min && marks <= g.max);
+    if (!gradeInfo) return "";
+    
+    // Randomly select one of the remarks for this grade
+    const randomIndex = Math.floor(Math.random() * gradeInfo.remarks.length);
+    return gradeInfo.remarks[randomIndex];
+  };
+
   const handleMarksChange = (id: number, value: string) => {
+    const numValue = value === "" ? null : Math.min(100, Math.max(0, parseInt(value) || 0));
+    
     setStudents(
       students.map(student => 
         student.id === id 
           ? { 
               ...student, 
-              marks: value === "" ? null : Math.min(100, Math.max(0, parseInt(value) || 0)),
-              grade: calculateGrade(value === "" ? null : parseInt(value) || 0)
+              marks: numValue,
+              grade: calculateGrade(numValue),
+              // Auto-generate remarks if feature is enabled
+              remarks: useAutoRemarks ? getAutoRemark(numValue) : student.remarks
             } 
           : student
       )
@@ -42,22 +82,49 @@ const TeacherPanel: React.FC = () => {
   };
 
   const handleRemarksChange = (id: number, value: string) => {
+    let hasErrors = false;
+    
+    // Simple grammar check
+    if (checkGrammar && value) {
+      // Check for capitalization of first letter
+      if (value.length > 0 && value[0] !== value[0].toUpperCase()) {
+        value = value.charAt(0).toUpperCase() + value.slice(1);
+        hasErrors = true;
+      }
+      
+      // Check for common spelling errors (simplified example)
+      const commonMisspellings: Record<string, string> = {
+        'improvment': 'improvement',
+        'excelent': 'excellent',
+        'gud': 'good',
+        'grate': 'great',
+        'verry': 'very',
+        'requiers': 'requires'
+      };
+      
+      Object.keys(commonMisspellings).forEach(misspelled => {
+        if (value.toLowerCase().includes(misspelled)) {
+          hasErrors = true;
+        }
+      });
+    }
+    
     setStudents(
       students.map(student => 
-        student.id === id ? { ...student, remarks: value } : student
+        student.id === id ? { 
+          ...student, 
+          remarks: value,
+          hasSpellingErrors: hasErrors
+        } : student
       )
     );
   };
 
   const calculateGrade = (marks: number | null): string => {
     if (marks === null) return "";
-    if (marks >= 90) return "A";
-    if (marks >= 80) return "B+";
-    if (marks >= 70) return "B";
-    if (marks >= 60) return "C+";
-    if (marks >= 50) return "C";
-    if (marks >= 40) return "D";
-    return "F";
+    
+    const gradeInfo = gradeConversion.find(g => marks >= g.min && marks <= g.max);
+    return gradeInfo?.grade || "";
   };
 
   const handleSave = (id: number) => {
@@ -65,11 +132,21 @@ const TeacherPanel: React.FC = () => {
     // In a real app, you would save the changes to the server here
   };
 
+  const handleApplyAutoRemarks = () => {
+    setStudents(
+      students.map(student => ({
+        ...student,
+        remarks: student.marks !== null ? getAutoRemark(student.marks) : student.remarks,
+        hasSpellingErrors: false
+      }))
+    );
+  };
+
   const getMarkStyle = (marks: number | null): string => {
     if (marks === null) return "";
     if (marks >= 80) return "text-green-600 dark:text-green-400";
     if (marks >= 60) return "text-blue-600 dark:text-blue-400";
-    if (marks >= 40) return "text-orange-600 dark:text-orange-400";
+    if (marks >= customPassingCriteria) return "text-orange-600 dark:text-orange-400";
     return "text-red-600 dark:text-red-400";
   };
 
@@ -79,7 +156,99 @@ const TeacherPanel: React.FC = () => {
         <div className="flex items-center gap-3 mb-6">
           <BookOpen size={24} className="text-theme-purple" />
           <h2 className="text-xl font-semibold">Teacher Panel</h2>
+          
+          <div className="ml-auto">
+            <button 
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              title="Mark Entry Settings"
+            >
+              <Settings size={20} className="text-foreground/70" />
+            </button>
+          </div>
         </div>
+        
+        {showSettings && (
+          <div className="glass rounded-xl p-4 mb-6 animate-fade-in">
+            <h3 className="font-medium mb-4">Mark Entry Settings</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={useAutoRemarks}
+                      onChange={() => setUseAutoRemarks(!useAutoRemarks)}
+                      className="rounded text-primary focus:ring-primary/30"
+                    />
+                    <span>Use Auto Remarks</span>
+                  </label>
+                  
+                  {!useAutoRemarks && (
+                    <button 
+                      onClick={handleApplyAutoRemarks}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Apply to All
+                    </button>
+                  )}
+                </div>
+                
+                <div className="flex items-center mb-3">
+                  <input
+                    type="checkbox"
+                    checked={checkGrammar}
+                    onChange={() => setCheckGrammar(!checkGrammar)}
+                    className="rounded text-primary focus:ring-primary/30 mr-2"
+                  />
+                  <span>Check Grammar and Spelling</span>
+                </div>
+                
+                <div className="mb-3">
+                  <label className="block text-sm text-foreground/70 mb-1">Passing Criteria</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={customPassingCriteria}
+                      onChange={(e) => setCustomPassingCriteria(parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                    <span className="text-sm font-medium">{customPassingCriteria}%</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium mb-2">Grade Conversion Sheet</h4>
+                <div className="bg-white/5 dark:bg-black/20 rounded-lg p-3 h-40 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="px-2 py-1 text-left">Range</th>
+                        <th className="px-2 py-1 text-left">Grade</th>
+                        <th className="px-2 py-1 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {gradeConversion.map((item, index) => (
+                        <tr key={index} className="border-b border-white/5 last:border-b-0">
+                          <td className="px-2 py-1">{item.min}-{item.max}%</td>
+                          <td className="px-2 py-1">{item.grade}</td>
+                          <td className="px-2 py-1">
+                            {item.min >= customPassingCriteria ? "Pass" : "Fail"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="glass rounded-xl p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4 mb-2">
@@ -178,18 +347,26 @@ const TeacherPanel: React.FC = () => {
                       {student.grade || "—"}
                     </span>
                   </td>
-                  <td className="py-3">
+                  <td className="py-3 relative">
                     {editingStudent === student.id ? (
                       <input
+                        ref={remarksRef}
                         type="text"
                         value={student.remarks}
                         onChange={(e) => handleRemarksChange(student.id, e.target.value)}
-                        className="glass rounded p-1 w-full border-none"
+                        className={`glass rounded p-1 w-full border ${
+                          student.hasSpellingErrors ? 'border-red-400 dark:border-red-600' : 'border-transparent'
+                        }`}
                       />
                     ) : (
                       <span className="text-foreground/80 text-sm">
                         {student.remarks || "No remarks"}
                       </span>
+                    )}
+                    {student.hasSpellingErrors && editingStudent === student.id && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500" title="Spelling or grammar issues detected">
+                        <MessageSquare size={16} />
+                      </div>
                     )}
                   </td>
                   <td className="py-3">
@@ -217,7 +394,7 @@ const TeacherPanel: React.FC = () => {
         
         <div className="mt-6 flex justify-end">
           <button className="btn-primary flex items-center gap-2">
-            <Check size={18} />
+            <CheckCheck size={18} />
             <span>Submit All Grades</span>
           </button>
         </div>

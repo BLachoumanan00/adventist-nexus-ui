@@ -8,7 +8,6 @@ import {
   BarChart2, 
   FileText, 
   Settings, 
-  Mail, 
   Bell, 
   Menu, 
   X, 
@@ -30,7 +29,6 @@ const Sidebar: React.FC = () => {
     { icon: BookOpen, label: "Teacher Panel", path: "/teacher" },
     { icon: BarChart2, label: "Statistics", path: "/statistics" },
     { icon: FileText, label: "Results", path: "/results" },
-    { icon: Mail, label: "Messages", path: "/messages" },
     { icon: Bell, label: "Notifications", path: "/notifications" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];

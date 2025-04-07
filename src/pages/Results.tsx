@@ -1,51 +1,132 @@
 
 import React, { useState } from "react";
-import { BookOpen, ChevronDown, Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { Download, FileText, Search, Eye, Filter } from "lucide-react";
+import ResultPreview from "../components/ResultPreview";
+
+interface StudentResult {
+  id: string;
+  name: string;
+  grade: string;
+  section: string;
+  subjects: {
+    subject: string;
+    marks: number;
+    grade: string;
+    remarks: string;
+  }[];
+  total: number;
+  average: number;
+  overallGrade: string;
+}
+
+const sampleStudents: StudentResult[] = [
+  {
+    id: "ACM23001",
+    name: "John Smith",
+    grade: "10",
+    section: "A",
+    subjects: [
+      { subject: "Mathematics", marks: 85, grade: "B+", remarks: "Good performance" },
+      { subject: "English", marks: 78, grade: "B", remarks: "Improving" },
+      { subject: "Science", marks: 92, grade: "A", remarks: "Excellent work" },
+      { subject: "History", marks: 70, grade: "C+", remarks: "Needs to focus more" },
+      { subject: "Computer Science", marks: 88, grade: "B+", remarks: "Strong practical skills" },
+    ],
+    total: 413,
+    average: 82.6,
+    overallGrade: "B+"
+  },
+  {
+    id: "ACM23015",
+    name: "Emily Davis",
+    grade: "10",
+    section: "A",
+    subjects: [
+      { subject: "Mathematics", marks: 90, grade: "A", remarks: "Excellent" },
+      { subject: "English", marks: 95, grade: "A", remarks: "Outstanding" },
+      { subject: "Science", marks: 88, grade: "B+", remarks: "Very good" },
+      { subject: "History", marks: 75, grade: "B", remarks: "Good effort" },
+      { subject: "Computer Science", marks: 92, grade: "A", remarks: "Exceptional work" },
+    ],
+    total: 440,
+    average: 88,
+    overallGrade: "B+"
+  },
+  {
+    id: "ACM23022",
+    name: "Michael Brown",
+    grade: "10",
+    section: "B",
+    subjects: [
+      { subject: "Mathematics", marks: 65, grade: "C", remarks: "Needs improvement" },
+      { subject: "English", marks: 70, grade: "C+", remarks: "Satisfactory" },
+      { subject: "Science", marks: 72, grade: "C+", remarks: "Can do better" },
+      { subject: "History", marks: 80, grade: "B", remarks: "Good knowledge" },
+      { subject: "Computer Science", marks: 75, grade: "B", remarks: "Shows interest" },
+    ],
+    total: 362,
+    average: 72.4,
+    overallGrade: "C+"
+  },
+  {
+    id: "ACM23036",
+    name: "Sarah Johnson",
+    grade: "10",
+    section: "B",
+    subjects: [
+      { subject: "Mathematics", marks: 95, grade: "A", remarks: "Outstanding" },
+      { subject: "English", marks: 88, grade: "B+", remarks: "Excellent writing skills" },
+      { subject: "Science", marks: 93, grade: "A", remarks: "Top performer" },
+      { subject: "History", marks: 85, grade: "B+", remarks: "Very good analysis" },
+      { subject: "Computer Science", marks: 90, grade: "A", remarks: "Talented" },
+    ],
+    total: 451,
+    average: 90.2,
+    overallGrade: "A"
+  },
+  {
+    id: "ACM23044",
+    name: "Robert Wilson",
+    grade: "10",
+    section: "C",
+    subjects: [
+      { subject: "Mathematics", marks: 35, grade: "F", remarks: "Needs significant improvement" },
+      { subject: "English", marks: 50, grade: "D", remarks: "More practice needed" },
+      { subject: "Science", marks: 45, grade: "D", remarks: "Struggling with concepts" },
+      { subject: "History", marks: 60, grade: "C", remarks: "Average performance" },
+      { subject: "Computer Science", marks: 55, grade: "D", remarks: "Requires assistance" },
+    ],
+    total: 245,
+    average: 49,
+    overallGrade: "D"
+  }
+];
 
 const Results: React.FC = () => {
-  const [selectedClass, setSelectedClass] = useState("Grade 8");
-  const [selectedSection, setSelectedSection] = useState("A");
-  const [selectedTerm, setSelectedTerm] = useState("Term 1");
-  const [selectedFormat, setSelectedFormat] = useState("pdf");
-  const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedGrade, setSelectedGrade] = useState('All');
+  const [selectedSection, setSelectedSection] = useState('All');
+  const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   
-  // Sample students data
-  const students = [
-    { id: 1, name: "John Smith", roll: "8A01", average: 78 },
-    { id: 2, name: "Sarah Johnson", roll: "8A02", average: 92 },
-    { id: 3, name: "Michael Brown", roll: "8A03", average: 65 },
-    { id: 4, name: "Emily Davis", roll: "8A04", average: 88 },
-    { id: 5, name: "Robert Wilson", roll: "8A05", average: 75 },
-    { id: 6, name: "Jessica Lee", roll: "8A06", average: 81 },
-    { id: 7, name: "William Taylor", roll: "8A07", average: 79 },
-    { id: 8, name: "Olivia Martin", roll: "8A08", average: 94 },
-  ];
+  const filteredStudents = sampleStudents.filter(student => {
+    const matchesSearch = 
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesGrade = selectedGrade === 'All' || student.grade === selectedGrade;
+    const matchesSection = selectedSection === 'All' || student.section === selectedSection;
+    
+    return matchesSearch && matchesGrade && matchesSection;
+  });
   
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedStudents([]);
-    } else {
-      setSelectedStudents(students.map(student => student.id));
-    }
-    setSelectAll(!selectAll);
+  const openPreview = (student: StudentResult) => {
+    setSelectedStudent(student);
+    setShowPreview(true);
   };
   
-  const handleSelectStudent = (id: number) => {
-    if (selectedStudents.includes(id)) {
-      setSelectedStudents(selectedStudents.filter(studentId => studentId !== id));
-      setSelectAll(false);
-    } else {
-      setSelectedStudents([...selectedStudents, id]);
-      if (selectedStudents.length + 1 === students.length) {
-        setSelectAll(true);
-      }
-    }
-  };
-  
-  const handleGenerateResults = () => {
-    // In a real app, this would generate and download the results
-    alert(`Generating ${selectedFormat.toUpperCase()} results for ${selectedStudents.length} students`);
+  const closePreview = () => {
+    setShowPreview(false);
   };
 
   return (
@@ -57,61 +138,59 @@ const Results: React.FC = () => {
         </div>
         
         <div className="glass rounded-xl p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div>
-              <label className="block text-sm text-foreground/70 mb-1">Class</label>
-              <select
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full glass rounded-lg border-none px-4 py-2"
-              >
-                <option>Grade 7</option>
-                <option>Grade 8</option>
-                <option>Grade 9</option>
-                <option>Grade 10</option>
-                <option>Grade 11</option>
-                <option>Grade 12</option>
-              </select>
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by name or ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg glass border-none focus:ring-2 ring-primary/30 outline-none"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" size={16} />
+              </div>
             </div>
             
-            <div>
-              <label className="block text-sm text-foreground/70 mb-1">Section</label>
-              <select
-                value={selectedSection}
-                onChange={(e) => setSelectedSection(e.target.value)}
-                className="w-full glass rounded-lg border-none px-4 py-2"
-              >
-                <option>A</option>
-                <option>B</option>
-                <option>C</option>
-              </select>
+            <div className="flex gap-4">
+              <div className="w-40">
+                <select
+                  value={selectedGrade}
+                  onChange={(e) => setSelectedGrade(e.target.value)}
+                  className="w-full rounded-lg glass border-none px-4 py-2"
+                >
+                  <option value="All">All Grades</option>
+                  <option value="7">Grade 7</option>
+                  <option value="8">Grade 8</option>
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                  <option value="11">Grade 11</option>
+                  <option value="12">Grade 12</option>
+                </select>
+              </div>
+              
+              <div className="w-40">
+                <select
+                  value={selectedSection}
+                  onChange={(e) => setSelectedSection(e.target.value)}
+                  className="w-full rounded-lg glass border-none px-4 py-2"
+                >
+                  <option value="All">All Sections</option>
+                  <option value="A">Section A</option>
+                  <option value="B">Section B</option>
+                  <option value="C">Section C</option>
+                </select>
+              </div>
+              
+              <button className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg">
+                <Filter size={16} />
+                <span>More Filters</span>
+              </button>
             </div>
-            
-            <div>
-              <label className="block text-sm text-foreground/70 mb-1">Term</label>
-              <select
-                value={selectedTerm}
-                onChange={(e) => setSelectedTerm(e.target.value)}
-                className="w-full glass rounded-lg border-none px-4 py-2"
-              >
-                <option>Term 1</option>
-                <option>Term 2</option>
-                <option>Term 3</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm text-foreground/70 mb-1">Format</label>
-              <select
-                value={selectedFormat}
-                onChange={(e) => setSelectedFormat(e.target.value)}
-                className="w-full glass rounded-lg border-none px-4 py-2"
-              >
-                <option value="pdf">PDF</option>
-                <option value="excel">Excel</option>
-                <option value="print">Print</option>
-              </select>
-            </div>
+          </div>
+          
+          <div className="text-sm text-foreground/60">
+            Showing {filteredStudents.length} students
           </div>
         </div>
         
@@ -119,53 +198,48 @@ const Results: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="pb-3 text-left">
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                      className="rounded text-primary focus:ring-primary/30"
-                    />
-                    <span className="font-medium text-foreground/70 text-sm">Select All</span>
-                  </div>
-                </th>
-                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Roll No.</th>
-                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student Name</th>
-                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Average Score</th>
-                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Preview</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Total</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Average</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Grade</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {students.map((student) => (
+              {filteredStudents.map((student) => (
                 <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="py-3">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedStudents.includes(student.id)}
-                      onChange={() => handleSelectStudent(student.id)}
-                      className="rounded text-primary focus:ring-primary/30"
-                    />
-                  </td>
-                  <td className="py-3">{student.roll}</td>
+                  <td className="py-3">{student.id}</td>
                   <td className="py-3">{student.name}</td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                      <span className={`${
-                        student.average >= 80 ? 'text-green-600 dark:text-green-400' :
-                        student.average >= 60 ? 'text-blue-600 dark:text-blue-400' :
-                        student.average >= 40 ? 'text-yellow-600 dark:text-yellow-400' :
-                        'text-red-600 dark:text-red-400'
-                      } font-medium`}>
-                        {student.average}%
-                      </span>
-                    </div>
+                  <td className="py-3">{student.grade}</td>
+                  <td className="py-3">{student.section}</td>
+                  <td className="py-3 text-center">{student.total}</td>
+                  <td className="py-3 text-center">{student.average.toFixed(1)}</td>
+                  <td className="py-3 text-center">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      student.overallGrade === "A" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                      student.overallGrade.includes("B") ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                      student.overallGrade.includes("C") ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                      student.overallGrade === "D" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
+                      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    }`}>
+                      {student.overallGrade}
+                    </span>
                   </td>
                   <td className="py-3">
-                    <button className="text-primary hover:underline text-sm">
-                      View Card
-                    </button>
+                    <div className="flex justify-center gap-2">
+                      <button 
+                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        onClick={() => openPreview(student)}
+                      >
+                        <Eye size={16} className="text-foreground/70" />
+                      </button>
+                      <button className="p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                        <Download size={16} className="text-foreground/70" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -173,60 +247,26 @@ const Results: React.FC = () => {
           </table>
         </div>
         
-        <div className="mt-6 flex justify-between">
-          <div className="text-sm text-foreground/60">
-            {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
-          </div>
-          
-          <div className="flex gap-3">
-            <button 
-              onClick={handleGenerateResults}
-              disabled={selectedStudents.length === 0}
-              className={`btn-primary flex items-center gap-2 ${
-                selectedStudents.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {selectedFormat === 'pdf' && <FileText size={18} />}
-              {selectedFormat === 'excel' && <FileSpreadsheet size={18} />}
-              {selectedFormat === 'print' && <Printer size={18} />}
-              <span>Generate Results</span>
-            </button>
-          </div>
+        <div className="mt-6 flex justify-end">
+          <button className="btn-primary flex items-center gap-2">
+            <Download size={18} />
+            <span>Generate All Results</span>
+          </button>
         </div>
       </div>
       
-      <div className="glass-card">
-        <div className="flex items-center gap-3 mb-6">
-          <Download size={24} className="text-theme-purple" />
-          <h2 className="text-xl font-semibold">Templates & Reports</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { title: "Report Cards", description: "Individual student report card", icon: FileText },
-            { title: "Class Results", description: "Consolidated class results", icon: FileSpreadsheet },
-            { title: "Certificates", description: "Merit and achievement certificates", icon: BookOpen },
-          ].map((item, index) => (
-            <div key={index} className="glass rounded-xl p-4 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer">
-              <div className="flex items-start gap-3 mb-2">
-                <div className="p-2 rounded-full bg-primary/10">
-                  <item.icon size={20} className="text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{item.title}</h3>
-                  <p className="text-sm text-foreground/60">{item.description}</p>
-                </div>
-              </div>
-              <div className="flex justify-end mt-4">
-                <button className="flex items-center gap-1 text-sm text-primary hover:underline">
-                  <span>Download</span>
-                  <ChevronDown size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {showPreview && selectedStudent && (
+        <ResultPreview 
+          student={{
+            name: selectedStudent.name,
+            id: selectedStudent.id,
+            grade: selectedStudent.grade,
+            section: selectedStudent.section
+          }}
+          results={selectedStudent.subjects}
+          onClose={closePreview}
+        />
+      )}
     </div>
   );
 };

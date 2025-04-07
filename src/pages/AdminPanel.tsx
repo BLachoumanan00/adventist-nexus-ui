@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog } from "lucide-react";
+import { useToast } from "../hooks/use-toast";
 
 interface User {
   id: number;
@@ -15,14 +16,24 @@ const AdminPanel: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<'Teacher' | 'Admin' | 'Clerk'>('Teacher');
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserDepartment, setNewUserDepartment] = useState('');
+  const { toast } = useToast();
+
+  // Update email domain
+  const formatEmail = (email: string) => {
+    if (!email.includes('@')) return `${email}@adventistcollege.mu`;
+    return email;
+  };
 
   // Sample users data
   const [users, setUsers] = useState<User[]>([
-    { id: 1, name: 'John Smith', email: 'john@example.com', role: 'Teacher', department: 'Mathematics', addedOn: '2023-05-15' },
-    { id: 2, name: 'Sarah Johnson', email: 'sarah@example.com', role: 'Admin', addedOn: '2023-04-20' },
-    { id: 3, name: 'Michael Brown', email: 'michael@example.com', role: 'Clerk', department: 'Administration', addedOn: '2023-06-10' },
-    { id: 4, name: 'Emily Davis', email: 'emily@example.com', role: 'Teacher', department: 'Science', addedOn: '2023-05-22' },
-    { id: 5, name: 'Robert Wilson', email: 'robert@example.com', role: 'Teacher', department: 'History', addedOn: '2023-07-01' },
+    { id: 1, name: 'John Smith', email: 'johnsmith@adventistcollege.mu', role: 'Teacher', department: 'Mathematics', addedOn: '2023-05-15' },
+    { id: 2, name: 'Sarah Johnson', email: 'sarahjohnson@adventistcollege.mu', role: 'Admin', addedOn: '2023-04-20' },
+    { id: 3, name: 'Michael Brown', email: 'michaelbrown@adventistcollege.mu', role: 'Clerk', department: 'Administration', addedOn: '2023-06-10' },
+    { id: 4, name: 'Emily Davis', email: 'emilydavis@adventistcollege.mu', role: 'Teacher', department: 'Science', addedOn: '2023-05-22' },
+    { id: 5, name: 'Robert Wilson', email: 'robertwilson@adventistcollege.mu', role: 'Teacher', department: 'History', addedOn: '2023-07-01' },
+    { id: 6, name: 'Black Houmanan', email: 'blackhoumanan@adventistcollege.mu', role: 'Admin', department: 'Superuser', addedOn: '2023-03-01' },
   ]);
 
   const filteredUsers = users.filter(user => 
@@ -33,22 +44,66 @@ const AdminPanel: React.FC = () => {
   );
 
   const handleAddUser = () => {
-    if (!newUserEmail) return;
+    if (!newUserEmail) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address for the new user.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const formattedEmail = formatEmail(newUserEmail);
+    
+    // Check if email already exists
+    if (users.some(user => user.email.toLowerCase() === formattedEmail.toLowerCase())) {
+      toast({
+        title: "User Already Exists",
+        description: "A user with this email already exists.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const newUser: User = {
       id: users.length + 1,
-      name: 'New User', // Would normally be filled by the user when accepting invitation
-      email: newUserEmail,
+      name: newUserName || 'New User', // Use provided name or default
+      email: formattedEmail,
       role: newUserRole,
+      department: newUserDepartment || undefined,
       addedOn: new Date().toISOString().split('T')[0]
     };
     
     setUsers([...users, newUser]);
     setNewUserEmail('');
+    setNewUserName('');
+    setNewUserDepartment('');
+    
+    toast({
+      title: "User Added Successfully",
+      description: `${newUser.name} has been added as ${newUser.role}.`,
+    });
   };
 
   const handleDeleteUser = (id: number) => {
+    const userToDelete = users.find(user => user.id === id);
+    
+    // Prevent deleting the superuser
+    if (userToDelete?.email.toLowerCase() === 'blackhoumanan@adventistcollege.mu') {
+      toast({
+        title: "Cannot Delete Superuser",
+        description: "This superuser account cannot be deleted.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setUsers(users.filter(user => user.id !== id));
+    
+    toast({
+      title: "User Deleted",
+      description: `${userToDelete?.name} has been removed.`,
+    });
   };
 
   const getRoleBadgeClass = (role: string) => {
@@ -62,6 +117,10 @@ const AdminPanel: React.FC = () => {
       default: 
         return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
     }
+  };
+
+  const isSuperUser = (email: string) => {
+    return email.toLowerCase() === 'blackhoumanan@adventistcollege.mu';
   };
 
   return (
@@ -88,25 +147,58 @@ const AdminPanel: React.FC = () => {
         <div className="glass rounded-xl p-4 mb-6">
           <h3 className="text-sm font-medium mb-3">Assign New User</h3>
           
-          <div className="flex flex-col md:flex-row gap-3">
-            <input
-              type="email"
-              placeholder="Email address"
-              value={newUserEmail}
-              onChange={(e) => setNewUserEmail(e.target.value)}
-              className="flex-grow rounded-lg glass border-none px-4 py-2"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+            <div>
+              <label className="text-xs text-foreground/70 mb-1 block">Email Address</label>
+              <input
+                type="email"
+                placeholder="Email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                className="w-full rounded-lg glass border-none px-4 py-2"
+              />
+              <p className="text-xs text-foreground/50 mt-1">
+                Domain @adventistcollege.mu will be added if not specified
+              </p>
+            </div>
             
-            <select 
-              value={newUserRole} 
-              onChange={(e) => setNewUserRole(e.target.value as any)}
-              className="rounded-lg glass border-none px-4 py-2"
-            >
-              <option value="Teacher">Teacher</option>
-              <option value="Admin">Admin</option>
-              <option value="Clerk">Clerk</option>
-            </select>
+            <div>
+              <label className="text-xs text-foreground/70 mb-1 block">Name (Optional)</label>
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                className="w-full rounded-lg glass border-none px-4 py-2"
+              />
+            </div>
             
+            <div>
+              <label className="text-xs text-foreground/70 mb-1 block">Department (Optional)</label>
+              <input
+                type="text"
+                placeholder="Department"
+                value={newUserDepartment}
+                onChange={(e) => setNewUserDepartment(e.target.value)}
+                className="w-full rounded-lg glass border-none px-4 py-2"
+              />
+            </div>
+            
+            <div>
+              <label className="text-xs text-foreground/70 mb-1 block">Role</label>
+              <select 
+                value={newUserRole} 
+                onChange={(e) => setNewUserRole(e.target.value as 'Teacher' | 'Admin' | 'Clerk')}
+                className="w-full rounded-lg glass border-none px-4 py-2"
+              >
+                <option value="Teacher">Teacher</option>
+                <option value="Admin">Admin</option>
+                <option value="Clerk">Clerk</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
             <button
               onClick={handleAddUser}
               className="btn-primary flex items-center gap-2"
@@ -131,8 +223,17 @@ const AdminPanel: React.FC = () => {
             </thead>
             <tbody>
               {filteredUsers.map(user => (
-                <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
-                  <td className="py-3">{user.name}</td>
+                <tr key={user.id} className={`border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors ${
+                  isSuperUser(user.email) ? 'bg-blue-50/10 dark:bg-blue-900/10' : ''
+                }`}>
+                  <td className="py-3">
+                    {user.name}
+                    {isSuperUser(user.email) && (
+                      <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-xs rounded-full">
+                        Superuser
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3">{user.email}</td>
                   <td className="py-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(user.role)}`}>
@@ -149,8 +250,9 @@ const AdminPanel: React.FC = () => {
                       <button 
                         className="p-1 rounded hover:bg-white/10 transition-colors"
                         onClick={() => handleDeleteUser(user.id)}
+                        disabled={isSuperUser(user.email)}
                       >
-                        <Trash size={16} className="text-foreground/70" />
+                        <Trash size={16} className={isSuperUser(user.email) ? "text-foreground/30" : "text-foreground/70"} />
                       </button>
                     </div>
                   </td>
