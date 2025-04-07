@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Bell, Check, FileSpreadsheet, Shield, User, UserCog, Settings as SettingsIcon } from "lucide-react";
 import { useTheme } from "../hooks/useTheme";
@@ -17,7 +16,7 @@ interface AppSettings {
 }
 
 const Settings: React.FC = () => {
-  const { theme, setTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
   
@@ -63,7 +62,6 @@ const Settings: React.FC = () => {
   };
 
   const handleSaveSettings = () => {
-    // In a real app, this would save to a backend
     localStorage.setItem('appSettings', JSON.stringify(settings));
     
     toast({
@@ -95,12 +93,16 @@ const Settings: React.FC = () => {
                 </div>
                 <select 
                   value={theme}
-                  onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
+                  onChange={(e) => {
+                    if ((e.target.value === 'dark' && theme === 'light') || 
+                        (e.target.value === 'light' && theme === 'dark')) {
+                      toggleTheme();
+                    }
+                  }}
                   className="glass px-3 py-1.5 rounded-lg border-none text-sm"
                 >
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
-                  <option value="system">System</option>
                 </select>
               </div>
             </div>
@@ -283,7 +285,6 @@ const Settings: React.FC = () => {
                   </div>
                   <button 
                     onClick={() => {
-                      // Generate and download CSV template
                       const headers = "ID,Name,Grade,Section,DateOfBirth,Gender,ParentName,ContactNumber\n";
                       const sampleData = "1,John Doe,8,A,2009-01-15,Male,Jane Doe,123-456-7890\n";
                       const csvContent = headers + sampleData;
@@ -316,7 +317,6 @@ const Settings: React.FC = () => {
                   </div>
                   <button 
                     onClick={() => {
-                      // Generate and download CSV template
                       const headers = "ID,Name,Email,Department,JoinDate,Subjects\n";
                       const sampleData = "1,Jane Smith,janesmith@adventistcollege.mu,Science,2020-08-15,\"Biology, Chemistry\"\n";
                       const csvContent = headers + sampleData;
@@ -349,7 +349,6 @@ const Settings: React.FC = () => {
                   </div>
                   <button 
                     onClick={() => {
-                      // Generate and download CSV template
                       const headers = "StudentID,StudentName,Subject,Term,AssessmentType,Mark,MaxMark,Remarks\n";
                       const sampleData = "1,John Doe,Mathematics,Term 1,Test,85,100,Excellent work\n";
                       const csvContent = headers + sampleData;
