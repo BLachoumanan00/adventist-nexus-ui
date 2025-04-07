@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BarChart3, Clock, LineChart, Notification, PieChart, Users } from "lucide-react";
+import { BarChart3, Clock, LineChart, Bell, PieChart, Users } from "lucide-react";
 
 const Dashboard: React.FC = () => {
   return (
@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-3 p-3 rounded-lg hover:bg-white/40 dark:hover:bg-white/5 transition-colors">
                 <div className="p-2 rounded-full bg-theme-soft-yellow/50">
-                  <Notification size={16} className="text-yellow-600" />
+                  <Bell size={16} className="text-yellow-600" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium">Staff Meeting</h3>
@@ -104,7 +104,7 @@ const Dashboard: React.FC = () => {
               { label: 'Add Student', icon: Users },
               { label: 'Enter Marks', icon: LineChart },
               { label: 'Generate Report', icon: BarChart3 },
-              { label: 'Send Notice', icon: Notification }
+              { label: 'Send Notice', icon: Bell }
             ].map((item, i) => (
               <button key={i} className="p-4 rounded-xl bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 flex flex-col items-center gap-2 transition-colors">
                 <item.icon size={24} className="text-theme-purple" />
