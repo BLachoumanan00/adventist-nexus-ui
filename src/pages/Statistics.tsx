@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
-import { BarChart as BarChartIcon, BookOpen, ChevronDown, Edit, PieChart as PieChartIcon, Save } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart as BarChartIcon, BookOpen, ChevronDown, Edit, PieChart as PieChartIcon, Save, Users, GraduationCap } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { useActivityLogger } from "../hooks/useActivityLogger";
 import { useToast } from "../hooks/use-toast";
 
@@ -9,6 +9,7 @@ const Statistics: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState("All Grades");
   const [selectedTerm, setSelectedTerm] = useState("Term 1");
   const [editMode, setEditMode] = useState(false);
+  const [viewMode, setViewMode] = useState<'overall' | 'class' | 'subject'>('overall');
   const { logActivity } = useActivityLogger();
   const { toast } = useToast();
   
@@ -20,6 +21,24 @@ const Statistics: React.FC = () => {
     { subject: "History", average: 68, passing: 78 },
     { subject: "Geography", average: 75, passing: 86 },
     { subject: "Computer", average: 88, passing: 95 },
+  ]);
+  
+  // Sample data for class-wise performance
+  const [classPerformanceData, setClassPerformanceData] = useState([
+    { class: "8A", average: 82, passing: 94, topSubject: "Math" },
+    { class: "8B", average: 78, passing: 88, topSubject: "English" },
+    { class: "9A", average: 75, passing: 86, topSubject: "Science" },
+    { class: "9B", average: 80, passing: 90, topSubject: "Computer" },
+    { class: "10A", average: 72, passing: 82, topSubject: "Geography" },
+    { class: "10B", average: 74, passing: 84, topSubject: "History" },
+  ]);
+  
+  // Sample data for subject-wise performance across classes
+  const [subjectWiseData, setSubjectWiseData] = useState([
+    { subject: "Math", "8A": 82, "8B": 74, "9A": 78, "9B": 72, "10A": 68, "10B": 76 },
+    { subject: "Science", "8A": 78, "8B": 72, "9A": 80, "9B": 76, "10A": 70, "10B": 74 },
+    { subject: "English", "8A": 84, "8B": 80, "9A": 76, "9B": 78, "10A": 72, "10B": 70 },
+    { subject: "History", "8A": 72, "8B": 68, "9A": 74, "9B": 70, "10A": 66, "10B": 72 },
   ]);
   
   // Sample data for the pie chart - now with state for editing
@@ -52,6 +71,8 @@ const Statistics: React.FC = () => {
   const [editableGradeData, setEditableGradeData] = useState([...gradeDistributionData]);
   const [editableAttendanceData, setEditableAttendanceData] = useState([...attendanceData]);
   const [editableClassData, setEditableClassData] = useState([...classComparisonData]);
+  const [editableClassPerformanceData, setEditableClassPerformanceData] = useState([...classPerformanceData]);
+  const [editableSubjectWiseData, setEditableSubjectWiseData] = useState([...subjectWiseData]);
 
   // Reset editable data when switching to edit mode
   useEffect(() => {
@@ -60,6 +81,8 @@ const Statistics: React.FC = () => {
       setEditableGradeData([...gradeDistributionData]);
       setEditableAttendanceData([...attendanceData]);
       setEditableClassData([...classComparisonData]);
+      setEditableClassPerformanceData([...classPerformanceData]);
+      setEditableSubjectWiseData([...subjectWiseData]);
     }
   }, [editMode]);
   
@@ -69,9 +92,11 @@ const Statistics: React.FC = () => {
     setGradeDistributionData([...editableGradeData]);
     setAttendanceData([...editableAttendanceData]);
     setClassComparisonData([...editableClassData]);
+    setClassPerformanceData([...editableClassPerformanceData]);
+    setSubjectWiseData([...editableSubjectWiseData]);
     setEditMode(false);
     
-    logActivity("Updated Statistics Data", `Updated data for ${selectedGrade} - ${selectedTerm}`);
+    logActivity("Updated Statistics Data", `Updated ${viewMode} data for ${selectedGrade} - ${selectedTerm}`);
     
     toast({
       title: "Statistics Saved",
@@ -84,6 +109,20 @@ const Statistics: React.FC = () => {
     const newData = [...editableSubjectData];
     newData[index][field] = Math.min(100, Math.max(0, value)); // Ensure value is between 0-100
     setEditableSubjectData(newData);
+  };
+  
+  // Handle class performance data changes
+  const handleClassPerformanceChange = (index: number, field: 'average' | 'passing', value: number) => {
+    const newData = [...editableClassPerformanceData];
+    newData[index][field] = Math.min(100, Math.max(0, value)); // Ensure value is between 0-100
+    setEditableClassPerformanceData(newData);
+  };
+  
+  // Handle subject-wise data changes
+  const handleSubjectWiseChange = (index: number, classKey: string, value: number) => {
+    const newData = [...editableSubjectWiseData];
+    newData[index][classKey] = Math.min(100, Math.max(0, value)); // Ensure value is between 0-100
+    setEditableSubjectWiseData(newData);
   };
   
   // Handle grade distribution changes
@@ -117,6 +156,27 @@ const Statistics: React.FC = () => {
           </div>
           
           <div className="flex gap-3">
+            <div className="flex items-center gap-3 bg-white/10 rounded-lg p-1">
+              <button 
+                className={`px-3 py-1.5 rounded-lg text-sm ${viewMode === 'overall' ? 'bg-white/20' : ''}`}
+                onClick={() => setViewMode('overall')}
+              >
+                Overall
+              </button>
+              <button 
+                className={`px-3 py-1.5 rounded-lg text-sm ${viewMode === 'class' ? 'bg-white/20' : ''}`}
+                onClick={() => setViewMode('class')}
+              >
+                Class-wise
+              </button>
+              <button 
+                className={`px-3 py-1.5 rounded-lg text-sm ${viewMode === 'subject' ? 'bg-white/20' : ''}`}
+                onClick={() => setViewMode('subject')}
+              >
+                Subject-wise
+              </button>
+            </div>
+          
             <select
               value={selectedGrade}
               onChange={(e) => setSelectedGrade(e.target.value)}
@@ -161,30 +221,314 @@ const Statistics: React.FC = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {viewMode === 'overall' && (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="glass rounded-xl p-4">
+                <h3 className="font-medium mb-3">Subject Performance</h3>
+                {editMode ? (
+                  <div className="mb-4 overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="pb-2 text-left text-sm">Subject</th>
+                          <th className="pb-2 text-left text-sm">Average Score</th>
+                          <th className="pb-2 text-left text-sm">Passing Rate %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editableSubjectData.map((item, index) => (
+                          <tr key={index} className="border-b border-white/5">
+                            <td className="py-2">{item.subject}</td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.average}
+                                min={0}
+                                max={100}
+                                onChange={(e) => handleSubjectDataChange(index, 'average', parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.passing}
+                                min={0}
+                                max={100}
+                                onChange={(e) => handleSubjectDataChange(index, 'passing', parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={subjectPerformanceData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="subject" stroke="rgba(255,255,255,0.5)" />
+                        <YAxis stroke="rgba(255,255,255,0.5)" />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            borderRadius: '8px', 
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="average" name="Average Score" fill="#9b87f5" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="passing" name="Passing Rate %" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+              
+              <div className="glass rounded-xl p-4">
+                <h3 className="font-medium mb-3">Grade Distribution</h3>
+                {editMode ? (
+                  <div className="mb-4 overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="pb-2 text-left text-sm">Grade</th>
+                          <th className="pb-2 text-left text-sm">Number of Students</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editableGradeData.map((item, index) => (
+                          <tr key={index} className="border-b border-white/5">
+                            <td className="py-2">
+                              <span className="px-2 py-0.5 rounded" style={{ backgroundColor: item.color + '40', color: item.color }}>
+                                {item.name}
+                              </span>
+                            </td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.value}
+                                min={0}
+                                onChange={(e) => handleGradeDataChange(index, parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={gradeDistributionData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {gradeDistributionData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => [`${value} Students`, 'Count']}
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            borderRadius: '8px', 
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="glass rounded-xl p-4">
+                <h3 className="font-medium mb-3">Class Comparison</h3>
+                {editMode ? (
+                  <div className="mb-4 overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="pb-2 text-left text-sm">Class</th>
+                          <th className="pb-2 text-left text-sm">Mathematics</th>
+                          <th className="pb-2 text-left text-sm">Science</th>
+                          <th className="pb-2 text-left text-sm">English</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editableClassData.map((item, index) => (
+                          <tr key={index} className="border-b border-white/5">
+                            <td className="py-2">{item.class}</td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.math}
+                                min={0}
+                                max={100}
+                                onChange={(e) => handleClassDataChange(index, 'math', parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.science}
+                                min={0}
+                                max={100}
+                                onChange={(e) => handleClassDataChange(index, 'science', parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.english}
+                                min={0}
+                                max={100}
+                                onChange={(e) => handleClassDataChange(index, 'english', parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={classComparisonData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <XAxis dataKey="class" stroke="rgba(255,255,255,0.5)" />
+                        <YAxis stroke="rgba(255,255,255,0.5)" />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            borderRadius: '8px', 
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="math" name="Mathematics" fill="#9b87f5" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="science" name="Science" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="english" name="English" fill="#4ade80" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+              
+              <div className="glass rounded-xl p-4">
+                <h3 className="font-medium mb-3">Attendance Overview</h3>
+                {editMode ? (
+                  <div className="mb-4 overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="pb-2 text-left text-sm">Status</th>
+                          <th className="pb-2 text-left text-sm">Value (%)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editableAttendanceData.map((item, index) => (
+                          <tr key={index} className="border-b border-white/5">
+                            <td className="py-2">
+                              <span className="px-2 py-0.5 rounded" style={{ backgroundColor: item.color + '40', color: item.color }}>
+                                {item.name}
+                              </span>
+                            </td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.value}
+                                min={0}
+                                onChange={(e) => handleAttendanceDataChange(index, parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={attendanceData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {attendanceData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            borderRadius: '8px', 
+                            border: 'none',
+                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+        
+        {viewMode === 'class' && (
           <div className="glass rounded-xl p-4">
-            <h3 className="font-medium mb-3">Subject Performance</h3>
+            <h3 className="font-medium mb-3">Class-wise Performance</h3>
             {editMode ? (
               <div className="mb-4 overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <th className="pb-2 text-left text-sm">Subject</th>
+                      <th className="pb-2 text-left text-sm">Class</th>
                       <th className="pb-2 text-left text-sm">Average Score</th>
                       <th className="pb-2 text-left text-sm">Passing Rate %</th>
+                      <th className="pb-2 text-left text-sm">Top Subject</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {editableSubjectData.map((item, index) => (
+                    {editableClassPerformanceData.map((item, index) => (
                       <tr key={index} className="border-b border-white/5">
-                        <td className="py-2">{item.subject}</td>
+                        <td className="py-2">{item.class}</td>
                         <td className="py-2">
                           <input 
                             type="number"
                             value={item.average}
                             min={0}
                             max={100}
-                            onChange={(e) => handleSubjectDataChange(index, 'average', parseInt(e.target.value) || 0)}
+                            onChange={(e) => handleClassPerformanceChange(index, 'average', parseInt(e.target.value) || 0)}
                             className="w-20 glass rounded px-2 py-1"
                           />
                         </td>
@@ -194,10 +538,11 @@ const Statistics: React.FC = () => {
                             value={item.passing}
                             min={0}
                             max={100}
-                            onChange={(e) => handleSubjectDataChange(index, 'passing', parseInt(e.target.value) || 0)}
+                            onChange={(e) => handleClassPerformanceChange(index, 'passing', parseInt(e.target.value) || 0)}
                             className="w-20 glass rounded px-2 py-1"
                           />
                         </td>
+                        <td className="py-2">{item.topSubject}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -206,9 +551,9 @@ const Statistics: React.FC = () => {
             ) : (
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={subjectPerformanceData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <BarChart data={classPerformanceData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="subject" stroke="rgba(255,255,255,0.5)" />
+                    <XAxis dataKey="class" stroke="rgba(255,255,255,0.5)" />
                     <YAxis stroke="rgba(255,255,255,0.5)" />
                     <Tooltip 
                       contentStyle={{ 
@@ -226,123 +571,41 @@ const Statistics: React.FC = () => {
               </div>
             )}
           </div>
-          
-          <div className="glass rounded-xl p-4">
-            <h3 className="font-medium mb-3">Grade Distribution</h3>
-            {editMode ? (
-              <div className="mb-4 overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="pb-2 text-left text-sm">Grade</th>
-                      <th className="pb-2 text-left text-sm">Number of Students</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {editableGradeData.map((item, index) => (
-                      <tr key={index} className="border-b border-white/5">
-                        <td className="py-2">
-                          <span className="px-2 py-0.5 rounded" style={{ backgroundColor: item.color + '40', color: item.color }}>
-                            {item.name}
-                          </span>
-                        </td>
-                        <td className="py-2">
-                          <input 
-                            type="number"
-                            value={item.value}
-                            min={0}
-                            onChange={(e) => handleGradeDataChange(index, parseInt(e.target.value) || 0)}
-                            className="w-20 glass rounded px-2 py-1"
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={gradeDistributionData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {gradeDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => [`${value} Students`, 'Count']}
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.8)', 
-                        borderRadius: '8px', 
-                        border: 'none',
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {viewMode === 'subject' && (
           <div className="glass rounded-xl p-4">
-            <h3 className="font-medium mb-3">Class Comparison</h3>
+            <h3 className="font-medium mb-3">Subject-wise Performance Across Classes</h3>
             {editMode ? (
               <div className="mb-4 overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <th className="pb-2 text-left text-sm">Class</th>
-                      <th className="pb-2 text-left text-sm">Mathematics</th>
-                      <th className="pb-2 text-left text-sm">Science</th>
-                      <th className="pb-2 text-left text-sm">English</th>
+                      <th className="pb-2 text-left text-sm">Subject</th>
+                      <th className="pb-2 text-left text-sm">8A</th>
+                      <th className="pb-2 text-left text-sm">8B</th>
+                      <th className="pb-2 text-left text-sm">9A</th>
+                      <th className="pb-2 text-left text-sm">9B</th>
+                      <th className="pb-2 text-left text-sm">10A</th>
+                      <th className="pb-2 text-left text-sm">10B</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {editableClassData.map((item, index) => (
+                    {editableSubjectWiseData.map((item, index) => (
                       <tr key={index} className="border-b border-white/5">
-                        <td className="py-2">{item.class}</td>
-                        <td className="py-2">
-                          <input 
-                            type="number"
-                            value={item.math}
-                            min={0}
-                            max={100}
-                            onChange={(e) => handleClassDataChange(index, 'math', parseInt(e.target.value) || 0)}
-                            className="w-20 glass rounded px-2 py-1"
-                          />
-                        </td>
-                        <td className="py-2">
-                          <input 
-                            type="number"
-                            value={item.science}
-                            min={0}
-                            max={100}
-                            onChange={(e) => handleClassDataChange(index, 'science', parseInt(e.target.value) || 0)}
-                            className="w-20 glass rounded px-2 py-1"
-                          />
-                        </td>
-                        <td className="py-2">
-                          <input 
-                            type="number"
-                            value={item.english}
-                            min={0}
-                            max={100}
-                            onChange={(e) => handleClassDataChange(index, 'english', parseInt(e.target.value) || 0)}
-                            className="w-20 glass rounded px-2 py-1"
-                          />
-                        </td>
+                        <td className="py-2">{item.subject}</td>
+                        {["8A", "8B", "9A", "9B", "10A", "10B"].map((classKey) => (
+                          <td className="py-2" key={classKey}>
+                            <input 
+                              type="number"
+                              value={item[classKey]}
+                              min={0}
+                              max={100}
+                              onChange={(e) => handleSubjectWiseChange(index, classKey, parseInt(e.target.value) || 0)}
+                              className="w-20 glass rounded px-2 py-1"
+                            />
+                          </td>
+                        ))}
                       </tr>
                     ))}
                   </tbody>
@@ -351,9 +614,9 @@ const Statistics: React.FC = () => {
             ) : (
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={classComparisonData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <LineChart margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="class" stroke="rgba(255,255,255,0.5)" />
+                    <XAxis dataKey="subject" categories={subjectWiseData.map(item => item.subject)} stroke="rgba(255,255,255,0.5)" />
                     <YAxis stroke="rgba(255,255,255,0.5)" />
                     <Tooltip 
                       contentStyle={{ 
@@ -364,81 +627,24 @@ const Statistics: React.FC = () => {
                       }}
                     />
                     <Legend />
-                    <Bar dataKey="math" name="Mathematics" fill="#9b87f5" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="science" name="Science" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="english" name="English" fill="#4ade80" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-          
-          <div className="glass rounded-xl p-4">
-            <h3 className="font-medium mb-3">Attendance Overview</h3>
-            {editMode ? (
-              <div className="mb-4 overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="pb-2 text-left text-sm">Status</th>
-                      <th className="pb-2 text-left text-sm">Value (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {editableAttendanceData.map((item, index) => (
-                      <tr key={index} className="border-b border-white/5">
-                        <td className="py-2">
-                          <span className="px-2 py-0.5 rounded" style={{ backgroundColor: item.color + '40', color: item.color }}>
-                            {item.name}
-                          </span>
-                        </td>
-                        <td className="py-2">
-                          <input 
-                            type="number"
-                            value={item.value}
-                            min={0}
-                            onChange={(e) => handleAttendanceDataChange(index, parseInt(e.target.value) || 0)}
-                            className="w-20 glass rounded px-2 py-1"
-                          />
-                        </td>
-                      </tr>
+                    {["8A", "8B", "9A", "9B", "10A", "10B"].map((classKey, index) => (
+                      <Line 
+                        key={classKey}
+                        type="monotone"
+                        data={subjectWiseData}
+                        dataKey={classKey}
+                        name={`Class ${classKey}`}
+                        stroke={["#9b87f5", "#60a5fa", "#4ade80", "#facc15", "#f87171", "#ef4444"][index % 6]}
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={attendanceData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {attendanceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.8)', 
-                        borderRadius: '8px', 
-                        border: 'none',
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
       
       <div className="glass-card">

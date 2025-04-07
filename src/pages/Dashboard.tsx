@@ -1,8 +1,18 @@
 
 import React from "react";
-import { BarChart3, Clock, LineChart, Bell, PieChart, Users } from "lucide-react";
+import { BarChart3, Clock, LineChart, Bell, PieChart, Users, FileText, MessageSquare } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useActivityLogger } from "../hooks/useActivityLogger";
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { logActivity } = useActivityLogger();
+  
+  const handleQuickAccess = (path: string, action: string) => {
+    logActivity("Quick Access", `Accessed ${action} from Dashboard`);
+    navigate(path);
+  };
+  
   return (
     <div className="animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -71,7 +81,13 @@ const Dashboard: React.FC = () => {
             ))}
           </div>
           
-          <button className="w-full mt-4 px-4 py-2 text-sm text-center text-primary hover:underline">
+          <button 
+            className="w-full mt-4 px-4 py-2 text-sm text-center text-primary hover:underline"
+            onClick={() => {
+              navigate('/notifications');
+              logActivity("Viewed Notifications", "Accessed from Dashboard");
+            }}
+          >
             View All Notifications
           </button>
         </div>
@@ -101,12 +117,16 @@ const Dashboard: React.FC = () => {
           <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'Add Student', icon: Users },
-              { label: 'Enter Marks', icon: LineChart },
-              { label: 'Generate Report', icon: BarChart3 },
-              { label: 'Send Notice', icon: Bell }
+              { label: 'Add Student', icon: Users, path: '/admin', action: 'Student Management' },
+              { label: 'Enter Marks', icon: LineChart, path: '/teacher', action: 'Teacher Panel' },
+              { label: 'Generate Report', icon: FileText, path: '/results', action: 'Results' },
+              { label: 'Send Notice', icon: Bell, path: '/notifications', action: 'Notifications' }
             ].map((item, i) => (
-              <button key={i} className="p-4 rounded-xl bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 flex flex-col items-center gap-2 transition-colors">
+              <button 
+                key={i} 
+                className="p-4 rounded-xl bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 flex flex-col items-center gap-2 transition-colors"
+                onClick={() => handleQuickAccess(item.path, item.action)}
+              >
                 <item.icon size={24} className="text-theme-purple" />
                 <span className="text-xs font-medium">{item.label}</span>
               </button>

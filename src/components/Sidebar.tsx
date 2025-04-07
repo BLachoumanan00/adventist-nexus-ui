@@ -1,131 +1,111 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { 
-  Home, 
-  Users, 
-  BookOpen, 
-  BarChart2, 
-  FileText, 
+  BarChart, 
+  GraduationCap, 
   Settings, 
-  Bell, 
-  Menu, 
-  X, 
   Upload, 
-  ShieldCheck 
+  Users, 
+  FileText, 
+  PieChart, 
+  Bell,
+  Calendar,
+  Award,
+  FileBarChart,
+  ClipboardList
 } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useNotifications } from "../context/NotificationContext";
+
+interface SidebarLinkProps {
+  to: string;
+  icon: React.ReactNode;
+  text: string;
+  badge?: number;
+}
+
+const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, text, badge }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+
+  return (
+    <NavLink
+      to={to}
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+        isActive ? "bg-primary/20 text-primary" : "hover:bg-white/10"
+      }`}
+    >
+      {icon}
+      <span>{text}</span>
+      {badge !== undefined && badge > 0 && (
+        <div className="ml-auto bg-primary text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+          {badge > 99 ? "99+" : badge}
+        </div>
+      )}
+    </NavLink>
+  );
+};
 
 const Sidebar: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const isMobile = useIsMobile();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const navigationItems = [
-    { icon: Home, label: "Dashboard", path: "/" },
-    { icon: ShieldCheck, label: "Admin Panel", path: "/admin" },
-    { icon: Upload, label: "Upload Data", path: "/upload" },
-    { icon: BookOpen, label: "Teacher Panel", path: "/teacher" },
-    { icon: BarChart2, label: "Statistics", path: "/statistics" },
-    { icon: FileText, label: "Results", path: "/results" },
-    { icon: Bell, label: "Notifications", path: "/notifications" },
-    { icon: Settings, label: "Settings", path: "/settings" },
-  ];
-
-  const toggleSidebar = () => setIsCollapsed(!isCollapsed);
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
-  // Return mobile menu if on mobile
-  if (isMobile) {
-    return (
-      <>
-        <button
-          onClick={toggleMobileMenu}
-          className="fixed top-4 left-4 z-50 p-2 rounded-full glass"
-          aria-label="Menu"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-        
-        {/* Mobile navigation menu - slide in from left */}
-        <div
-          className={`fixed inset-0 z-40 ${
-            isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-          } transition-transform duration-300 ease-in-out`}
-        >
-          <div className="relative h-full w-64 glass shadow-2xl overflow-y-auto">
-            <div className="flex justify-between items-center p-4 border-b border-white/10">
-              <h1 className="font-bold text-lg">Adventist College</h1>
-              <ThemeToggle />
-            </div>
-            <nav className="p-3 flex flex-col gap-1">
-              {navigationItems.map((item, index) => (
-                <Link
-                  key={index}
-                  to={item.path}
-                  className="nav-item"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <item.icon size={20} />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-              <div className="glass px-4 py-2 rounded-full text-sm">
-                Adventist College Mauritius
-              </div>
-            </div>
-          </div>
-          
-          {/* Backdrop - click to close */}
-          <div 
-            className="absolute inset-0 -z-10 bg-black/50 backdrop-blur-sm"
-            onClick={toggleMobileMenu}
-          ></div>
-        </div>
-      </>
-    );
-  }
-
-  // Desktop sidebar
+  const { unreadCount } = useNotifications();
+  
   return (
-    <div
-      className={`h-screen ${
-        isCollapsed ? "w-20" : "w-64"
-      } glass fixed left-0 top-0 transition-all duration-300 overflow-hidden z-30 flex flex-col`}
-    >
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        {!isCollapsed && <h1 className="font-bold">Adventist College</h1>}
-        <button
-          onClick={toggleSidebar}
-          className="p-2 rounded-full hover:bg-white/10 transition-colors"
-          aria-label="Toggle sidebar"
-        >
-          <Menu size={20} />
-        </button>
+    <aside className="w-60 h-full overflow-y-auto glass border-r border-white/10 flex flex-col">
+      <div className="p-4 border-b border-white/10">
+        <h1 className="text-lg font-bold">School Management</h1>
       </div>
       
-      <nav className="p-3 flex-grow flex flex-col gap-1">
-        {navigationItems.map((item, index) => (
-          <Link
-            key={index}
-            to={item.path}
-            className={`nav-item ${isCollapsed ? "justify-center" : ""}`}
-            title={isCollapsed ? item.label : ""}
-          >
-            <item.icon size={20} />
-            {!isCollapsed && <span>{item.label}</span>}
-          </Link>
-        ))}
+      <nav className="flex-1 p-2">
+        <div className="mb-6">
+          <div className="text-xs uppercase text-foreground/50 font-medium px-3 py-1.5">
+            General
+          </div>
+          <div className="space-y-1">
+            <SidebarLink to="/dashboard" icon={<BarChart size={18} />} text="Dashboard" />
+            <SidebarLink to="/notifications" icon={<Bell size={18} />} text="Notifications" badge={unreadCount} />
+            <SidebarLink to="/statistics" icon={<PieChart size={18} />} text="Statistics" />
+          </div>
+        </div>
+        
+        <div className="mb-6">
+          <div className="text-xs uppercase text-foreground/50 font-medium px-3 py-1.5">
+            Academic
+          </div>
+          <div className="space-y-1">
+            <SidebarLink to="/teacher" icon={<GraduationCap size={18} />} text="Teacher Panel" />
+            <SidebarLink to="/results" icon={<FileText size={18} />} text="Results" />
+            <SidebarLink to="/attendance" icon={<Calendar size={18} />} text="Attendance" />
+            <SidebarLink to="/certificates" icon={<Award size={18} />} text="Certificates" />
+            <SidebarLink to="/result-generator" icon={<FileBarChart size={18} />} text="Result Generator" />
+          </div>
+        </div>
+        
+        <div className="mb-6">
+          <div className="text-xs uppercase text-foreground/50 font-medium px-3 py-1.5">
+            Administration
+          </div>
+          <div className="space-y-1">
+            <SidebarLink to="/admin" icon={<Users size={18} />} text="User Management" />
+            <SidebarLink to="/upload" icon={<Upload size={18} />} text="Data Upload" />
+            <SidebarLink to="/activity-logs" icon={<ClipboardList size={18} />} text="Activity Logs" />
+            <SidebarLink to="/settings" icon={<Settings size={18} />} text="Settings" />
+          </div>
+        </div>
       </nav>
       
-      <div className="p-4 border-t border-white/10 flex justify-between items-center">
-        {!isCollapsed && <div className="text-sm">Theme</div>}
-        <ThemeToggle />
+      <div className="p-4 border-t border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+            <span className="text-primary font-medium">BL</span>
+          </div>
+          <div>
+            <div className="text-sm font-medium">Billy Lachoumanan</div>
+            <div className="text-xs text-foreground/60">Administrator</div>
+          </div>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 };
 
