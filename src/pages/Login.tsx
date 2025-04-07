@@ -29,7 +29,7 @@ const Login: React.FC = () => {
       setIsLoading(false);
       
       // Hardcoded superuser for demo
-      if (formattedEmail.toLowerCase() === 'blackhoumanan@adventistcollege.mu' && password === 'password') {
+      if (formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu' && password === 'Admin0000*') {
         localStorage.setItem('user', JSON.stringify({
           email: formattedEmail,
           name: 'Black Houmanan',
