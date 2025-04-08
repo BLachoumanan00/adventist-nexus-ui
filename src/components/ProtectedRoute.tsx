@@ -20,8 +20,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
+  // Special case for the superuser account
+  const isSuperUser = user.email?.toLowerCase() === 'blachoumanan@adventistcollege.mu';
+  
   // If role requirement exists and user doesn't have that role
-  if (requiredRole.length > 0 && !requiredRole.includes(user.role) && !user.isSuperUser) {
+  if (requiredRole.length > 0 && !requiredRole.includes(user.role) && !isSuperUser) {
     // Superusers bypass role restrictions
     return <Navigate to="/dashboard" replace />;
   }

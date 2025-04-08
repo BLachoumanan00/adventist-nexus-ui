@@ -44,11 +44,14 @@ const Login: React.FC = () => {
       setIsLoading(false);
       
       if (user) {
+        // Special case for the specific admin account
+        const isSuperUser = formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu';
+        
         const userObj = {
           email: user.email,
           name: user.name,
           role: user.role,
-          isSuperUser: user.role === 'Admin'
+          isSuperUser: isSuperUser || user.role === 'Admin'
         };
         
         // Log user activity

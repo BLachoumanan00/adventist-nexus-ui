@@ -28,16 +28,32 @@ function App() {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     
     if (users.length === 0) {
-      // Add a default admin user
+      // Add a default admin user with the specific email
       const defaultAdmin = {
-        name: "System Administrator",
-        email: "admin@adventistcollege.mu",
-        password: "admin123",
+        name: "Billy Lachoumanan",
+        email: "blachoumanan@adventistcollege.mu",
+        password: "Admin0000*",
         role: "Admin",
         createdAt: new Date().toISOString()
       };
       
       localStorage.setItem('users', JSON.stringify([defaultAdmin]));
+    } else {
+      // Check if the superuser exists, if not ensure it does
+      const superUserExists = users.some((user: any) => 
+        user.email.toLowerCase() === "blachoumanan@adventistcollege.mu");
+      
+      if (!superUserExists) {
+        const updatedUsers = [...users, {
+          name: "Billy Lachoumanan",
+          email: "blachoumanan@adventistcollege.mu",
+          password: "Admin0000*",
+          role: "Admin",
+          createdAt: new Date().toISOString()
+        }];
+        
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+      }
     }
   }, []);
 
