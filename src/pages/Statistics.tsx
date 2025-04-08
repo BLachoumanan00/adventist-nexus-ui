@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BarChart as BarChartIcon, BookOpen, ChevronDown, Edit, PieChart as PieChartIcon, Save, Users, GraduationCap } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
@@ -13,7 +12,6 @@ const Statistics: React.FC = () => {
   const { logActivity } = useActivityLogger();
   const { toast } = useToast();
   
-  // Sample data for the bar chart - now with state to allow editing
   const [subjectPerformanceData, setSubjectPerformanceData] = useState([
     { subject: "Math", average: 76, passing: 88 },
     { subject: "Science", average: 72, passing: 84 },
@@ -23,7 +21,6 @@ const Statistics: React.FC = () => {
     { subject: "Computer", average: 88, passing: 95 },
   ]);
   
-  // Sample data for class-wise performance
   const [classPerformanceData, setClassPerformanceData] = useState([
     { class: "8A", average: 82, passing: 94, topSubject: "Math" },
     { class: "8B", average: 78, passing: 88, topSubject: "English" },
@@ -33,7 +30,6 @@ const Statistics: React.FC = () => {
     { class: "10B", average: 74, passing: 84, topSubject: "History" },
   ]);
   
-  // Sample data for subject-wise performance across classes
   const [subjectWiseData, setSubjectWiseData] = useState([
     { subject: "Math", "8A": 82, "8B": 74, "9A": 78, "9B": 72, "10A": 68, "10B": 76 },
     { subject: "Science", "8A": 78, "8B": 72, "9A": 80, "9B": 76, "10A": 70, "10B": 74 },
@@ -41,7 +37,6 @@ const Statistics: React.FC = () => {
     { subject: "History", "8A": 72, "8B": 68, "9A": 74, "9B": 70, "10A": 66, "10B": 72 },
   ]);
   
-  // Sample data for the pie chart - now with state for editing
   const [gradeDistributionData, setGradeDistributionData] = useState([
     { name: "A", value: 32, color: "#4ade80" },
     { name: "B", value: 45, color: "#60a5fa" },
@@ -50,14 +45,12 @@ const Statistics: React.FC = () => {
     { name: "F", value: 1, color: "#ef4444" },
   ]);
   
-  // Sample data for attendance pie chart - now with state
   const [attendanceData, setAttendanceData] = useState([
     { name: "Present", value: 92, color: "#4ade80" },
     { name: "Absent", value: 5, color: "#f87171" },
     { name: "Late", value: 3, color: "#facc15" },
   ]);
   
-  // Sample data for class comparison - now with state
   const [classComparisonData, setClassComparisonData] = useState([
     { class: "8A", math: 78, science: 74, english: 84 },
     { class: "8B", math: 72, science: 70, english: 80 },
@@ -66,7 +59,6 @@ const Statistics: React.FC = () => {
     { class: "9B", math: 74, science: 68, english: 86 },
   ]);
   
-  // Create copies of data for editing
   const [editableSubjectData, setEditableSubjectData] = useState([...subjectPerformanceData]);
   const [editableGradeData, setEditableGradeData] = useState([...gradeDistributionData]);
   const [editableAttendanceData, setEditableAttendanceData] = useState([...attendanceData]);
@@ -74,7 +66,6 @@ const Statistics: React.FC = () => {
   const [editableClassPerformanceData, setEditableClassPerformanceData] = useState([...classPerformanceData]);
   const [editableSubjectWiseData, setEditableSubjectWiseData] = useState([...subjectWiseData]);
 
-  // Reset editable data when switching to edit mode
   useEffect(() => {
     if (editMode) {
       setEditableSubjectData([...subjectPerformanceData]);
@@ -86,7 +77,6 @@ const Statistics: React.FC = () => {
     }
   }, [editMode]);
   
-  // Handle saving changes
   const handleSaveChanges = () => {
     setSubjectPerformanceData([...editableSubjectData]);
     setGradeDistributionData([...editableGradeData]);
@@ -104,45 +94,39 @@ const Statistics: React.FC = () => {
     });
   };
   
-  // Handle subject data changes
   const handleSubjectDataChange = (index: number, field: 'average' | 'passing', value: number) => {
     const newData = [...editableSubjectData];
-    newData[index][field] = Math.min(100, Math.max(0, value)); // Ensure value is between 0-100
+    newData[index][field] = Math.min(100, Math.max(0, value));
     setEditableSubjectData(newData);
   };
   
-  // Handle class performance data changes
   const handleClassPerformanceChange = (index: number, field: 'average' | 'passing', value: number) => {
     const newData = [...editableClassPerformanceData];
-    newData[index][field] = Math.min(100, Math.max(0, value)); // Ensure value is between 0-100
+    newData[index][field] = Math.min(100, Math.max(0, value));
     setEditableClassPerformanceData(newData);
   };
   
-  // Handle subject-wise data changes
   const handleSubjectWiseChange = (index: number, classKey: string, value: number) => {
     const newData = [...editableSubjectWiseData];
-    newData[index][classKey] = Math.min(100, Math.max(0, value)); // Ensure value is between 0-100
+    newData[index][classKey] = Math.min(100, Math.max(0, value));
     setEditableSubjectWiseData(newData);
   };
   
-  // Handle grade distribution changes
   const handleGradeDataChange = (index: number, value: number) => {
     const newData = [...editableGradeData];
     newData[index].value = Math.max(0, value);
     setEditableGradeData(newData);
   };
   
-  // Handle attendance data changes
   const handleAttendanceDataChange = (index: number, value: number) => {
     const newData = [...editableAttendanceData];
     newData[index].value = Math.max(0, value);
     setEditableAttendanceData(newData);
   };
   
-  // Handle class comparison data changes
   const handleClassDataChange = (index: number, field: 'math' | 'science' | 'english', value: number) => {
     const newData = [...editableClassData];
-    newData[index][field] = Math.min(100, Math.max(0, value)); // Ensure value is between 0-100
+    newData[index][field] = Math.min(100, Math.max(0, value));
     setEditableClassData(newData);
   };
 
