@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Key, LogIn, User } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff, Key, LogIn, User, UserPlus } from "lucide-react";
 import { useTheme } from "../hooks/useTheme";
 import { useToast } from "../hooks/use-toast";
 
@@ -31,68 +31,43 @@ const Login: React.FC = () => {
       ? `${email}@adventistcollege.mu` 
       : email;
     
-    // Simulate login - in a real app this would be an API call
+    // Get users from localStorage or create empty array
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    
+    // Find user with matching credentials
+    const user = users.find((u: any) => 
+      u.email.toLowerCase() === formattedEmail.toLowerCase() && 
+      u.password === password
+    );
+    
     setTimeout(() => {
       setIsLoading(false);
       
-      // Hardcoded superuser for demo
-      if (formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu' && password === 'Admin0000*') {
-        const user = {
-          email: formattedEmail,
-          name: 'Black Houmanan',
-          role: 'Admin',
-          isSuperUser: true
+      if (user) {
+        const userObj = {
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          isSuperUser: user.role === 'Admin'
         };
         
         // Log user activity
-        logUserActivity(user);
+        logUserActivity(userObj);
         
         // Store user in localStorage
-        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('user', JSON.stringify(userObj));
         
         toast({
           title: "Login Successful",
-          description: capitalizeAfterPeriod("welcome back, Black Houmanan!"),
+          description: capitalizeAfterPeriod(`welcome back, ${user.name}!`),
         });
-        navigate('/');
+        navigate('/dashboard');
       } else {
-        // Check if user exists in mock data store
-        const mockUsers = [
-          { email: 'teacher@adventistcollege.mu', password: 'password', name: 'Teacher Demo', role: 'Teacher' },
-          { email: 'admin@adventistcollege.mu', password: 'password', name: 'Admin Demo', role: 'Admin' }
-        ];
-        
-        const user = mockUsers.find(u => 
-          u.email.toLowerCase() === formattedEmail.toLowerCase() && 
-          u.password === password
-        );
-        
-        if (user) {
-          const userObj = {
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            isSuperUser: false
-          };
-          
-          // Log user activity
-          logUserActivity(userObj);
-          
-          // Store user in localStorage
-          localStorage.setItem('user', JSON.stringify(userObj));
-          
-          toast({
-            title: "Login Successful",
-            description: capitalizeAfterPeriod(`welcome back, ${user.name}!`),
-          });
-          navigate('/');
-        } else {
-          toast({
-            title: "Login Failed",
-            description: capitalizeAfterPeriod("invalid email or password."),
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Login Failed",
+          description: capitalizeAfterPeriod("invalid email or password."),
+          variant: "destructive",
+        });
       }
     }, 1000);
   };
@@ -196,11 +171,13 @@ const Login: React.FC = () => {
           </button>
         </form>
         
-        <div className="mt-8 text-center text-sm text-foreground/60">
-          <p>Demo Accounts:</p>
-          <p>Super Admin: blachoumanan@adventistcollege.mu / Admin0000*</p>
-          <p>Teacher: teacher@adventistcollege.mu / password</p>
-          <p>Admin: admin@adventistcollege.mu / password</p>
+        <div className="mt-6 text-center">
+          <p className="text-sm text-foreground/70">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-primary hover:underline">
+              Sign Up
+            </Link>
+          </p>
         </div>
       </div>
     </div>

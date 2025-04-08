@@ -1,8 +1,9 @@
 
-import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import TeacherPanel from "./pages/TeacherPanel";
 import Results from "./pages/Results";
@@ -22,11 +23,31 @@ import UserActivityLog from "./components/UserActivityLog";
 import "./App.css";
 
 function App() {
+  // Create a default admin user if none exists
+  useEffect(() => {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    
+    if (users.length === 0) {
+      // Add a default admin user
+      const defaultAdmin = {
+        name: "System Administrator",
+        email: "admin@adventistcollege.mu",
+        password: "admin123",
+        role: "Admin",
+        createdAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('users', JSON.stringify([defaultAdmin]));
+    }
+  }, []);
+
   return (
     <NotificationProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route
             path="/dashboard"
             element={
