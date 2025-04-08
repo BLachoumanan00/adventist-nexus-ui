@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Key, LogIn, User, UserPlus } from "lucide-react";
@@ -45,13 +44,14 @@ const Login: React.FC = () => {
       
       if (user) {
         // Special case for the specific admin account
-        const isSuperUser = formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu';
+        const isSuperUser = formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu' || 
+                            user.isSuperUser === true;
         
         const userObj = {
           email: user.email,
           name: user.name,
           role: user.role,
-          isSuperUser // Set this directly from the email check
+          isSuperUser // Set superuser status
         };
         
         // Log user activity

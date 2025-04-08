@@ -37,7 +37,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, text, badge }) => {
       }`}
     >
       {icon}
-      <span>{text}</span>
+      <span className="whitespace-nowrap overflow-hidden text-ellipsis">{text}</span>
       {badge !== undefined && badge > 0 && (
         <div className="ml-auto bg-primary text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
           {badge > 99 ? "99+" : badge}
@@ -51,9 +51,9 @@ const Sidebar: React.FC = () => {
   const { unreadCount } = useNotifications();
   
   return (
-    <aside className="w-60 h-full overflow-y-auto glass border-r border-white/10 flex flex-col">
+    <aside className="w-60 h-full overflow-y-auto glass border-r border-white/10 flex flex-col fixed left-0 top-0 bottom-0 z-30">
       <div className="p-4 border-b border-white/10">
-        <h1 className="text-lg font-bold">School Management</h1>
+        <h1 className="text-lg font-bold whitespace-nowrap">School Management</h1>
       </div>
       
       <nav className="flex-1 p-2">
@@ -101,7 +101,7 @@ const Sidebar: React.FC = () => {
           </div>
           <div>
             <div className="text-sm font-medium">Billy Lachoumanan</div>
-            <div className="text-xs text-foreground/60">Administrator</div>
+            <div className="text-xs text-foreground/60">Superuser</div>
           </div>
         </div>
       </div>

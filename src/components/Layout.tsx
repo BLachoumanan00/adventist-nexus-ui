@@ -15,7 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   React.useEffect(() => {
     document.documentElement.style.setProperty(
       "--sidebar-width",
-      isMobile ? "0px" : "16rem"
+      isMobile ? "0px" : "240px"  // Increased from 16rem (256px) to ensure text fits
     );
   }, [isMobile]);
 

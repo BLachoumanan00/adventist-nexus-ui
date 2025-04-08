@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
@@ -27,13 +26,16 @@ function App() {
   useEffect(() => {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     
+    const superUserEmail = "blachoumanan@adventistcollege.mu";
+    
     if (users.length === 0) {
       // Add a default admin user with the specific email
       const defaultAdmin = {
         name: "Billy Lachoumanan",
-        email: "blachoumanan@adventistcollege.mu",
+        email: superUserEmail,
         password: "Admin0000*",
         role: "Admin",
+        isSuperUser: true, // Explicitly marking as superuser
         createdAt: new Date().toISOString()
       };
       
@@ -41,14 +43,15 @@ function App() {
     } else {
       // Check if the superuser exists, if not ensure it does
       const superUserExists = users.some((user: any) => 
-        user.email.toLowerCase() === "blachoumanan@adventistcollege.mu");
+        user.email.toLowerCase() === superUserEmail.toLowerCase());
       
       if (!superUserExists) {
         const updatedUsers = [...users, {
           name: "Billy Lachoumanan",
-          email: "blachoumanan@adventistcollege.mu",
+          email: superUserEmail,
           password: "Admin0000*",
           role: "Admin",
+          isSuperUser: true, // Explicitly marking as superuser
           createdAt: new Date().toISOString()
         }];
         
@@ -56,11 +59,12 @@ function App() {
       } else {
         // Make sure the existing superuser has the correct properties
         const updatedUsers = users.map((user: any) => {
-          if (user.email.toLowerCase() === "blachoumanan@adventistcollege.mu") {
+          if (user.email.toLowerCase() === superUserEmail.toLowerCase()) {
             return {
               ...user,
               password: "Admin0000*", // Ensure password is correct
-              role: "Admin" // Ensure role is correct
+              role: "Admin", // Ensure role is correct
+              isSuperUser: true // Explicitly ensure superuser status
             };
           }
           return user;
