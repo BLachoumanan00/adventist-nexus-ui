@@ -615,7 +615,6 @@ const Statistics: React.FC = () => {
                       <Line 
                         key={classKey}
                         type="monotone"
-                        data={subjectWiseData}
                         dataKey={classKey}
                         name={`Class ${classKey}`}
                         stroke={["#9b87f5", "#60a5fa", "#4ade80", "#facc15", "#f87171", "#ef4444"][index % 6]}
