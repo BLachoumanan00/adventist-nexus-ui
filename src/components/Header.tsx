@@ -64,7 +64,7 @@ const Header: React.FC<HeaderProps> = ({ notificationCount = 0 }) => {
                 <div className="text-right mr-3">
                   <p className="text-sm font-medium">{user.name}</p>
                   <p className="text-xs text-foreground/60">
-                    {user.email.toLowerCase() === 'blachoumanan@adventistcollege.mu' ? 'Superuser' : user.role}
+                    {user.isSuperUser ? 'Superuser' : user.role}
                   </p>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">

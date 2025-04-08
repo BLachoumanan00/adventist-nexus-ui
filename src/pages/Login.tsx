@@ -51,7 +51,7 @@ const Login: React.FC = () => {
           email: user.email,
           name: user.name,
           role: user.role,
-          isSuperUser: isSuperUser || user.role === 'Admin'
+          isSuperUser // Set this directly from the email check
         };
         
         // Log user activity

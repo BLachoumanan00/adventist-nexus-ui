@@ -53,6 +53,20 @@ function App() {
         }];
         
         localStorage.setItem('users', JSON.stringify(updatedUsers));
+      } else {
+        // Make sure the existing superuser has the correct properties
+        const updatedUsers = users.map((user: any) => {
+          if (user.email.toLowerCase() === "blachoumanan@adventistcollege.mu") {
+            return {
+              ...user,
+              password: "Admin0000*", // Ensure password is correct
+              role: "Admin" // Ensure role is correct
+            };
+          }
+          return user;
+        });
+        
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
       }
     }
   }, []);
