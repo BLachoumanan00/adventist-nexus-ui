@@ -598,9 +598,9 @@ const Statistics: React.FC = () => {
             ) : (
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <LineChart data={subjectWiseData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="subject" categories={subjectWiseData.map(item => item.subject)} stroke="rgba(255,255,255,0.5)" />
+                    <XAxis dataKey="subject" stroke="rgba(255,255,255,0.5)" />
                     <YAxis stroke="rgba(255,255,255,0.5)" />
                     <Tooltip 
                       contentStyle={{ 
