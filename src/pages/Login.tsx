@@ -1,8 +1,10 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Key, LogIn, User, UserPlus } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { useActivityLogger } from "../hooks/useActivityLogger";
+import { useTheme } from "../hooks/useTheme";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +13,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
+  const { theme } = useTheme(); // Import the theme from the useTheme hook
   const navigate = useNavigate();
 
   React.useEffect(() => {
