@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import { BookOpen, Check, ChevronDown, Edit, Filter, Save, Settings, CheckCheck, MessageSquare, Upload, Download } from "lucide-react";
 import { useToast } from '../hooks/use-toast';
@@ -13,16 +14,14 @@ interface Student {
   hasSpellingErrors?: boolean;
 }
 
-// Grade conversion chart
-const gradeConversion = [
-  { min: 90, max: 100, grade: 'A', remarks: ['Excellent performance', 'Outstanding work', 'Exceptional understanding'] },
-  { min: 80, max: 89, grade: 'B+', remarks: ['Very good progress', 'Strong understanding', 'Above average work'] },
-  { min: 70, max: 79, grade: 'B', remarks: ['Good performance', 'Consistent work', 'Shows potential'] },
-  { min: 60, max: 69, grade: 'C+', remarks: ['Satisfactory work', 'Fair understanding', 'Average performance'] },
-  { min: 50, max: 59, grade: 'C', remarks: ['Basic understanding', 'Needs more practice', 'Passing, but needs improvement'] },
-  { min: 40, max: 49, grade: 'D', remarks: ['Needs improvement', 'Minimum passing grade', 'Requires additional support'] },
-  { min: 0, max: 39, grade: 'F', remarks: ['Below passing standards', 'Significant improvement needed', 'Requires remedial work'] }
-];
+// Grade conversion chart with editable passing criteria
+interface GradeRange {
+  min: number;
+  max: number;
+  grade: string;
+  passingCriteria: number;
+  remarks: string[];
+}
 
 const TeacherPanel: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState("Grade 8");
@@ -35,11 +34,26 @@ const TeacherPanel: React.FC = () => {
   const [customPassingCriteria, setCustomPassingCriteria] = useState(35);
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [editingGeneralRemarks, setEditingGeneralRemarks] = useState<number | null>(null);
+  const [editingRemarks, setEditingRemarks] = useState<number | null>(null);
   const remarksRef = useRef<HTMLInputElement | null>(null);
   const generalRemarksRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
+  
+  // Updated grade conversion with passing criteria for each grade
+  const [gradeConversion, setGradeConversion] = useState<GradeRange[]>([
+    { min: 90, max: 100, grade: 'A', passingCriteria: 90, remarks: ['Excellent performance', 'Outstanding work', 'Exceptional understanding'] },
+    { min: 80, max: 89, grade: 'B+', passingCriteria: 80, remarks: ['Very good progress', 'Strong understanding', 'Above average work'] },
+    { min: 70, max: 79, grade: 'B', passingCriteria: 70, remarks: ['Good performance', 'Consistent work', 'Shows potential'] },
+    { min: 60, max: 69, grade: 'C+', passingCriteria: 60, remarks: ['Satisfactory work', 'Fair understanding', 'Average performance'] },
+    { min: 50, max: 59, grade: 'C', passingCriteria: 50, remarks: ['Basic understanding', 'Needs more practice', 'Passing, but needs improvement'] },
+    { min: 40, max: 49, grade: 'D', passingCriteria: 40, remarks: ['Needs improvement', 'Minimum passing grade', 'Requires additional support'] },
+    { min: 0, max: 39, grade: 'F', passingCriteria: 0, remarks: ['Below passing standards', 'Significant improvement needed', 'Requires remedial work'] }
+  ]);
+  
+  // State for editing passing criteria
+  const [editingGradeCriteria, setEditingGradeCriteria] = useState<number | null>(null);
   
   const [students, setStudents] = useState<Student[]>([
     { id: 1, name: "John Smith", marks: 78, grade: "B+", remarks: "Good performance", generalRemarks: "Cooperative student. Shows good attitude in class." },
@@ -54,10 +68,10 @@ const TeacherPanel: React.FC = () => {
 
   // Focus on the remarks field when editing
   useEffect(() => {
-    if (editingStudent !== null && remarksRef.current) {
+    if (editingRemarks !== null && remarksRef.current) {
       remarksRef.current.focus();
     }
-  }, [editingStudent]);
+  }, [editingRemarks]);
 
   // Focus on the general remarks field when editing
   useEffect(() => {
@@ -182,12 +196,22 @@ const TeacherPanel: React.FC = () => {
 
   const handleSave = (id: number) => {
     setEditingStudent(null);
+    setEditingRemarks(null);
     setEditingGeneralRemarks(null);
     toast({
       title: "Marks Saved",
       description: `Updated marks for ${students.find(s => s.id === id)?.name}`
     });
     logActivity("Updated Marks", `Changed marks for student ID ${id}`);
+  };
+
+  const handleSaveRemarks = (id: number) => {
+    setEditingRemarks(null);
+    toast({
+      title: "Remarks Saved",
+      description: `Updated remarks for ${students.find(s => s.id === id)?.name}`
+    });
+    logActivity("Updated Remarks", `Changed remarks for student ID ${id}`);
   };
 
   const handleSaveGeneralRemarks = (id: number) => {
@@ -211,10 +235,37 @@ const TeacherPanel: React.FC = () => {
 
   const getMarkStyle = (marks: number | null): string => {
     if (marks === null) return "";
-    if (marks >= 80) return "text-green-600 dark:text-green-400";
-    if (marks >= 60) return "text-blue-600 dark:text-blue-400";
-    if (marks >= customPassingCriteria) return "text-orange-600 dark:text-orange-400";
+    
+    // Find the appropriate grade
+    const gradeInfo = gradeConversion.find(g => marks >= g.min && marks <= g.max);
+    if (!gradeInfo) return "";
+    
+    // Check if the mark is above the passing criteria for this grade
+    if (marks >= gradeInfo.passingCriteria) {
+      if (marks >= 80) return "text-green-600 dark:text-green-400";
+      if (marks >= 60) return "text-blue-600 dark:text-blue-400";
+      return "text-orange-600 dark:text-orange-400";
+    }
+    
     return "text-red-600 dark:text-red-400";
+  };
+
+  // Handle editing passing criteria for a specific grade
+  const handlePassingCriteriaChange = (index: number, value: string) => {
+    const newGradeConversion = [...gradeConversion];
+    const numValue = Math.min(newGradeConversion[index].max, Math.max(newGradeConversion[index].min, parseInt(value) || 0));
+    
+    newGradeConversion[index].passingCriteria = numValue;
+    setGradeConversion(newGradeConversion);
+  };
+
+  const handleSavePassingCriteria = (index: number) => {
+    setEditingGradeCriteria(null);
+    toast({
+      title: "Passing Criteria Updated",
+      description: `Updated passing criteria for grade ${gradeConversion[index].grade}`
+    });
+    logActivity("Updated Passing Criteria", `Changed passing criteria for grade ${gradeConversion[index].grade}`);
   };
 
   const handleBulkSave = () => {
@@ -374,32 +425,18 @@ const TeacherPanel: React.FC = () => {
                   />
                   <span>Check Grammar and Spelling</span>
                 </div>
-                
-                <div className="mb-3">
-                  <label className="block text-sm text-foreground/70 mb-1">Passing Criteria</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="50"
-                      value={customPassingCriteria}
-                      onChange={(e) => setCustomPassingCriteria(parseInt(e.target.value))}
-                      className="w-full"
-                    />
-                    <span className="text-sm font-medium">{customPassingCriteria}%</span>
-                  </div>
-                </div>
               </div>
               
               <div>
-                <h4 className="text-sm font-medium mb-2">Grade Conversion Sheet</h4>
-                <div className="bg-white/5 dark:bg-black/20 rounded-lg p-3 h-40 overflow-y-auto">
+                <h4 className="text-sm font-medium mb-2">Grade Conversion and Passing Criteria</h4>
+                <div className="bg-white/5 dark:bg-black/20 rounded-lg p-3 h-auto max-h-60 overflow-y-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-white/10">
                         <th className="px-2 py-1 text-left">Range</th>
                         <th className="px-2 py-1 text-left">Grade</th>
-                        <th className="px-2 py-1 text-left">Status</th>
+                        <th className="px-2 py-1 text-left">Passing Criteria</th>
+                        <th className="px-2 py-1 text-left">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -408,7 +445,35 @@ const TeacherPanel: React.FC = () => {
                           <td className="px-2 py-1">{item.min}-{item.max}%</td>
                           <td className="px-2 py-1">{item.grade}</td>
                           <td className="px-2 py-1">
-                            {item.min >= customPassingCriteria ? "Pass" : "Fail"}
+                            {editingGradeCriteria === index ? (
+                              <input
+                                type="number"
+                                min={item.min}
+                                max={item.max}
+                                value={item.passingCriteria}
+                                onChange={(e) => handlePassingCriteriaChange(index, e.target.value)}
+                                className="glass rounded w-16 p-1 border-none"
+                              />
+                            ) : (
+                              <>{item.passingCriteria}%</>
+                            )}
+                          </td>
+                          <td className="px-2 py-1">
+                            {editingGradeCriteria === index ? (
+                              <button
+                                onClick={() => handleSavePassingCriteria(index)}
+                                className="p-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                              >
+                                <Save size={14} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setEditingGradeCriteria(index)}
+                                className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                              >
+                                <Edit size={14} className="text-foreground/70" />
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -600,7 +665,7 @@ const TeacherPanel: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 relative">
-                      {editingStudent === student.id ? (
+                      {editingRemarks === student.id ? (
                         <input
                           ref={remarksRef}
                           type="text"
@@ -611,11 +676,14 @@ const TeacherPanel: React.FC = () => {
                           }`}
                         />
                       ) : (
-                        <span className="text-foreground/80 text-sm">
+                        <div 
+                          className="text-foreground/80 text-sm cursor-pointer hover:bg-white/5 p-1 rounded"
+                          onClick={() => setEditingRemarks(student.id)}
+                        >
                           {student.remarks || "No remarks"}
-                        </span>
+                        </div>
                       )}
-                      {student.hasSpellingErrors && editingStudent === student.id && (
+                      {student.hasSpellingErrors && editingRemarks === student.id && (
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500" title="Spelling or grammar issues detected">
                           <MessageSquare size={16} />
                         </div>
@@ -633,9 +701,12 @@ const TeacherPanel: React.FC = () => {
                           rows={2}
                         />
                       ) : (
-                        <span className="text-foreground/80 text-sm">
+                        <div 
+                          className="text-foreground/80 text-sm cursor-pointer hover:bg-white/5 p-1 rounded"
+                          onClick={() => setEditingGeneralRemarks(student.id)}
+                        >
                           {student.generalRemarks || "No general remarks"}
-                        </span>
+                        </div>
                       )}
                     </td>
                     <td className="py-3">
@@ -643,6 +714,15 @@ const TeacherPanel: React.FC = () => {
                         <button
                           onClick={() => handleSave(student.id)}
                           className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          title="Save marks"
+                        >
+                          <Save size={16} />
+                        </button>
+                      ) : editingRemarks === student.id ? (
+                        <button
+                          onClick={() => handleSaveRemarks(student.id)}
+                          className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          title="Save remarks"
                         >
                           <Save size={16} />
                         </button>
@@ -650,6 +730,7 @@ const TeacherPanel: React.FC = () => {
                         <button
                           onClick={() => handleSaveGeneralRemarks(student.id)}
                           className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          title="Save general remarks"
                         >
                           <Save size={16} />
                         </button>
@@ -658,16 +739,9 @@ const TeacherPanel: React.FC = () => {
                           <button
                             onClick={() => setEditingStudent(student.id)}
                             className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                            title="Edit marks and subject remarks"
+                            title="Edit marks"
                           >
                             <Edit size={16} className="text-foreground/70" />
-                          </button>
-                          <button
-                            onClick={() => setEditingGeneralRemarks(student.id)}
-                            className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                            title="Edit general remarks"
-                          >
-                            <MessageSquare size={16} className="text-foreground/70" />
                           </button>
                         </div>
                       )}
