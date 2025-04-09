@@ -26,17 +26,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     // Apply theme to document
+    const root = document.documentElement;
     if (theme === "dark") {
-      document.documentElement.classList.add("dark");
+      root.classList.add("dark");
     } else {
-      document.documentElement.classList.remove("dark");
+      root.classList.remove("dark");
     }
     
     // Save theme to localStorage
     localStorage.setItem("theme", theme);
     
     // Set data-theme attribute for accessibility
-    document.documentElement.setAttribute("data-theme", theme);
+    root.setAttribute("data-theme", theme);
+    
+    console.log("Theme changed to:", theme); // Add debug log
   }, [theme]);
 
   const toggleTheme = () => {
