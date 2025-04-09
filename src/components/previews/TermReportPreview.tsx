@@ -1,0 +1,192 @@
+
+import React from "react";
+import { X } from "lucide-react";
+
+interface Subject {
+  subject: string;
+  marks: number;
+  totalMarks: number;
+  grade: string;
+  remarks: string;
+}
+
+interface TermReportPreviewProps {
+  student: {
+    id: string;
+    name: string;
+    grade: string;
+    section: string;
+    totalMarks: number;
+    percentage: number;
+    rank: number;
+    overallGrade: string;
+    generalRemarks: string;
+  };
+  subjects: Subject[];
+  schoolLogo?: string | null;
+  signature?: string | null;
+  schoolName?: string;
+  schoolAddress?: string;
+  examName?: string;
+  attendance?: { present: number; total: number };
+  onClose: () => void;
+}
+
+const TermReportPreview: React.FC<TermReportPreviewProps> = ({
+  student,
+  subjects,
+  schoolLogo,
+  signature,
+  schoolName = "Adventist College",
+  schoolAddress = "Royal Road, Rose Hill, Mauritius",
+  examName = "Term 1 Examination",
+  attendance = { present: 85, total: 90 },
+  onClose
+}) => {
+  const getGradeColor = (grade: string) => {
+    if (grade.includes('A')) return "text-green-600 dark:text-green-400";
+    if (grade.includes('B')) return "text-blue-600 dark:text-blue-400";
+    if (grade.includes('C')) return "text-yellow-600 dark:text-yellow-400";
+    if (grade.includes('D')) return "text-orange-600 dark:text-orange-400";
+    return "text-red-600 dark:text-red-400";
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-10">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 my-auto relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 rounded-full bg-gray-200 dark:bg-gray-700"
+        >
+          <X size={20} />
+        </button>
+        
+        {/* Print button */}
+        <button 
+          onClick={() => window.print()} 
+          className="absolute top-4 right-16 px-4 py-1 bg-primary text-white rounded-md"
+        >
+          Print
+        </button>
+        
+        <div className="p-8 print:p-0" id="printable-term-report">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6 border-b pb-4">
+            {schoolLogo && (
+              <div className="w-20 h-20">
+                <img src={schoolLogo} alt="School Logo" className="w-full h-full object-contain" />
+              </div>
+            )}
+            <div className="text-center flex-1">
+              <h1 className="text-2xl font-bold">{schoolName}</h1>
+              <p className="text-gray-600 dark:text-gray-400">{schoolAddress}</p>
+              <h2 className="text-xl mt-2 font-semibold">{examName}</h2>
+              <h3 className="text-lg font-medium">Term Report</h3>
+            </div>
+            <div className="w-20 h-20">
+              {/* Empty div for alignment */}
+            </div>
+          </div>
+          
+          {/* Student Details */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <p><strong>Student Name:</strong> {student.name}</p>
+              <p><strong>Student ID:</strong> {student.id}</p>
+            </div>
+            <div>
+              <p><strong>Class:</strong> Grade {student.grade}-{student.section}</p>
+              <p><strong>Attendance:</strong> {attendance.present}/{attendance.total} days ({Math.round((attendance.present/attendance.total)*100)}%)</p>
+            </div>
+          </div>
+          
+          {/* Academic Performance */}
+          <h4 className="font-semibold mb-2">Academic Performance</h4>
+          <table className="w-full mb-6 border-collapse">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="border border-gray-300 dark:border-gray-600 p-2 text-left">Subject</th>
+                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center">Marks</th>
+                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center">Total</th>
+                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center">Grade</th>
+                <th className="border border-gray-300 dark:border-gray-600 p-2 text-left">Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subjects.map((subject, index) => (
+                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="border border-gray-300 dark:border-gray-600 p-2">{subject.subject}</td>
+                  <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">{subject.marks}</td>
+                  <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">{subject.totalMarks}</td>
+                  <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">
+                    <span className={`${getGradeColor(subject.grade)} font-medium`}>
+                      {subject.grade}
+                    </span>
+                  </td>
+                  <td className="border border-gray-300 dark:border-gray-600 p-2">{subject.remarks}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-gray-100 dark:bg-gray-700 font-medium">
+              <tr>
+                <td className="border border-gray-300 dark:border-gray-600 p-2">Total</td>
+                <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">{student.totalMarks}</td>
+                <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">
+                  {subjects.reduce((sum, subject) => sum + subject.totalMarks, 0)}
+                </td>
+                <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">
+                  <span className={`${getGradeColor(student.overallGrade)} font-medium`}>
+                    {student.overallGrade}
+                  </span>
+                </td>
+                <td className="border border-gray-300 dark:border-gray-600 p-2">
+                  {student.percentage.toFixed(1)}% (Rank: {student.rank})
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          {/* General Remarks */}
+          <div className="mb-8">
+            <h4 className="font-semibold mb-2">General Remarks:</h4>
+            <p className="p-2 border border-gray-300 dark:border-gray-600 rounded">{student.generalRemarks}</p>
+          </div>
+          
+          {/* Additional Information */}
+          <div className="mb-8">
+            <h4 className="font-semibold mb-2">Areas for Improvement:</h4>
+            <ul className="list-disc pl-5">
+              {subjects
+                .filter(subject => subject.grade.includes('C') || subject.grade.includes('D') || subject.grade.includes('F'))
+                .map((subject, index) => (
+                  <li key={index}>Focus on {subject.subject} - {subject.remarks}</li>
+                ))
+              }
+              {!subjects.some(subject => subject.grade.includes('C') || subject.grade.includes('D') || subject.grade.includes('F')) && (
+                <li>Continue maintaining excellent performance in all subjects</li>
+              )}
+            </ul>
+          </div>
+          
+          {/* Signature */}
+          <div className="flex justify-between items-end mt-12">
+            <div>
+              <p className="mb-8">Date: {new Date().toLocaleDateString()}</p>
+              <p>Class Teacher</p>
+            </div>
+            <div className="text-center">
+              {signature && (
+                <div className="mb-2 h-20">
+                  <img src={signature} alt="Principal Signature" className="h-full object-contain mx-auto" />
+                </div>
+              )}
+              <p>Principal</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TermReportPreview;

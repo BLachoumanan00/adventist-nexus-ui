@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { BarChart as BarChartIcon, BookOpen, ChevronDown, Edit, PieChart as PieChartIcon, Save, Users, GraduationCap } from "lucide-react";
+
+import React, { useState, useEffect, useRef } from "react";
+import { BarChart as BarChartIcon, ChevronDown, Edit, PieChart as PieChartIcon, Save, Download, FileText, GraduationCap } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { useActivityLogger } from "../hooks/useActivityLogger";
 import { useToast } from "../hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
+import { useTheme } from "../hooks/useTheme";
 
 const Statistics: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState("All Grades");
@@ -11,6 +14,11 @@ const Statistics: React.FC = () => {
   const [viewMode, setViewMode] = useState<'overall' | 'class' | 'subject'>('overall');
   const { logActivity } = useActivityLogger();
   const { toast } = useToast();
+  const { theme } = useTheme();
+  const chartRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
   
   const [subjectPerformanceData, setSubjectPerformanceData] = useState([
     { subject: "Math", average: 76, passing: 88 },
@@ -77,6 +85,54 @@ const Statistics: React.FC = () => {
     }
   }, [editMode]);
   
+  // Load data from localStorage
+  useEffect(() => {
+    const savedStatisticsData = localStorage.getItem('statisticsData');
+    if (savedStatisticsData) {
+      try {
+        const parsedData = JSON.parse(savedStatisticsData);
+        if (parsedData.subjectPerformanceData) setSubjectPerformanceData(parsedData.subjectPerformanceData);
+        if (parsedData.classPerformanceData) setClassPerformanceData(parsedData.classPerformanceData);
+        if (parsedData.subjectWiseData) setSubjectWiseData(parsedData.subjectWiseData);
+        if (parsedData.gradeDistributionData) setGradeDistributionData(parsedData.gradeDistributionData);
+        if (parsedData.attendanceData) setAttendanceData(parsedData.attendanceData);
+        if (parsedData.classComparisonData) setClassComparisonData(parsedData.classComparisonData);
+      } catch (error) {
+        console.error('Error loading saved statistics data:', error);
+      }
+    }
+  }, []);
+  
+  // Autosave functionality
+  useEffect(() => {
+    if (!autoSaveEnabled || !hasChanges) return;
+    
+    const timer = setTimeout(() => {
+      saveDataToLocalStorage();
+      setLastSaved(new Date());
+      setHasChanges(false);
+      
+      toast({
+        title: "Statistics Autosaved",
+        description: `All statistics data has been automatically saved at ${new Date().toLocaleTimeString()}`
+      });
+    }, 60000); // Autosave after 1 minute of inactivity
+    
+    return () => clearTimeout(timer);
+  }, [
+    subjectPerformanceData, classPerformanceData, subjectWiseData, 
+    gradeDistributionData, attendanceData, classComparisonData, 
+    hasChanges, autoSaveEnabled
+  ]);
+  
+  // Mark changes when data is modified
+  useEffect(() => {
+    setHasChanges(true);
+  }, [
+    subjectPerformanceData, classPerformanceData, subjectWiseData, 
+    gradeDistributionData, attendanceData, classComparisonData
+  ]);
+  
   const handleSaveChanges = () => {
     setSubjectPerformanceData([...editableSubjectData]);
     setGradeDistributionData([...editableGradeData]);
@@ -85,6 +141,7 @@ const Statistics: React.FC = () => {
     setClassPerformanceData([...editableClassPerformanceData]);
     setSubjectWiseData([...editableSubjectWiseData]);
     setEditMode(false);
+    setHasChanges(true);
     
     logActivity("Updated Statistics Data", `Updated ${viewMode} data for ${selectedGrade} - ${selectedTerm}`);
     
@@ -92,6 +149,219 @@ const Statistics: React.FC = () => {
       title: "Statistics Saved",
       description: "Your changes to the statistics data have been saved.",
     });
+  };
+  
+  // Save data to localStorage
+  const saveDataToLocalStorage = () => {
+    const dataToSave = {
+      subjectPerformanceData,
+      classPerformanceData,
+      subjectWiseData,
+      gradeDistributionData,
+      attendanceData,
+      classComparisonData,
+      savedAt: new Date().toISOString()
+    };
+    
+    localStorage.setItem('statisticsData', JSON.stringify(dataToSave));
+    setLastSaved(new Date());
+    setHasChanges(false);
+    
+    toast({
+      title: "Statistics Saved",
+      description: "All statistics data has been saved."
+    });
+  };
+  
+  // Backup data
+  const backupData = () => {
+    const dataToBackup = {
+      subjectPerformanceData,
+      classPerformanceData,
+      subjectWiseData,
+      gradeDistributionData,
+      attendanceData,
+      classComparisonData,
+      savedAt: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(dataToBackup);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `statistics-backup-${new Date().toISOString().slice(0,10)}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    toast({
+      title: "Backup Created",
+      description: "All statistics data has been backed up to a local file."
+    });
+    logActivity("Created Statistics Backup", `Backup file: ${exportFileDefaultName}`);
+  };
+  
+  // Restore from backup
+  const restoreFromBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsedData = JSON.parse(event.target?.result as string);
+        
+        // Validate and update data
+        if (parsedData.subjectPerformanceData) setSubjectPerformanceData(parsedData.subjectPerformanceData);
+        if (parsedData.classPerformanceData) setClassPerformanceData(parsedData.classPerformanceData);
+        if (parsedData.subjectWiseData) setSubjectWiseData(parsedData.subjectWiseData);
+        if (parsedData.gradeDistributionData) setGradeDistributionData(parsedData.gradeDistributionData);
+        if (parsedData.attendanceData) setAttendanceData(parsedData.attendanceData);
+        if (parsedData.classComparisonData) setClassComparisonData(parsedData.classComparisonData);
+        
+        toast({
+          title: "Backup Restored",
+          description: `Statistics data restored from backup created on ${new Date(parsedData.savedAt).toLocaleString()}`
+        });
+        logActivity("Restored Statistics From Backup", `Backup date: ${new Date(parsedData.savedAt).toLocaleString()}`);
+      } catch (error) {
+        console.error('Error restoring from backup:', error);
+        toast({
+          title: "Restore Failed",
+          description: "The backup file format is invalid or corrupted.",
+          variant: "destructive"
+        });
+      }
+    };
+    reader.readAsText(file);
+  };
+  
+  // Convert SVG chart to image and download
+  const downloadChart = (chartId: string, chartName: string) => {
+    const chartElement = chartRefs.current[chartId];
+    if (!chartElement) return;
+    
+    const svgElement = chartElement.querySelector('svg');
+    if (!svgElement) return;
+    
+    // Create a clone of the SVG to modify
+    const svgClone = svgElement.cloneNode(true) as SVGElement;
+    
+    // Set background to white for better visibility
+    svgClone.style.backgroundColor = theme === 'dark' ? '#1f2937' : '#ffffff';
+    
+    // Convert SVG to string
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    
+    // Create canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = function() {
+      // Set canvas dimensions
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      // Draw image to canvas
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        
+        // Get image data and download
+        canvas.toBlob(function(blob) {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${chartName}-${selectedGrade}-${selectedTerm}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+        });
+      }
+    };
+    
+    img.src = svgUrl;
+    
+    toast({
+      title: "Chart Downloaded",
+      description: `${chartName} chart has been downloaded as an image.`
+    });
+    logActivity("Downloaded Chart", `Downloaded ${chartName} chart for ${selectedGrade}, ${selectedTerm}`);
+  };
+  
+  // Export statistics data as CSV
+  const exportAsCSV = (data: any[], filename: string) => {
+    if (!data || !data.length) return;
+    
+    // Get headers from first object
+    const headers = Object.keys(data[0]);
+    
+    // Create CSV content
+    const csvRows = [
+      headers.join(','), // Header row
+      ...data.map(row => 
+        headers.map(header => {
+          // Handle commas in data by wrapping in quotes
+          const cell = row[header]?.toString() || '';
+          return cell.includes(',') ? `"${cell}"` : cell;
+        }).join(',')
+      )
+    ];
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}-${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Data Exported",
+      description: `${filename} has been exported as a CSV file.`
+    });
+    logActivity("Exported Data", `Exported ${filename} as CSV`);
+  };
+  
+  // Export all statistics data to Excel-friendly format
+  const exportAllData = () => {
+    // Create workbook-like structure with multiple sheets
+    const dataPackage = {
+      subjectPerformance: subjectPerformanceData,
+      classPerformance: classPerformanceData,
+      subjectWise: subjectWiseData,
+      gradeDistribution: gradeDistributionData,
+      attendance: attendanceData,
+      classComparison: classComparisonData
+    };
+    
+    // Convert to JSON
+    const jsonString = JSON.stringify(dataPackage, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `all-statistics-data-${selectedGrade}-${selectedTerm}-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "All Data Exported",
+      description: "Complete statistics dataset exported as JSON file."
+    });
+    logActivity("Exported All Statistics", `Exported complete statistics for ${selectedGrade}, ${selectedTerm}`);
   };
   
   const handleSubjectDataChange = (index: number, field: 'average' | 'passing', value: number) => {
@@ -139,77 +409,136 @@ const Statistics: React.FC = () => {
             <h2 className="text-xl font-semibold">Performance Statistics</h2>
           </div>
           
-          <div className="flex gap-3">
-            <div className="flex items-center gap-3 bg-white/10 rounded-lg p-1">
-              <button 
-                className={`px-3 py-1.5 rounded-lg text-sm ${viewMode === 'overall' ? 'bg-white/20' : ''}`}
-                onClick={() => setViewMode('overall')}
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedGrade}
+                onChange={(e) => setSelectedGrade(e.target.value)}
+                className="glass rounded-lg border-none px-4 py-1.5 text-sm"
+                disabled={editMode}
               >
-                Overall
-              </button>
-              <button 
-                className={`px-3 py-1.5 rounded-lg text-sm ${viewMode === 'class' ? 'bg-white/20' : ''}`}
-                onClick={() => setViewMode('class')}
+                <option>All Grades</option>
+                <option>Grade 8</option>
+                <option>Grade 9</option>
+                <option>Grade 10</option>
+                <option>Grade 11</option>
+                <option>Grade 12</option>
+              </select>
+              
+              <select
+                value={selectedTerm}
+                onChange={(e) => setSelectedTerm(e.target.value)}
+                className="glass rounded-lg border-none px-4 py-1.5 text-sm"
+                disabled={editMode}
               >
-                Class-wise
-              </button>
-              <button 
-                className={`px-3 py-1.5 rounded-lg text-sm ${viewMode === 'subject' ? 'bg-white/20' : ''}`}
-                onClick={() => setViewMode('subject')}
-              >
-                Subject-wise
-              </button>
+                <option>Term 1</option>
+                <option>Term 2</option>
+                <option>Term 3</option>
+              </select>
             </div>
-          
-            <select
-              value={selectedGrade}
-              onChange={(e) => setSelectedGrade(e.target.value)}
-              className="glass rounded-lg border-none px-4 py-1.5 text-sm"
-              disabled={editMode}
-            >
-              <option>All Grades</option>
-              <option>Grade 8</option>
-              <option>Grade 9</option>
-              <option>Grade 10</option>
-              <option>Grade 11</option>
-              <option>Grade 12</option>
-            </select>
             
-            <select
-              value={selectedTerm}
-              onChange={(e) => setSelectedTerm(e.target.value)}
-              className="glass rounded-lg border-none px-4 py-1.5 text-sm"
-              disabled={editMode}
-            >
-              <option>Term 1</option>
-              <option>Term 2</option>
-              <option>Term 3</option>
-            </select>
-            
-            <button 
-              onClick={() => editMode ? handleSaveChanges() : setEditMode(true)}
-              className="btn-primary flex items-center gap-1 text-sm"
-            >
-              {editMode ? (
-                <>
-                  <Save size={14} />
-                  <span>Save</span>
-                </>
-              ) : (
-                <>
-                  <Edit size={14} />
-                  <span>Edit</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Edit Button */}
+              <button 
+                onClick={() => editMode ? handleSaveChanges() : setEditMode(true)}
+                className="btn-primary flex items-center gap-1 text-sm"
+              >
+                {editMode ? (
+                  <>
+                    <Save size={14} />
+                    <span>Save</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit size={14} />
+                    <span>Edit</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Save Button */}
+              <button 
+                onClick={saveDataToLocalStorage}
+                className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
+                disabled={editMode}
+              >
+                <Save size={14} />
+                <span>Save</span>
+              </button>
+              
+              {/* Export Button */}
+              <button 
+                onClick={exportAllData}
+                className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
+                disabled={editMode}
+              >
+                <FileText size={14} />
+                <span>Export All</span>
+              </button>
+              
+              {/* Backup Button */}
+              <button 
+                onClick={backupData}
+                className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
+                disabled={editMode}
+              >
+                <Download size={14} />
+                <span>Backup</span>
+              </button>
+              
+              {/* Restore Button */}
+              <label className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm cursor-pointer">
+                <Upload size={14} />
+                <span>Restore</span>
+                <input
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  disabled={editMode}
+                  onChange={restoreFromBackup}
+                />
+              </label>
+              
+              {/* Auto Save Toggle */}
+              <div className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="stats-autosave"
+                  checked={autoSaveEnabled}
+                  onChange={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                  className="rounded"
+                />
+                <label htmlFor="stats-autosave" className="text-sm">Autosave</label>
+              </div>
+            </div>
           </div>
         </div>
         
-        {viewMode === 'overall' && (
-          <>
+        {/* View Mode Tabs */}
+        <Tabs defaultValue="overall" className="mb-6" onValueChange={(value) => setViewMode(value as any)}>
+          <TabsList className="grid w-full md:w-auto grid-cols-3">
+            <TabsTrigger value="overall">Overall</TabsTrigger>
+            <TabsTrigger value="class">Class-wise</TabsTrigger>
+            <TabsTrigger value="subject">Subject-wise</TabsTrigger>
+          </TabsList>
+          
+          {/* Overall Statistics Tab */}
+          <TabsContent value="overall">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Subject Performance Chart */}
               <div className="glass rounded-xl p-4">
-                <h3 className="font-medium mb-3">Subject Performance</h3>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">Subject Performance</h3>
+                  <button
+                    onClick={() => downloadChart('subjectPerformance', 'Subject-Performance')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </button>
+                </div>
+                
                 {editMode ? (
                   <div className="mb-4 overflow-x-auto">
                     <table className="w-full">
@@ -250,7 +579,7 @@ const Statistics: React.FC = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="h-80">
+                  <div className="h-80" ref={el => chartRefs.current['subjectPerformance'] = el}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={subjectPerformanceData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -258,7 +587,8 @@ const Statistics: React.FC = () => {
                         <YAxis stroke="rgba(255,255,255,0.5)" />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                            color: theme === 'dark' ? '#fff' : '#000',
                             borderRadius: '8px', 
                             border: 'none',
                             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
@@ -271,10 +601,33 @@ const Statistics: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 )}
+                
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => exportAsCSV(subjectPerformanceData, 'subject-performance')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <FileText size={14} />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
               </div>
               
+              {/* Grade Distribution Chart */}
               <div className="glass rounded-xl p-4">
-                <h3 className="font-medium mb-3">Grade Distribution</h3>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">Grade Distribution</h3>
+                  <button
+                    onClick={() => downloadChart('gradeDistribution', 'Grade-Distribution')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </button>
+                </div>
+                
                 {editMode ? (
                   <div className="mb-4 overflow-x-auto">
                     <table className="w-full">
@@ -307,7 +660,7 @@ const Statistics: React.FC = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="h-80">
+                  <div className="h-80" ref={el => chartRefs.current['gradeDistribution'] = el}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -327,7 +680,8 @@ const Statistics: React.FC = () => {
                         <Tooltip 
                           formatter={(value) => [`${value} Students`, 'Count']}
                           contentStyle={{ 
-                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                            color: theme === 'dark' ? '#fff' : '#000',
                             borderRadius: '8px', 
                             border: 'none',
                             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
@@ -338,12 +692,35 @@ const Statistics: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 )}
+                
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => exportAsCSV(gradeDistributionData, 'grade-distribution')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <FileText size={14} />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
               </div>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Class Comparison Chart */}
               <div className="glass rounded-xl p-4">
-                <h3 className="font-medium mb-3">Class Comparison</h3>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">Class Comparison</h3>
+                  <button
+                    onClick={() => downloadChart('classComparison', 'Class-Comparison')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </button>
+                </div>
+                
                 {editMode ? (
                   <div className="mb-4 overflow-x-auto">
                     <table className="w-full">
@@ -395,7 +772,7 @@ const Statistics: React.FC = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="h-80">
+                  <div className="h-80" ref={el => chartRefs.current['classComparison'] = el}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={classComparisonData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
@@ -403,7 +780,8 @@ const Statistics: React.FC = () => {
                         <YAxis stroke="rgba(255,255,255,0.5)" />
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                            color: theme === 'dark' ? '#fff' : '#000',
                             borderRadius: '8px', 
                             border: 'none',
                             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
@@ -417,10 +795,33 @@ const Statistics: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 )}
+                
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => exportAsCSV(classComparisonData, 'class-comparison')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <FileText size={14} />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
               </div>
               
+              {/* Attendance Overview Chart */}
               <div className="glass rounded-xl p-4">
-                <h3 className="font-medium mb-3">Attendance Overview</h3>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-medium">Attendance Overview</h3>
+                  <button
+                    onClick={() => downloadChart('attendanceOverview', 'Attendance-Overview')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </button>
+                </div>
+                
                 {editMode ? (
                   <div className="mb-4 overflow-x-auto">
                     <table className="w-full">
@@ -453,7 +854,7 @@ const Statistics: React.FC = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="h-80">
+                  <div className="h-80" ref={el => chartRefs.current['attendanceOverview'] = el}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -472,7 +873,8 @@ const Statistics: React.FC = () => {
                         </Pie>
                         <Tooltip 
                           contentStyle={{ 
-                            backgroundColor: 'rgba(255,255,255,0.8)', 
+                            backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                            color: theme === 'dark' ? '#fff' : '#000',
                             borderRadius: '8px', 
                             border: 'none',
                             boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
@@ -483,150 +885,217 @@ const Statistics: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 )}
+                
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => exportAsCSV(attendanceData, 'attendance-overview')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <FileText size={14} />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </>
-        )}
-        
-        {viewMode === 'class' && (
-          <div className="glass rounded-xl p-4">
-            <h3 className="font-medium mb-3">Class-wise Performance</h3>
-            {editMode ? (
-              <div className="mb-4 overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="pb-2 text-left text-sm">Class</th>
-                      <th className="pb-2 text-left text-sm">Average Score</th>
-                      <th className="pb-2 text-left text-sm">Passing Rate %</th>
-                      <th className="pb-2 text-left text-sm">Top Subject</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {editableClassPerformanceData.map((item, index) => (
-                      <tr key={index} className="border-b border-white/5">
-                        <td className="py-2">{item.class}</td>
-                        <td className="py-2">
-                          <input 
-                            type="number"
-                            value={item.average}
-                            min={0}
-                            max={100}
-                            onChange={(e) => handleClassPerformanceChange(index, 'average', parseInt(e.target.value) || 0)}
-                            className="w-20 glass rounded px-2 py-1"
-                          />
-                        </td>
-                        <td className="py-2">
-                          <input 
-                            type="number"
-                            value={item.passing}
-                            min={0}
-                            max={100}
-                            onChange={(e) => handleClassPerformanceChange(index, 'passing', parseInt(e.target.value) || 0)}
-                            className="w-20 glass rounded px-2 py-1"
-                          />
-                        </td>
-                        <td className="py-2">{item.topSubject}</td>
+          </TabsContent>
+          
+          {/* Class-wise Statistics Tab */}
+          <TabsContent value="class">
+            <div className="glass rounded-xl p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-medium">Class-wise Performance</h3>
+                <button
+                  onClick={() => downloadChart('classPerformance', 'Class-wise-Performance')}
+                  className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                  disabled={editMode}
+                >
+                  <Download size={14} />
+                  <span>Download</span>
+                </button>
+              </div>
+              
+              {editMode ? (
+                <div className="mb-4 overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="pb-2 text-left text-sm">Class</th>
+                        <th className="pb-2 text-left text-sm">Average Score</th>
+                        <th className="pb-2 text-left text-sm">Passing Rate %</th>
+                        <th className="pb-2 text-left text-sm">Top Subject</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={classPerformanceData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="class" stroke="rgba(255,255,255,0.5)" />
-                    <YAxis stroke="rgba(255,255,255,0.5)" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.8)', 
-                        borderRadius: '8px', 
-                        border: 'none',
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="average" name="Average Score" fill="#9b87f5" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="passing" name="Passing Rate %" fill="#60a5fa" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {viewMode === 'subject' && (
-          <div className="glass rounded-xl p-4">
-            <h3 className="font-medium mb-3">Subject-wise Performance Across Classes</h3>
-            {editMode ? (
-              <div className="mb-4 overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="pb-2 text-left text-sm">Subject</th>
-                      <th className="pb-2 text-left text-sm">8A</th>
-                      <th className="pb-2 text-left text-sm">8B</th>
-                      <th className="pb-2 text-left text-sm">9A</th>
-                      <th className="pb-2 text-left text-sm">9B</th>
-                      <th className="pb-2 text-left text-sm">10A</th>
-                      <th className="pb-2 text-left text-sm">10B</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {editableSubjectWiseData.map((item, index) => (
-                      <tr key={index} className="border-b border-white/5">
-                        <td className="py-2">{item.subject}</td>
-                        {["8A", "8B", "9A", "9B", "10A", "10B"].map((classKey) => (
-                          <td className="py-2" key={classKey}>
+                    </thead>
+                    <tbody>
+                      {editableClassPerformanceData.map((item, index) => (
+                        <tr key={index} className="border-b border-white/5">
+                          <td className="py-2">{item.class}</td>
+                          <td className="py-2">
                             <input 
                               type="number"
-                              value={item[classKey]}
+                              value={item.average}
                               min={0}
                               max={100}
-                              onChange={(e) => handleSubjectWiseChange(index, classKey, parseInt(e.target.value) || 0)}
+                              onChange={(e) => handleClassPerformanceChange(index, 'average', parseInt(e.target.value) || 0)}
                               className="w-20 glass rounded px-2 py-1"
                             />
                           </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={subjectWiseData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="subject" stroke="rgba(255,255,255,0.5)" />
-                    <YAxis stroke="rgba(255,255,255,0.5)" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'rgba(255,255,255,0.8)', 
-                        borderRadius: '8px', 
-                        border: 'none',
-                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
-                      }}
-                    />
-                    <Legend />
-                    {["8A", "8B", "9A", "9B", "10A", "10B"].map((classKey, index) => (
-                      <Line 
-                        key={classKey}
-                        type="monotone"
-                        dataKey={classKey}
-                        name={`Class ${classKey}`}
-                        stroke={["#9b87f5", "#60a5fa", "#4ade80", "#facc15", "#f87171", "#ef4444"][index % 6]}
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
+                          <td className="py-2">
+                            <input 
+                              type="number"
+                              value={item.passing}
+                              min={0}
+                              max={100}
+                              onChange={(e) => handleClassPerformanceChange(index, 'passing', parseInt(e.target.value) || 0)}
+                              className="w-20 glass rounded px-2 py-1"
+                            />
+                          </td>
+                          <td className="py-2">{item.topSubject}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="h-80" ref={el => chartRefs.current['classPerformance'] = el}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={classPerformanceData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                      <XAxis dataKey="class" stroke="rgba(255,255,255,0.5)" />
+                      <YAxis stroke="rgba(255,255,255,0.5)" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                          color: theme === 'dark' ? '#fff' : '#000',
+                          borderRadius: '8px', 
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                        }}
                       />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
+                      <Legend />
+                      <Bar dataKey="average" name="Average Score" fill="#9b87f5" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="passing" name="Passing Rate %" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => exportAsCSV(classPerformanceData, 'class-wise-performance')}
+                  className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                  disabled={editMode}
+                >
+                  <FileText size={14} />
+                  <span>Export CSV</span>
+                </button>
               </div>
-            )}
-          </div>
+            </div>
+          </TabsContent>
+          
+          {/* Subject-wise Statistics Tab */}
+          <TabsContent value="subject">
+            <div className="glass rounded-xl p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-medium">Subject-wise Performance Across Classes</h3>
+                <button
+                  onClick={() => downloadChart('subjectWisePerformance', 'Subject-wise-Performance')}
+                  className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                  disabled={editMode}
+                >
+                  <Download size={14} />
+                  <span>Download</span>
+                </button>
+              </div>
+              
+              {editMode ? (
+                <div className="mb-4 overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="pb-2 text-left text-sm">Subject</th>
+                        <th className="pb-2 text-left text-sm">8A</th>
+                        <th className="pb-2 text-left text-sm">8B</th>
+                        <th className="pb-2 text-left text-sm">9A</th>
+                        <th className="pb-2 text-left text-sm">9B</th>
+                        <th className="pb-2 text-left text-sm">10A</th>
+                        <th className="pb-2 text-left text-sm">10B</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editableSubjectWiseData.map((item, index) => (
+                        <tr key={index} className="border-b border-white/5">
+                          <td className="py-2">{item.subject}</td>
+                          {["8A", "8B", "9A", "9B", "10A", "10B"].map((classKey) => (
+                            <td className="py-2" key={classKey}>
+                              <input 
+                                type="number"
+                                value={item[classKey]}
+                                min={0}
+                                max={100}
+                                onChange={(e) => handleSubjectWiseChange(index, classKey, parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="h-80" ref={el => chartRefs.current['subjectWisePerformance'] = el}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={subjectWiseData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                      <XAxis dataKey="subject" stroke="rgba(255,255,255,0.5)" />
+                      <YAxis stroke="rgba(255,255,255,0.5)" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                          color: theme === 'dark' ? '#fff' : '#000',
+                          borderRadius: '8px', 
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                        }}
+                      />
+                      <Legend />
+                      {["8A", "8B", "9A", "9B", "10A", "10B"].map((classKey, index) => (
+                        <Line 
+                          key={classKey}
+                          type="monotone"
+                          dataKey={classKey}
+                          name={`Class ${classKey}`}
+                          stroke={["#9b87f5", "#60a5fa", "#4ade80", "#facc15", "#f87171", "#ef4444"][index % 6]}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              
+              <div className="flex justify-end mt-2">
+                <button
+                  onClick={() => exportAsCSV(subjectWiseData, 'subject-wise-across-classes')}
+                  className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                  disabled={editMode}
+                >
+                  <FileText size={14} />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+        
+        {autoSaveEnabled && lastSaved && !hasChanges && (
+          <p className="text-sm text-foreground/60 mt-2">Last auto-saved at {lastSaved.toLocaleTimeString()}</p>
+        )}
+        
+        {autoSaveEnabled && hasChanges && (
+          <p className="text-sm text-foreground/60 mt-2">Changes will be auto-saved after 1 minute of inactivity</p>
         )}
       </div>
       
