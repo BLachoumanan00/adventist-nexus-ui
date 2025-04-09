@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { BarChart as BarChartIcon, ChevronDown, Edit, PieChart as PieChartIcon, Save, Download, FileText, GraduationCap } from "lucide-react";
+import { BarChart as BarChartIcon, ChevronDown, Edit, PieChart as PieChartIcon, Save, Download, FileText, GraduationCap, Upload } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { useActivityLogger } from "../hooks/useActivityLogger";
 import { useToast } from "../hooks/use-toast";

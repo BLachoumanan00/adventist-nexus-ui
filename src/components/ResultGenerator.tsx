@@ -7,6 +7,14 @@ import ResultSlipPreview from './previews/ResultSlipPreview';
 import TermReportPreview from './previews/TermReportPreview';
 import CertificatePreview from './previews/CertificatePreview';
 
+interface Subject {
+  subject: string;
+  marks: number;
+  totalMarks: number;
+  grade: string;
+  remarks: string;
+}
+
 interface Student {
   id: string;
   name: string;
@@ -17,13 +25,7 @@ interface Student {
   rank: number;
   overallGrade: string;
   generalRemarks: string;
-  subjects: {
-    name: string;
-    marks: number;
-    totalMarks: number;
-    grade: string;
-    remarks: string;
-  }[];
+  subjects: Subject[];
 }
 
 const ResultGenerator: React.FC = () => {
@@ -59,11 +61,11 @@ const ResultGenerator: React.FC = () => {
       overallGrade: "B+",
       generalRemarks: "A good student who shows dedication in most subjects. Can improve with more focus.",
       subjects: [
-        { name: "Mathematics", marks: 85, totalMarks: 100, grade: "B+", remarks: "Good problem-solving skills" },
-        { name: "English", marks: 78, totalMarks: 100, grade: "B", remarks: "Writing needs improvement" },
-        { name: "Science", marks: 92, totalMarks: 100, grade: "A", remarks: "Excellent understanding of concepts" },
-        { name: "History", marks: 75, totalMarks: 100, grade: "B", remarks: "Average performance" },
-        { name: "Computer Science", marks: 90, totalMarks: 100, grade: "A", remarks: "Shows great aptitude" }
+        { subject: "Mathematics", marks: 85, totalMarks: 100, grade: "B+", remarks: "Good problem-solving skills" },
+        { subject: "English", marks: 78, totalMarks: 100, grade: "B", remarks: "Writing needs improvement" },
+        { subject: "Science", marks: 92, totalMarks: 100, grade: "A", remarks: "Excellent understanding of concepts" },
+        { subject: "History", marks: 75, totalMarks: 100, grade: "B", remarks: "Average performance" },
+        { subject: "Computer Science", marks: 90, totalMarks: 100, grade: "A", remarks: "Shows great aptitude" }
       ]
     },
     {
@@ -77,11 +79,11 @@ const ResultGenerator: React.FC = () => {
       overallGrade: "A",
       generalRemarks: "An outstanding student with excellent academic performance. Continue the good work.",
       subjects: [
-        { name: "Mathematics", marks: 90, totalMarks: 100, grade: "A", remarks: "Excellent analytical skills" },
-        { name: "English", marks: 95, totalMarks: 100, grade: "A", remarks: "Exceptional writing and comprehension" },
-        { name: "Science", marks: 88, totalMarks: 100, grade: "B+", remarks: "Good practical work" },
-        { name: "History", marks: 78, totalMarks: 100, grade: "B", remarks: "Needs to improve on analysis" },
-        { name: "Computer Science", marks: 90, totalMarks: 100, grade: "A", remarks: "Strong programming skills" }
+        { subject: "Mathematics", marks: 90, totalMarks: 100, grade: "A", remarks: "Excellent analytical skills" },
+        { subject: "English", marks: 95, totalMarks: 100, grade: "A", remarks: "Exceptional writing and comprehension" },
+        { subject: "Science", marks: 88, totalMarks: 100, grade: "B+", remarks: "Good practical work" },
+        { subject: "History", marks: 78, totalMarks: 100, grade: "B", remarks: "Needs to improve on analysis" },
+        { subject: "Computer Science", marks: 90, totalMarks: 100, grade: "A", remarks: "Strong programming skills" }
       ]
     },
     {
@@ -95,11 +97,11 @@ const ResultGenerator: React.FC = () => {
       overallGrade: "B",
       generalRemarks: "Shows improvement but needs to work harder in weaker subjects. Participation in class is commendable.",
       subjects: [
-        { name: "Mathematics", marks: 65, totalMarks: 100, grade: "C", remarks: "Needs more practice" },
-        { name: "English", marks: 70, totalMarks: 100, grade: "C+", remarks: "Grammar needs improvement" },
-        { name: "Science", marks: 72, totalMarks: 100, grade: "C+", remarks: "Should focus on theoretical concepts" },
-        { name: "History", marks: 80, totalMarks: 100, grade: "B", remarks: "Good knowledge of events" },
-        { name: "Computer Science", marks: 75, totalMarks: 100, grade: "B", remarks: "Average coding skills" }
+        { subject: "Mathematics", marks: 65, totalMarks: 100, grade: "C", remarks: "Needs more practice" },
+        { subject: "English", marks: 70, totalMarks: 100, grade: "C+", remarks: "Grammar needs improvement" },
+        { subject: "Science", marks: 72, totalMarks: 100, grade: "C+", remarks: "Should focus on theoretical concepts" },
+        { subject: "History", marks: 80, totalMarks: 100, grade: "B", remarks: "Good knowledge of events" },
+        { subject: "Computer Science", marks: 75, totalMarks: 100, grade: "B", remarks: "Average coding skills" }
       ]
     }
   ]);
