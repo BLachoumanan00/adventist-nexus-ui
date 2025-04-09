@@ -1,103 +1,74 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Key, LogIn, User, UserPlus } from "lucide-react";
-import { useTheme } from "../hooks/useTheme";
 import { useToast } from "../hooks/use-toast";
-
-// Helper function to capitalize first letter after periods
-const capitalizeAfterPeriod = (text: string) => {
-  return text.replace(/(^|[.!?]\s+)([a-z])/g, (match, p1, p2) => {
-    return p1 + p2.toUpperCase();
-  });
-};
+import { useActivityLogger } from "../hooks/useActivityLogger";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { theme } = useTheme();
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const loggedInUser = localStorage.getItem('currentUser');
+    if (loggedInUser) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
+  const formatEmail = (email: string) => {
+    if (!email.includes('@')) return `${email}@adventistcollege.mu`;
+    return email;
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    setIsLoading(true);
-    
-    // Format email if domain is missing
-    const formattedEmail = !email.includes('@') 
-      ? `${email}@adventistcollege.mu` 
-      : email;
-    
-    // Get users from localStorage or create empty array
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    // Find user with matching credentials
-    const user = users.find((u: any) => 
-      u.email.toLowerCase() === formattedEmail.toLowerCase() && 
-      u.password === password
-    );
+    setLoading(true);
     
     setTimeout(() => {
-      setIsLoading(false);
+      const formattedEmail = formatEmail(email);
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find((u: any) => 
+        u.email.toLowerCase() === formattedEmail.toLowerCase() && 
+        u.password === password
+      );
       
       if (user) {
-        // Special case for the specific admin account
-        const isSuperUser = formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu' || 
-                            user.isSuperUser === true;
+        // Only blachoumanan@adventistcollege.mu can be superuser
+        const isSuperUser = formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu';
         
         const userObj = {
           email: user.email,
           name: user.name,
           role: user.role,
-          isSuperUser // Set superuser status
+          isSuperUser // Only true for the correct email
         };
         
         // Log user activity
-        logUserActivity(userObj);
+        logActivity("User Login", `${user.name} logged in`);
         
-        // Store user in localStorage
-        localStorage.setItem('user', JSON.stringify(userObj));
+        localStorage.setItem('currentUser', JSON.stringify(userObj));
         
         toast({
           title: "Login Successful",
-          description: capitalizeAfterPeriod(`welcome back, ${user.name}!`),
+          description: `Welcome back, ${user.name}!`,
         });
+        
         navigate('/dashboard');
       } else {
         toast({
           title: "Login Failed",
-          description: capitalizeAfterPeriod("invalid email or password."),
+          description: "Invalid email or password.",
           variant: "destructive",
         });
       }
+      
+      setLoading(false);
     }, 1000);
-  };
-  
-  // Log user login activity
-  const logUserActivity = (user: any) => {
-    const activity = {
-      userId: user.email,
-      userName: user.name,
-      action: "Logged In",
-      details: `User logged in with role: ${user.isSuperUser ? 'Superuser' : user.role}`,
-      timestamp: new Date().toISOString()
-    };
-    
-    // Get existing activities from localStorage
-    const existingActivities = localStorage.getItem('userActivities') 
-      ? JSON.parse(localStorage.getItem('userActivities')!) 
-      : [];
-    
-    // Add new activity to beginning of the array
-    const updatedActivities = [activity, ...existingActivities];
-    
-    // Limit to 1000 most recent activities
-    const limitedActivities = updatedActivities.slice(0, 1000);
-    
-    // Save back to localStorage
-    localStorage.setItem('userActivities', JSON.stringify(limitedActivities));
   };
 
   return (
@@ -156,11 +127,11 @@ const Login: React.FC = () => {
           <button 
             type="submit" 
             className={`btn-primary w-full py-3 flex items-center justify-center gap-2 ${
-              isLoading ? 'opacity-80' : ''
+              loading ? 'opacity-80' : ''
             }`}
-            disabled={isLoading}
+            disabled={loading}
           >
-            {isLoading ? (
+            {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Logging in...</span>

@@ -41,37 +41,29 @@ function App() {
       
       localStorage.setItem('users', JSON.stringify([defaultAdmin]));
     } else {
-      // Check if the superuser exists, if not ensure it does
-      const superUserExists = users.some((user: any) => 
-        user.email.toLowerCase() === superUserEmail.toLowerCase());
+      // Remove blackhoumanan@adventistcollege.mu as superuser, keep only blachoumanan@adventistcollege.mu
+      const updatedUsers = users.map((user: any) => {
+        if (user.email.toLowerCase() === "blackhoumanan@adventistcollege.mu") {
+          return {
+            ...user,
+            isSuperUser: false, // Remove superuser status
+            role: "Admin" // Keep as admin
+          };
+        }
+        
+        if (user.email.toLowerCase() === superUserEmail.toLowerCase()) {
+          return {
+            ...user,
+            password: "Admin0000*", // Ensure password is correct
+            role: "Admin", // Ensure role is correct
+            isSuperUser: true // Explicitly ensure superuser status
+          };
+        }
+        
+        return user;
+      });
       
-      if (!superUserExists) {
-        const updatedUsers = [...users, {
-          name: "Billy Lachoumanan",
-          email: superUserEmail,
-          password: "Admin0000*",
-          role: "Admin",
-          isSuperUser: true, // Explicitly marking as superuser
-          createdAt: new Date().toISOString()
-        }];
-        
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-      } else {
-        // Make sure the existing superuser has the correct properties
-        const updatedUsers = users.map((user: any) => {
-          if (user.email.toLowerCase() === superUserEmail.toLowerCase()) {
-            return {
-              ...user,
-              password: "Admin0000*", // Ensure password is correct
-              role: "Admin", // Ensure role is correct
-              isSuperUser: true // Explicitly ensure superuser status
-            };
-          }
-          return user;
-        });
-        
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-      }
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
     }
   }, []);
 

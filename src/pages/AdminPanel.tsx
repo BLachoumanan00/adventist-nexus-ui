@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog, AlertCircle } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 
 interface User {
@@ -10,6 +10,14 @@ interface User {
   role: 'Teacher' | 'Admin' | 'Clerk' | 'Student';
   department?: string;
   addedOn: string;
+  isSuperUser?: boolean;
+}
+
+interface CurrentUser {
+  email: string;
+  name: string;
+  role: string;
+  isSuperUser: boolean;
 }
 
 const AdminPanel: React.FC = () => {
@@ -18,7 +26,17 @@ const AdminPanel: React.FC = () => {
   const [newUserRole, setNewUserRole] = useState<'Teacher' | 'Admin' | 'Clerk'>('Teacher');
   const [newUserName, setNewUserName] = useState('');
   const [newUserDepartment, setNewUserDepartment] = useState('');
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const { toast } = useToast();
+
+  // Load current user on component mount
+  useEffect(() => {
+    const userStr = localStorage.getItem('currentUser');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setCurrentUser(user as CurrentUser);
+    }
+  }, []);
 
   // Update email domain
   const formatEmail = (email: string) => {
@@ -33,7 +51,7 @@ const AdminPanel: React.FC = () => {
     { id: 3, name: 'Michael Brown', email: 'michaelbrown@adventistcollege.mu', role: 'Clerk', department: 'Administration', addedOn: '2023-06-10' },
     { id: 4, name: 'Emily Davis', email: 'emilydavis@adventistcollege.mu', role: 'Teacher', department: 'Science', addedOn: '2023-05-22' },
     { id: 5, name: 'Robert Wilson', email: 'robertwilson@adventistcollege.mu', role: 'Teacher', department: 'History', addedOn: '2023-07-01' },
-    { id: 6, name: 'Black Houmanan', email: 'blackhoumanan@adventistcollege.mu', role: 'Admin', department: 'Superuser', addedOn: '2023-03-01' },
+    { id: 6, name: 'Billy Lachoumanan', email: 'blachoumanan@adventistcollege.mu', role: 'Admin', department: 'Superuser', addedOn: '2023-03-01', isSuperUser: true },
   ]);
 
   const filteredUsers = users.filter(user => 
@@ -65,13 +83,24 @@ const AdminPanel: React.FC = () => {
       return;
     }
     
+    // Only superuser can add admin users
+    if (newUserRole === 'Admin' && (!currentUser?.isSuperUser)) {
+      toast({
+        title: "Permission Denied",
+        description: "Only the superuser can add administrators.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const newUser: User = {
       id: users.length + 1,
       name: newUserName || 'New User', // Use provided name or default
       email: formattedEmail,
       role: newUserRole,
       department: newUserDepartment || undefined,
-      addedOn: new Date().toISOString().split('T')[0]
+      addedOn: new Date().toISOString().split('T')[0],
+      isSuperUser: false // Regular users cannot be superusers
     };
     
     setUsers([...users, newUser]);
@@ -89,10 +118,20 @@ const AdminPanel: React.FC = () => {
     const userToDelete = users.find(user => user.id === id);
     
     // Prevent deleting the superuser
-    if (userToDelete?.email.toLowerCase() === 'blackhoumanan@adventistcollege.mu') {
+    if (userToDelete?.email.toLowerCase() === 'blachoumanan@adventistcollege.mu') {
       toast({
         title: "Cannot Delete Superuser",
         description: "This superuser account cannot be deleted.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Only superuser can delete admin users
+    if (userToDelete?.role === 'Admin' && !currentUser?.isSuperUser) {
+      toast({
+        title: "Permission Denied", 
+        description: "Only the superuser can delete administrators.",
         variant: "destructive",
       });
       return;
@@ -120,7 +159,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const isSuperUser = (email: string) => {
-    return email.toLowerCase() === 'blackhoumanan@adventistcollege.mu';
+    return email.toLowerCase() === 'blachoumanan@adventistcollege.mu';
   };
 
   return (
@@ -192,9 +231,15 @@ const AdminPanel: React.FC = () => {
                 className="w-full rounded-lg glass border-none px-4 py-2"
               >
                 <option value="Teacher">Teacher</option>
-                <option value="Admin">Admin</option>
+                {currentUser?.isSuperUser && <option value="Admin">Admin</option>}
                 <option value="Clerk">Clerk</option>
               </select>
+              {newUserRole === 'Admin' && !currentUser?.isSuperUser && (
+                <p className="text-xs text-red-500 mt-1 flex items-center">
+                  <AlertCircle size={12} className="mr-1" />
+                  Only superuser can assign admin role
+                </p>
+              )}
             </div>
           </div>
           
@@ -250,9 +295,13 @@ const AdminPanel: React.FC = () => {
                       <button 
                         className="p-1 rounded hover:bg-white/10 transition-colors"
                         onClick={() => handleDeleteUser(user.id)}
-                        disabled={isSuperUser(user.email)}
+                        disabled={isSuperUser(user.email) || (user.role === 'Admin' && !currentUser?.isSuperUser)}
                       >
-                        <Trash size={16} className={isSuperUser(user.email) ? "text-foreground/30" : "text-foreground/70"} />
+                        <Trash size={16} className={
+                          (isSuperUser(user.email) || (user.role === 'Admin' && !currentUser?.isSuperUser)) 
+                            ? "text-foreground/30" 
+                            : "text-foreground/70"
+                        } />
                       </button>
                     </div>
                   </td>

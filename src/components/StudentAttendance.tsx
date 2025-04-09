@@ -17,6 +17,7 @@ const StudentAttendance: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState('All');
   const [selectedSection, setSelectedSection] = useState('All');
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
+  const [bulkEditMode, setBulkEditMode] = useState(false);
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
   
@@ -78,6 +79,38 @@ const StudentAttendance: React.FC = () => {
     });
   };
   
+  // New bulk edit functionality
+  const handleBulkEditToggle = () => {
+    setBulkEditMode(!bulkEditMode);
+    
+    // Initialize edit values for all students
+    if (!bulkEditMode) {
+      const initialValues: {[key: string]: number} = {};
+      students.forEach(student => {
+        initialValues[student.id] = student.absences;
+      });
+      setEditValues(initialValues);
+    }
+  };
+  
+  const handleBulkSave = () => {
+    // Apply all changes at once
+    const updatedStudents = students.map(student => ({
+      ...student,
+      absences: editValues[student.id] || student.absences
+    }));
+    
+    setStudents(updatedStudents);
+    setBulkEditMode(false);
+    
+    toast({
+      title: "Bulk Update Complete",
+      description: `Updated absences for ${filteredStudents.length} students`,
+    });
+    
+    logActivity("Bulk Updated Attendance", `Updated absences for ${selectedGrade} ${selectedSection} class`);
+  };
+  
   const getAbsenceStyle = (absences: number): string => {
     if (absences === 0) return "text-green-600 dark:text-green-400";
     if (absences <= 2) return "text-blue-600 dark:text-blue-400";
@@ -137,9 +170,11 @@ const StudentAttendance: React.FC = () => {
               </select>
             </div>
             
-            <button className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg">
-              <Filter size={16} />
-              <span>More Filters</span>
+            <button 
+              className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg"
+              onClick={handleBulkEditToggle}
+            >
+              {bulkEditMode ? "Single Edit" : "Bulk Edit"}
             </button>
           </div>
         </div>
@@ -149,27 +184,84 @@ const StudentAttendance: React.FC = () => {
         </div>
       </div>
       
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-white/10">
-              <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
-              <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
-              <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
-              <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
-              <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Absences</th>
-              <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map((student) => (
-              <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="py-3">{student.id}</td>
-                <td className="py-3">{student.name}</td>
-                <td className="py-3">Grade {student.grade}</td>
-                <td className="py-3">Section {student.section}</td>
-                <td className="py-3 text-center">
-                  {editingStudent === student.id ? (
+      {!bulkEditMode ? (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Absences</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="py-3">{student.id}</td>
+                  <td className="py-3">{student.name}</td>
+                  <td className="py-3">Grade {student.grade}</td>
+                  <td className="py-3">Section {student.section}</td>
+                  <td className="py-3 text-center">
+                    {editingStudent === student.id ? (
+                      <input
+                        type="number"
+                        min="0"
+                        value={editValues[student.id] || 0}
+                        onChange={(e) => handleAbsenceChange(student.id, e.target.value)}
+                        className="w-16 text-center glass rounded px-2 py-1"
+                      />
+                    ) : (
+                      <span className={getAbsenceStyle(student.absences)}>
+                        {student.absences}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 text-center">
+                    {editingStudent === student.id ? (
+                      <button 
+                        onClick={() => handleSave(student)}
+                        className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                      >
+                        <Save size={16} className="text-primary" />
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleEdit(student)}
+                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                      >
+                        <Check size={16} className="text-foreground/70" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        // Bulk edit mode table
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Absences</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="py-3">{student.id}</td>
+                  <td className="py-3">{student.name}</td>
+                  <td className="py-3">Grade {student.grade}</td>
+                  <td className="py-3">Section {student.section}</td>
+                  <td className="py-3 text-center">
                     <input
                       type="number"
                       min="0"
@@ -177,43 +269,32 @@ const StudentAttendance: React.FC = () => {
                       onChange={(e) => handleAbsenceChange(student.id, e.target.value)}
                       className="w-16 text-center glass rounded px-2 py-1"
                     />
-                  ) : (
-                    <span className={getAbsenceStyle(student.absences)}>
-                      {student.absences}
-                    </span>
-                  )}
-                </td>
-                <td className="py-3 text-center">
-                  {editingStudent === student.id ? (
-                    <button 
-                      onClick={() => handleSave(student)}
-                      className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
-                    >
-                      <Save size={16} className="text-primary" />
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => handleEdit(student)}
-                      className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                    >
-                      <Check size={16} className="text-foreground/70" />
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       
       <div className="mt-6 flex justify-between items-center">
         <div className="text-sm text-foreground/60">
-          Tip: Click on the check icon to update absences.
+          Tip: {bulkEditMode ? "Enter absences for all students at once" : "Click on the check icon to update absences"}
         </div>
-        <button className="btn-primary flex items-center gap-2">
-          <Save size={18} />
-          <span>Save All Changes</span>
-        </button>
+        {bulkEditMode ? (
+          <button 
+            className="btn-primary flex items-center gap-2"
+            onClick={handleBulkSave}
+          >
+            <Save size={18} />
+            <span>Save All Changes</span>
+          </button>
+        ) : (
+          <button className="btn-primary flex items-center gap-2">
+            <Save size={18} />
+            <span>Save All Changes</span>
+          </button>
+        )}
       </div>
     </div>
   );

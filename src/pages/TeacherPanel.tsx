@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import { BookOpen, Check, ChevronDown, Edit, Filter, Save, Settings, CheckCheck, MessageSquare, Upload, Download } from "lucide-react";
 import { useToast } from '../hooks/use-toast';
@@ -10,6 +9,7 @@ interface Student {
   marks: number | null;
   grade: string;
   remarks: string;
+  generalRemarks: string;
   hasSpellingErrors?: boolean;
 }
 
@@ -34,20 +34,22 @@ const TeacherPanel: React.FC = () => {
   const [checkGrammar, setCheckGrammar] = useState(true);
   const [customPassingCriteria, setCustomPassingCriteria] = useState(35);
   const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [editingGeneralRemarks, setEditingGeneralRemarks] = useState<number | null>(null);
   const remarksRef = useRef<HTMLInputElement | null>(null);
+  const generalRemarksRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
   
   const [students, setStudents] = useState<Student[]>([
-    { id: 1, name: "John Smith", marks: 78, grade: "B+", remarks: "Good performance" },
-    { id: 2, name: "Sarah Johnson", marks: 92, grade: "A", remarks: "Excellent work" },
-    { id: 3, name: "Michael Brown", marks: 65, grade: "C", remarks: "Needs improvement" },
-    { id: 4, name: "Emily Davis", marks: 88, grade: "B+", remarks: "Very good progress" },
-    { id: 5, name: "Robert Wilson", marks: 75, grade: "B", remarks: "Consistent work" },
-    { id: 6, name: "Jessica Lee", marks: null, grade: "", remarks: "" },
-    { id: 7, name: "William Taylor", marks: 81, grade: "B+", remarks: "Good participation" },
-    { id: 8, name: "Olivia Martin", marks: 94, grade: "A", remarks: "Outstanding work" },
+    { id: 1, name: "John Smith", marks: 78, grade: "B+", remarks: "Good performance", generalRemarks: "Cooperative student. Shows good attitude in class." },
+    { id: 2, name: "Sarah Johnson", marks: 92, grade: "A", remarks: "Excellent work", generalRemarks: "Outstanding student. Goes above and beyond requirements." },
+    { id: 3, name: "Michael Brown", marks: 65, grade: "C", remarks: "Needs improvement", generalRemarks: "Often distracted in class. Needs to focus more on studies." },
+    { id: 4, name: "Emily Davis", marks: 88, grade: "B+", remarks: "Very good progress", generalRemarks: "Cheerful and participative in all activities." },
+    { id: 5, name: "Robert Wilson", marks: 75, grade: "B", remarks: "Consistent work", generalRemarks: "Steady improvement over the term. Keep it up." },
+    { id: 6, name: "Jessica Lee", marks: null, grade: "", remarks: "", generalRemarks: "New transfer student. Assessment pending." },
+    { id: 7, name: "William Taylor", marks: 81, grade: "B+", remarks: "Good participation", generalRemarks: "Very involved in class discussions. Good teamwork." },
+    { id: 8, name: "Olivia Martin", marks: 94, grade: "A", remarks: "Outstanding work", generalRemarks: "Helpful to other students. Shows leadership qualities." },
   ]);
 
   // Focus on the remarks field when editing
@@ -56,6 +58,13 @@ const TeacherPanel: React.FC = () => {
       remarksRef.current.focus();
     }
   }, [editingStudent]);
+
+  // Focus on the general remarks field when editing
+  useEffect(() => {
+    if (editingGeneralRemarks !== null && generalRemarksRef.current) {
+      generalRemarksRef.current.focus();
+    }
+  }, [editingGeneralRemarks]);
 
   // Generate auto remarks based on marks
   const getAutoRemark = (marks: number | null): string => {
@@ -141,6 +150,29 @@ const TeacherPanel: React.FC = () => {
     );
   };
 
+  const handleGeneralRemarksChange = (id: number, value: string) => {
+    let hasErrors = false;
+    
+    // Simple grammar check
+    if (checkGrammar && value) {
+      // Check for capitalization of first letter
+      if (value.length > 0 && value[0] !== value[0].toUpperCase()) {
+        value = value.charAt(0).toUpperCase() + value.slice(1);
+        hasErrors = true;
+      }
+    }
+    
+    setStudents(
+      students.map(student => 
+        student.id === id ? { 
+          ...student, 
+          generalRemarks: value,
+          hasSpellingErrors: hasErrors || student.hasSpellingErrors
+        } : student
+      )
+    );
+  };
+
   const calculateGrade = (marks: number | null): string => {
     if (marks === null) return "";
     
@@ -150,11 +182,21 @@ const TeacherPanel: React.FC = () => {
 
   const handleSave = (id: number) => {
     setEditingStudent(null);
+    setEditingGeneralRemarks(null);
     toast({
       title: "Marks Saved",
       description: `Updated marks for ${students.find(s => s.id === id)?.name}`
     });
     logActivity("Updated Marks", `Changed marks for student ID ${id}`);
+  };
+
+  const handleSaveGeneralRemarks = (id: number) => {
+    setEditingGeneralRemarks(null);
+    toast({
+      title: "General Remarks Saved",
+      description: `Updated general remarks for ${students.find(s => s.id === id)?.name}`
+    });
+    logActivity("Updated General Remarks", `Changed general remarks for student ID ${id}`);
   };
 
   const handleApplyAutoRemarks = () => {
@@ -248,9 +290,9 @@ const TeacherPanel: React.FC = () => {
 
   const handleExportMarks = () => {
     // Generate CSV content
-    const headers = "ID,Name,Marks,Grade,Remarks\n";
+    const headers = "ID,Name,Marks,Grade,Subject Remarks,General Remarks\n";
     const rows = students.map(student => 
-      `${student.id},"${student.name}",${student.marks || ""},${student.grade},"${student.remarks}"`
+      `${student.id},"${student.name}",${student.marks || ""},${student.grade},"${student.remarks}","${student.generalRemarks}"`
     ).join('\n');
     
     const content = headers + rows;
@@ -527,7 +569,8 @@ const TeacherPanel: React.FC = () => {
                   <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student Name</th>
                   <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Marks</th>
                   <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm w-2/5">Remarks</th>
+                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Subject Remarks</th>
+                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">General Remarks</th>
                   <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Actions</th>
                 </tr>
               </thead>
@@ -578,6 +621,23 @@ const TeacherPanel: React.FC = () => {
                         </div>
                       )}
                     </td>
+                    <td className="py-3 relative">
+                      {editingGeneralRemarks === student.id ? (
+                        <textarea
+                          ref={generalRemarksRef}
+                          value={student.generalRemarks}
+                          onChange={(e) => handleGeneralRemarksChange(student.id, e.target.value)}
+                          className={`glass rounded p-1 w-full border ${
+                            student.hasSpellingErrors ? 'border-red-400 dark:border-red-600' : 'border-transparent'
+                          }`}
+                          rows={2}
+                        />
+                      ) : (
+                        <span className="text-foreground/80 text-sm">
+                          {student.generalRemarks || "No general remarks"}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3">
                       {editingStudent === student.id ? (
                         <button
@@ -586,13 +646,30 @@ const TeacherPanel: React.FC = () => {
                         >
                           <Save size={16} />
                         </button>
-                      ) : (
+                      ) : editingGeneralRemarks === student.id ? (
                         <button
-                          onClick={() => setEditingStudent(student.id)}
-                          className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                          onClick={() => handleSaveGeneralRemarks(student.id)}
+                          className="p-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                         >
-                          <Edit size={16} className="text-foreground/70" />
+                          <Save size={16} />
                         </button>
+                      ) : (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setEditingStudent(student.id)}
+                            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                            title="Edit marks and subject remarks"
+                          >
+                            <Edit size={16} className="text-foreground/70" />
+                          </button>
+                          <button
+                            onClick={() => setEditingGeneralRemarks(student.id)}
+                            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                            title="Edit general remarks"
+                          >
+                            <MessageSquare size={16} className="text-foreground/70" />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
