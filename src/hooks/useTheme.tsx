@@ -39,7 +39,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Set data-theme attribute for accessibility
     root.setAttribute("data-theme", theme);
     
-    console.log("Theme changed to:", theme); // Add debug log
+    // Apply theme to body element as well for wider compatibility
+    document.body.className = theme;
+    
+    console.log("Theme changed to:", theme);
   }, [theme]);
 
   const toggleTheme = () => {

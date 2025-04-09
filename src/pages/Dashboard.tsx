@@ -1,17 +1,30 @@
-
 import React from "react";
 import { BarChart3, Clock, LineChart, Bell, PieChart, Users, FileText, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "../hooks/useActivityLogger";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useTheme } from "../hooks/useTheme";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { logActivity } = useActivityLogger();
+  const { theme } = useTheme();
   
   const handleQuickAccess = (path: string, action: string) => {
     logActivity("Quick Access", `Accessed ${action} from Dashboard`);
     navigate(path);
   };
+
+  // Performance data for the chart
+  const performanceData = [
+    { month: 'Jan', mathematics: 65, science: 78, english: 82 },
+    { month: 'Feb', mathematics: 72, science: 75, english: 79 },
+    { month: 'Mar', mathematics: 78, science: 80, english: 84 },
+    { month: 'Apr', mathematics: 74, science: 82, english: 87 },
+    { month: 'May', mathematics: 80, science: 85, english: 89 },
+    { month: 'Jun', mathematics: 85, science: 83, english: 91 },
+  ];
   
   return (
     <div className="animate-fade-in">
@@ -58,9 +71,26 @@ const Dashboard: React.FC = () => {
             </select>
           </div>
           
-          <div className="h-64 w-full bg-theme-soft-blue/30 rounded-lg flex items-center justify-center">
-            <BarChart3 size={36} className="text-theme-blue/40" />
-            <span className="ml-2 text-sm text-foreground/60">Performance Chart</span>
+          <div className="h-64 w-full rounded-lg">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} />
+                <XAxis dataKey="month" stroke={theme === 'dark' ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)"} />
+                <YAxis stroke={theme === 'dark' ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)"} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                    color: theme === 'dark' ? '#fff' : '#000',
+                    borderRadius: '8px', 
+                    border: 'none'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="mathematics" name="Mathematics" fill="#9b87f5" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="science" name="Science" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="english" name="English" fill="#4ade80" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
         
