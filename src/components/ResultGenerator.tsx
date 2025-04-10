@@ -11,7 +11,8 @@ import {
   FileUp,
   Settings,
   Edit,
-  Cog
+  Cog,
+  Users
 } from "lucide-react";
 import ResultSlipPreview from "./previews/ResultSlipPreview";
 import TermReportPreview from "./previews/TermReportPreview";
@@ -75,6 +76,18 @@ interface GradeCriteria {
   };
 }
 
+// Sample student names for auto-generation
+const sampleStudentNames = [
+  "John Smith", "Emily Johnson", "Michael Williams", "Jessica Brown", "Christopher Jones",
+  "Ashley Davis", "Matthew Miller", "Amanda Wilson", "David Moore", "Sarah Taylor",
+  "James Anderson", "Jennifer Thomas", "Robert Jackson", "Elizabeth White", "Daniel Harris",
+  "Melissa Martin", "Joseph Thompson", "Nicole Garcia", "William Martinez", "Stephanie Robinson",
+  "Charles Clark", "Rebecca Rodriguez", "Anthony Lewis", "Laura Lee", "Steven Walker",
+  "Kimberly Hall", "Kevin Allen", "Michelle Young", "Brian King", "Lauren Wright",
+  "Edward Scott", "Amber Green", "Jason Baker", "Rachel Adams", "Ryan Nelson",
+  "Heather Hill", "Justin Mitchell", "Crystal Rivera", "Brandon Carter", "Danielle Parker"
+];
+
 const defaultGradeCriteria: GradeThreshold[] = [
   { min: 90, max: 100, grade: "A+" },
   { min: 80, max: 89, grade: "A" },
@@ -107,6 +120,16 @@ const ResultGenerator: React.FC = () => {
     teacher: "",
     principal: ""
   });
+  
+  // New state for bulk generation
+  const [bulkGenerationMode, setBulkGenerationMode] = useState(false);
+  const [bulkGradeSelected, setBulkGradeSelected] = useState("Grade 7");
+  const [bulkSectionSelected, setBulkSectionSelected] = useState("A");
+  const [bulkStudentCount, setBulkStudentCount] = useState(10);
+  const [bulkTermSelected, setBulkTermSelected] = useState("Term 1");
+  const [bulkYearSelected, setBulkYearSelected] = useState(new Date().getFullYear().toString());
+  const [bulkStudents, setBulkStudents] = useState<Student[]>([]);
+  const [currentBulkStudentIndex, setCurrentBulkStudentIndex] = useState(0);
   
   // State for grade criteria
   const [gradeCriteria, setGradeCriteria] = useState<GradeCriteria>({
@@ -700,6 +723,205 @@ const ResultGenerator: React.FC = () => {
       modal.showModal();
     }
   };
+
+  // Function to generate random marks for a subject
+  const generateRandomMarks = (totalMarks: number): number => {
+    // Generate a mark that is more likely to be in the 60-95% range
+    const basePercentage = Math.random() * 35 + 60; // 60-95%
+    // Add some randomness to create a more normal distribution
+    const adjustedPercentage = basePercentage + (Math.random() * 10 - 5); // +/- 5% variation
+    // Clamp to 0-100% range
+    const clampedPercentage = Math.min(Math.max(adjustedPercentage, 0), 100);
+    // Convert to actual mark
+    return Math.round((clampedPercentage / 100) * totalMarks);
+  };
+
+  // Generate bulk student results
+  const generateBulkResults = () => {
+    if (!bulkGradeSelected || !bulkSectionSelected || !bulkTermSelected) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a grade, section, and term.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const gradeNumber = parseInt(bulkGradeSelected.replace("Grade ", ""));
+    
+    // Generate the requested number of students
+    const newBulkStudents: Student[] = [];
+    
+    for (let i = 0; i < bulkStudentCount; i++) {
+      // Select a random name from the sample names
+      const randomNameIndex = Math.floor(Math.random() * sampleStudentNames.length);
+      const studentName = sampleStudentNames[randomNameIndex];
+      
+      // Generate subjects with random marks
+      const studentSubjects: Subject[] = [];
+      
+      // Add 4-7 subjects randomly
+      const numberOfSubjects = Math.floor(Math.random() * 4) + 4; // 4-7 subjects
+      const shuffledSubjects = [...subjectTemplates].sort(() => 0.5 - Math.random());
+      
+      for (let j = 0; j < Math.min(numberOfSubjects, shuffledSubjects.length); j++) {
+        const subjectTemplate = shuffledSubjects[j];
+        const marks = generateRandomMarks(subjectTemplate.totalMarks);
+        const percentage = (marks / subjectTemplate.totalMarks) * 100;
+        const grade = getGradeForPercentage(
+          percentage, 
+          bulkGradeSelected, 
+          subjectTemplate.isMainSubject
+        );
+        
+        studentSubjects.push({
+          subject: subjectTemplate.name,
+          marks: marks,
+          totalMarks: subjectTemplate.totalMarks,
+          grade: grade,
+          remarks: calculateRemark(grade),
+          isMainSubject: subjectTemplate.isMainSubject
+        });
+      }
+      
+      // Calculate total marks and average
+      let totalMarks = 0;
+      let totalMaxMarks = 0;
+      
+      studentSubjects.forEach(subj => {
+        totalMarks += subj.marks;
+        totalMaxMarks += subj.totalMarks;
+      });
+      
+      const averagePercentage = (totalMarks / totalMaxMarks) * 100;
+      
+      // Calculate overall grade
+      let overallGrade = "";
+      
+      if (gradeNumber >= 12) {
+        const mainSubjects = studentSubjects.filter(s => s.isMainSubject);
+        const subSubjects = studentSubjects.filter(s => !s.isMainSubject);
+        
+        let mainPercentage = 0;
+        
+        if (mainSubjects.length > 0) {
+          const mainTotal = mainSubjects.reduce((sum, subj) => sum + subj.marks, 0);
+          const mainMaxTotal = mainSubjects.reduce((sum, subj) => sum + subj.totalMarks, 0);
+          mainPercentage = (mainTotal / mainMaxTotal) * 100;
+        }
+        
+        overallGrade = mainSubjects.length > 0 
+          ? getGradeForPercentage(mainPercentage, bulkGradeSelected, true)
+          : getGradeForPercentage(averagePercentage, bulkGradeSelected);
+      } else {
+        overallGrade = getGradeForPercentage(averagePercentage, bulkGradeSelected);
+      }
+      
+      // Random number of days absent (0-10)
+      const daysAbsent = Math.floor(Math.random() * 11);
+      
+      // Generate a rank for the student
+      const rank = i + 1;
+      
+      // Generate general teacher remark based on performance
+      let teacherRemark = "";
+      if (averagePercentage >= 80) {
+        teacherRemark = `${studentName} has demonstrated excellent understanding and performance across all subjects.`;
+      } else if (averagePercentage >= 65) {
+        teacherRemark = `${studentName} shows good progress in most subjects but could improve in some areas.`;
+      } else if (averagePercentage >= 50) {
+        teacherRemark = `${studentName} is showing satisfactory progress but needs to work harder to achieve better results.`;
+      } else {
+        teacherRemark = `${studentName} needs to significantly improve performance and put in more effort across all subjects.`;
+      }
+      
+      newBulkStudents.push({
+        id: "STD" + Math.floor(1000 + Math.random() * 9000),
+        name: studentName,
+        grade: bulkGradeSelected,
+        section: bulkSectionSelected,
+        term: bulkTermSelected,
+        year: bulkYearSelected,
+        subjects: studentSubjects,
+        totalMarks: totalMarks,
+        averagePercentage: averagePercentage,
+        overallGrade: overallGrade,
+        position: rank.toString(),
+        teacherRemarks: teacherRemark,
+        principalRemarks: "",
+        daysAbsent: daysAbsent,
+        // For preview compatibility
+        percentage: averagePercentage,
+        rank: rank,
+        generalRemarks: teacherRemark
+      });
+    }
+    
+    // Sort students by average percentage in descending order
+    newBulkStudents.sort((a, b) => b.averagePercentage - a.averagePercentage);
+    
+    // Update ranks after sorting
+    for (let i = 0; i < newBulkStudents.length; i++) {
+      newBulkStudents[i].rank = i + 1;
+      newBulkStudents[i].position = (i + 1).toString();
+    }
+    
+    setBulkStudents(newBulkStudents);
+    
+    if (newBulkStudents.length > 0) {
+      // Load the first student for viewing
+      setStudent(newBulkStudents[0]);
+      setCurrentBulkStudentIndex(0);
+      setEditMode(false);
+      setBulkGenerationMode(true);
+      
+      toast({
+        title: "Results Generated",
+        description: `Generated ${newBulkStudents.length} results for ${bulkGradeSelected}-${bulkSectionSelected}`
+      });
+      
+      logActivity(
+        "Bulk Results Generated", 
+        `Generated ${newBulkStudents.length} results for ${bulkGradeSelected}-${bulkSectionSelected}`
+      );
+    }
+  };
+  
+  // Navigation through bulk generated students
+  const navigateBulkStudents = (direction: 'next' | 'prev') => {
+    if (bulkStudents.length === 0) return;
+    
+    let newIndex = currentBulkStudentIndex;
+    
+    if (direction === 'next') {
+      newIndex = (currentBulkStudentIndex + 1) % bulkStudents.length;
+    } else {
+      newIndex = (currentBulkStudentIndex - 1 + bulkStudents.length) % bulkStudents.length;
+    }
+    
+    setCurrentBulkStudentIndex(newIndex);
+    setStudent(bulkStudents[newIndex]);
+  };
+  
+  const saveBulkStudents = () => {
+    // Add all bulk generated students to the main students list
+    setStudents(prev => {
+      // Filter out any duplicates by ID
+      const existingIds = new Set(prev.map(s => s.id));
+      const newStudents = bulkStudents.filter(s => !existingIds.has(s.id));
+      
+      return [...prev, ...newStudents];
+    });
+    
+    saveToLocalStorage();
+    
+    toast({
+      title: "Bulk Results Saved",
+      description: `Saved ${bulkStudents.length} results to the database.`
+    });
+    
+    logActivity("Saved Bulk Results", `Added ${bulkStudents.length} results to the database`);
+  };
   
   return (
     <div className="animate-fade-in">
@@ -740,6 +962,96 @@ const ResultGenerator: React.FC = () => {
               </TabsList>
               
               <TabsContent value="info">
+                {/* Bulk Generation Section */}
+                <div className="mb-6 glass p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <Users size={14} />
+                      Bulk Result Generation
+                    </h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm mb-1">Grade</label>
+                      <select
+                        value={bulkGradeSelected}
+                        onChange={(e) => setBulkGradeSelected(e.target.value)}
+                        className="w-full glass px-3 py-2 rounded-lg"
+                      >
+                        <option value="Grade 7">Grade 7</option>
+                        <option value="Grade 8">Grade 8</option>
+                        <option value="Grade 9">Grade 9</option>
+                        <option value="Grade 10">Grade 10</option>
+                        <option value="Grade 11">Grade 11</option>
+                        <option value="Grade 12">Grade 12</option>
+                        <option value="Grade 13">Grade 13</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm mb-1">Section</label>
+                      <select
+                        value={bulkSectionSelected}
+                        onChange={(e) => setBulkSectionSelected(e.target.value)}
+                        className="w-full glass px-3 py-2 rounded-lg"
+                      >
+                        <option value="A">Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                        <option value="D">Section D</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm mb-1">Term</label>
+                      <select
+                        value={bulkTermSelected}
+                        onChange={(e) => setBulkTermSelected(e.target.value)}
+                        className="w-full glass px-3 py-2 rounded-lg"
+                      >
+                        <option value="Term 1">Term 1</option>
+                        <option value="Term 2">Term 2</option>
+                        <option value="Term 3">Term 3</option>
+                        <option value="Final">Final</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm mb-1">Academic Year</label>
+                      <input
+                        type="text"
+                        value={bulkYearSelected}
+                        onChange={(e) => setBulkYearSelected(e.target.value)}
+                        className="w-full glass px-3 py-2 rounded-lg"
+                        placeholder="Academic Year"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm mb-1">Number of Students</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="40"
+                        value={bulkStudentCount}
+                        onChange={(e) => setBulkStudentCount(parseInt(e.target.value) || 10)}
+                        className="w-full glass px-3 py-2 rounded-lg"
+                      />
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <button
+                        onClick={generateBulkResults}
+                        className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
+                      >
+                        <Plus size={16} />
+                        Generate Results
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
                 {/* School Details Section */}
                 <div className="mb-6 glass p-4 rounded-lg">
                   <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -1308,6 +1620,42 @@ const ResultGenerator: React.FC = () => {
               </select>
             </div>
           </div>
+          
+          {/* Bulk navigation controls */}
+          {bulkGenerationMode && bulkStudents.length > 0 && (
+            <div className="mb-4 flex justify-between items-center glass p-3 rounded-lg">
+              <button
+                onClick={() => navigateBulkStudents('prev')}
+                className="glass px-3 py-1.5 rounded-lg text-sm"
+              >
+                Previous Student
+              </button>
+              
+              <div className="text-sm font-medium">
+                Student {currentBulkStudentIndex + 1} of {bulkStudents.length}
+              </div>
+              
+              <button
+                onClick={() => navigateBulkStudents('next')}
+                className="glass px-3 py-1.5 rounded-lg text-sm"
+              >
+                Next Student
+              </button>
+            </div>
+          )}
+          
+          {/* Save bulk students button */}
+          {bulkGenerationMode && bulkStudents.length > 0 && (
+            <div className="mb-4 flex justify-end">
+              <button
+                onClick={saveBulkStudents}
+                className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <Save size={16} />
+                Save All {bulkStudents.length} Results
+              </button>
+            </div>
+          )}
           
           <div className="h-[calc(100vh-14rem)] overflow-y-auto glass p-4 rounded-lg">
             {previewMode === 'slip' ? (
