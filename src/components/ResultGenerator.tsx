@@ -9,7 +9,8 @@ import {
   Plus,
   Trash2,
   FileUp,
-  Settings
+  Settings,
+  Edit
 } from "lucide-react";
 import ResultSlipPreview from "./previews/ResultSlipPreview";
 import TermReportPreview from "./previews/TermReportPreview";
@@ -41,6 +42,11 @@ interface Student {
     present: number;
     total: number;
   };
+  // Adding missing properties for preview compatibility
+  section: string;
+  percentage: number;
+  rank: number;
+  generalRemarks: string;
 }
 
 interface School {
@@ -114,7 +120,12 @@ const ResultGenerator: React.FC = () => {
     attendance: {
       present: 0,
       total: 0,
-    }
+    },
+    // Adding missing properties for preview compatibility
+    section: "",
+    percentage: 0,
+    rank: 0,
+    generalRemarks: ""
   });
   
   const [students, setStudents] = useState<Student[]>([]);
@@ -195,7 +206,9 @@ const ResultGenerator: React.FC = () => {
       ...prev,
       totalMarks,
       averagePercentage,
-      overallGrade
+      overallGrade,
+      // Update the percentage field for preview compatibility
+      percentage: averagePercentage
     }));
   };
   
@@ -267,7 +280,13 @@ const ResultGenerator: React.FC = () => {
       return;
     }
     
-    const updatedStudent = { ...student };
+    // Update the section and rank fields before saving
+    const updatedStudent = { 
+      ...student,
+      section: student.section || "A", // Default section if not set
+      rank: student.rank || parseInt(student.position) || 0, // Use position as rank if available
+      generalRemarks: student.teacherRemarks // Use teacher remarks as general remarks
+    };
     
     // For new students
     if (!students.some(s => s.id === student.id)) {
@@ -276,6 +295,8 @@ const ResultGenerator: React.FC = () => {
       // For existing students
       setStudents(prev => prev.map(s => s.id === student.id ? updatedStudent : s));
     }
+    
+    setStudent(updatedStudent); // Update the current student with the new fields
     
     saveToLocalStorage();
     setEditMode(false);
@@ -305,7 +326,12 @@ const ResultGenerator: React.FC = () => {
       attendance: {
         present: 0,
         total: 0,
-      }
+      },
+      // Initialize the new fields
+      section: "",
+      percentage: 0,
+      rank: 0,
+      generalRemarks: ""
     });
     setEditMode(true);
   };
@@ -371,7 +397,8 @@ const ResultGenerator: React.FC = () => {
     setStudent(prev => ({
       ...prev,
       teacherRemarks: bulkRemarks.teacher || prev.teacherRemarks,
-      principalRemarks: bulkRemarks.principal || prev.principalRemarks
+      principalRemarks: bulkRemarks.principal || prev.principalRemarks,
+      generalRemarks: bulkRemarks.teacher || prev.generalRemarks // Update general remarks too
     }));
     
     toast({
@@ -618,6 +645,21 @@ const ResultGenerator: React.FC = () => {
                 </div>
                 
                 <div>
+                  <label className="block text-sm mb-1">Section</label>
+                  <select
+                    value={student.section}
+                    onChange={(e) => setStudent({...student, section: e.target.value})}
+                    className="w-full glass px-3 py-2 rounded-lg"
+                  >
+                    <option value="">Select Section</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                  </select>
+                </div>
+                
+                <div>
                   <label className="block text-sm mb-1">Term</label>
                   <select
                     value={student.term}
@@ -648,7 +690,11 @@ const ResultGenerator: React.FC = () => {
                   <input
                     type="text"
                     value={student.position}
-                    onChange={(e) => setStudent({...student, position: e.target.value})}
+                    onChange={(e) => {
+                      const pos = e.target.value;
+                      const rank = parseInt(pos) || 0;
+                      setStudent({...student, position: pos, rank: rank});
+                    }}
                     className="w-full glass px-3 py-2 rounded-lg"
                     placeholder="e.g. 1st, 2nd, 3rd"
                   />
@@ -687,7 +733,12 @@ const ResultGenerator: React.FC = () => {
                 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => document.getElementById('addSubjectModal')?.showModal()}
+                    onClick={() => {
+                      const modal = document.getElementById('addSubjectModal');
+                      if (modal && modal instanceof HTMLDialogElement) {
+                        modal.showModal();
+                      }
+                    }}
                     className="text-xs flex items-center gap-1 glass px-2 py-1 rounded"
                   >
                     <Plus size={12} />
@@ -796,7 +847,11 @@ const ResultGenerator: React.FC = () => {
                   <label className="block text-sm mb-1">Teacher's Remarks</label>
                   <textarea
                     value={student.teacherRemarks}
-                    onChange={(e) => setStudent({...student, teacherRemarks: e.target.value})}
+                    onChange={(e) => setStudent({
+                      ...student, 
+                      teacherRemarks: e.target.value,
+                      generalRemarks: e.target.value // Update generalRemarks as well
+                    })}
                     className="w-full glass px-3 py-2 rounded-lg h-24 resize-none"
                     placeholder="Teacher's Remarks"
                   />
@@ -898,7 +953,12 @@ const ResultGenerator: React.FC = () => {
                   
                   <div className="flex justify-end gap-2">
                     <button
-                      onClick={() => (document.getElementById('addSubjectModal') as HTMLDialogElement)?.close()}
+                      onClick={() => {
+                        const modal = document.getElementById('addSubjectModal');
+                        if (modal && modal instanceof HTMLDialogElement) {
+                          modal.close();
+                        }
+                      }}
                       className="glass px-4 py-2 rounded-lg"
                     >
                       Cancel
@@ -907,7 +967,10 @@ const ResultGenerator: React.FC = () => {
                     <button
                       onClick={() => {
                         addSubjectTemplate();
-                        (document.getElementById('addSubjectModal') as HTMLDialogElement)?.close();
+                        const modal = document.getElementById('addSubjectModal');
+                        if (modal && modal instanceof HTMLDialogElement) {
+                          modal.close();
+                        }
                       }}
                       className="btn-primary px-4 py-2 rounded-lg"
                     >
