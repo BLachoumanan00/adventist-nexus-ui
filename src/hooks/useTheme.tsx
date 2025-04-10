@@ -39,8 +39,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Set data-theme attribute for accessibility
     root.setAttribute("data-theme", theme);
     
-    // Apply theme to body element as well for wider compatibility
-    document.body.className = theme === "dark" ? "dark" : "light";
+    // Update body class
+    if (theme === "dark") {
+      document.body.classList.add("dark");
+      document.body.classList.remove("light");
+    } else {
+      document.body.classList.add("light");
+      document.body.classList.remove("dark");
+    }
     
     console.log("Theme changed to:", theme);
   }, [theme]);

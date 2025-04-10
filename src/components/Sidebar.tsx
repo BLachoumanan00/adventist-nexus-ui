@@ -14,9 +14,7 @@ import {
   Calendar,
   Award,
   FileBarChart,
-  ClipboardList,
-  UserPlus,
-  UserMinus
+  ClipboardList
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
 

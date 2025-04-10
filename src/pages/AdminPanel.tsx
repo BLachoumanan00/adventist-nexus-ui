@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog, AlertCircle, UserPlus, UserMinus, School, GraduationCap, BookOpenCheck } from "lucide-react";
+import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog, AlertCircle, UserPlus, UserMinus, School, GraduationCap, BookOpenCheck, Save, Plus, Minus, Check } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 
@@ -35,14 +34,21 @@ interface Teacher {
   contactNo: string;
 }
 
+interface GradeRange {
+  grade: string;
+  minPercentage: number;
+  maxPercentage: number;
+}
+
 interface GradeCriteria {
   grade: string;
   passingPercentage: number;
-  gradeRanges: {
-    grade: string;
-    minPercentage: number;
-    maxPercentage: number;
-  }[];
+  gradeRanges: GradeRange[];
+  hasAdvancedCriteria?: boolean;
+  mainSubjectsRanges?: GradeRange[];
+  subSubjectsRanges?: GradeRange[];
+  mainPassingPercentage?: number;
+  subPassingPercentage?: number;
 }
 
 interface CurrentUser {
@@ -61,6 +67,8 @@ const AdminPanel: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('users');
+  const [editingGradeId, setEditingGradeId] = useState<string | null>(null);
+  const [editingRangeType, setEditingRangeType] = useState<'standard' | 'main' | 'sub'>('standard');
 
   // Student management state
   const [students, setStudents] = useState<Student[]>([
@@ -132,7 +140,7 @@ const AdminPanel: React.FC = () => {
       ]
     },
     {
-      grade: 'Grade 11-12',
+      grade: 'Grade 11',
       passingPercentage: 55,
       gradeRanges: [
         { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
@@ -145,9 +153,47 @@ const AdminPanel: React.FC = () => {
         { grade: 'F', minPercentage: 0, maxPercentage: 54 },
       ]
     },
+    {
+      grade: 'Grade 12-13',
+      passingPercentage: 60,
+      gradeRanges: [
+        { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
+        { grade: 'A', minPercentage: 80, maxPercentage: 89 },
+        { grade: 'B+', minPercentage: 75, maxPercentage: 79 },
+        { grade: 'B', minPercentage: 70, maxPercentage: 74 },
+        { grade: 'C+', minPercentage: 65, maxPercentage: 69 },
+        { grade: 'C', minPercentage: 60, maxPercentage: 64 },
+        { grade: 'D', minPercentage: 55, maxPercentage: 59 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 54 },
+      ],
+      hasAdvancedCriteria: true,
+      mainPassingPercentage: 65,
+      subPassingPercentage: 55,
+      mainSubjectsRanges: [
+        { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
+        { grade: 'A', minPercentage: 85, maxPercentage: 89 },
+        { grade: 'B+', minPercentage: 80, maxPercentage: 84 },
+        { grade: 'B', minPercentage: 75, maxPercentage: 79 },
+        { grade: 'C+', minPercentage: 70, maxPercentage: 74 },
+        { grade: 'C', minPercentage: 65, maxPercentage: 69 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 64 },
+      ],
+      subSubjectsRanges: [
+        { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
+        { grade: 'A', minPercentage: 80, maxPercentage: 89 },
+        { grade: 'B+', minPercentage: 70, maxPercentage: 79 },
+        { grade: 'B', minPercentage: 65, maxPercentage: 69 },
+        { grade: 'C', minPercentage: 55, maxPercentage: 64 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 54 },
+      ]
+    }
   ]);
-  const [selectedGradeCriteria, setSelectedGradeCriteria] = useState<string>('');
-  const [editingGradeRange, setEditingGradeRange] = useState<number | null>(null);
+
+  const [newGradeRange, setNewGradeRange] = useState<GradeRange>({
+    grade: '',
+    minPercentage: 0,
+    maxPercentage: 0
+  });
 
   // Load current user on component mount
   useEffect(() => {
@@ -403,14 +449,116 @@ const AdminPanel: React.FC = () => {
     const updatedCriteria = [...gradeCriteria];
     if (field === 'passingPercentage') {
       updatedCriteria[index].passingPercentage = value;
+    } else if (field === 'mainPassingPercentage') {
+      updatedCriteria[index].mainPassingPercentage = value;
+    } else if (field === 'subPassingPercentage') {
+      updatedCriteria[index].subPassingPercentage = value;
     }
     setGradeCriteria(updatedCriteria);
+    saveGradeCriteria(updatedCriteria);
   };
 
-  const updateGradeRange = (criteriaIndex: number, rangeIndex: number, field: string, value: number) => {
+  const updateGradeRange = (criteriaIndex: number, rangeIndex: number, field: string, value: number, rangeType: 'standard' | 'main' | 'sub' = 'standard') => {
     const updatedCriteria = [...gradeCriteria];
-    updatedCriteria[criteriaIndex].gradeRanges[rangeIndex][field as 'minPercentage' | 'maxPercentage'] = value;
+    
+    if (rangeType === 'standard') {
+      updatedCriteria[criteriaIndex].gradeRanges[rangeIndex][field as 'minPercentage' | 'maxPercentage'] = value;
+    } else if (rangeType === 'main' && updatedCriteria[criteriaIndex].mainSubjectsRanges) {
+      updatedCriteria[criteriaIndex].mainSubjectsRanges[rangeIndex][field as 'minPercentage' | 'maxPercentage'] = value;
+    } else if (rangeType === 'sub' && updatedCriteria[criteriaIndex].subSubjectsRanges) {
+      updatedCriteria[criteriaIndex].subSubjectsRanges[rangeIndex][field as 'minPercentage' | 'maxPercentage'] = value;
+    }
+    
     setGradeCriteria(updatedCriteria);
+    saveGradeCriteria(updatedCriteria);
+  };
+
+  const addGradeRange = (criteriaIndex: number, rangeType: 'standard' | 'main' | 'sub' = 'standard') => {
+    if (!newGradeRange.grade) {
+      toast({
+        title: "Missing Grade Label",
+        description: "Please enter a grade label (e.g., A+, B, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updatedCriteria = [...gradeCriteria];
+    const newRange = { ...newGradeRange };
+
+    if (rangeType === 'standard') {
+      updatedCriteria[criteriaIndex].gradeRanges.push(newRange);
+      // Sort by maxPercentage descending
+      updatedCriteria[criteriaIndex].gradeRanges.sort((a, b) => b.maxPercentage - a.maxPercentage);
+    } else if (rangeType === 'main' && updatedCriteria[criteriaIndex].mainSubjectsRanges) {
+      updatedCriteria[criteriaIndex].mainSubjectsRanges.push(newRange);
+      updatedCriteria[criteriaIndex].mainSubjectsRanges.sort((a, b) => b.maxPercentage - a.maxPercentage);
+    } else if (rangeType === 'sub' && updatedCriteria[criteriaIndex].subSubjectsRanges) {
+      updatedCriteria[criteriaIndex].subSubjectsRanges.push(newRange);
+      updatedCriteria[criteriaIndex].subSubjectsRanges.sort((a, b) => b.maxPercentage - a.maxPercentage);
+    }
+
+    setGradeCriteria(updatedCriteria);
+    setNewGradeRange({
+      grade: '',
+      minPercentage: 0,
+      maxPercentage: 0
+    });
+    saveGradeCriteria(updatedCriteria);
+    
+    toast({
+      title: "Grade Range Added",
+      description: `New grade "${newRange.grade}" added successfully.`,
+    });
+  };
+
+  const removeGradeRange = (criteriaIndex: number, rangeIndex: number, rangeType: 'standard' | 'main' | 'sub' = 'standard') => {
+    const updatedCriteria = [...gradeCriteria];
+
+    if (rangeType === 'standard') {
+      // Don't allow removing if it's the last grade range
+      if (updatedCriteria[criteriaIndex].gradeRanges.length <= 1) {
+        toast({
+          title: "Cannot Remove Last Grade",
+          description: "There must be at least one grade range.",
+          variant: "destructive",
+        });
+        return;
+      }
+      updatedCriteria[criteriaIndex].gradeRanges.splice(rangeIndex, 1);
+    } else if (rangeType === 'main' && updatedCriteria[criteriaIndex].mainSubjectsRanges) {
+      if (updatedCriteria[criteriaIndex].mainSubjectsRanges.length <= 1) {
+        toast({
+          title: "Cannot Remove Last Grade",
+          description: "There must be at least one grade range for main subjects.",
+          variant: "destructive",
+        });
+        return;
+      }
+      updatedCriteria[criteriaIndex].mainSubjectsRanges.splice(rangeIndex, 1);
+    } else if (rangeType === 'sub' && updatedCriteria[criteriaIndex].subSubjectsRanges) {
+      if (updatedCriteria[criteriaIndex].subSubjectsRanges.length <= 1) {
+        toast({
+          title: "Cannot Remove Last Grade",
+          description: "There must be at least one grade range for sub subjects.",
+          variant: "destructive",
+        });
+        return;
+      }
+      updatedCriteria[criteriaIndex].subSubjectsRanges.splice(rangeIndex, 1);
+    }
+
+    setGradeCriteria(updatedCriteria);
+    saveGradeCriteria(updatedCriteria);
+    
+    toast({
+      title: "Grade Range Removed",
+      description: "Grade range has been removed successfully.",
+    });
+  };
+
+  const saveGradeCriteria = (criteria: GradeCriteria[]) => {
+    localStorage.setItem('gradeCriteria', JSON.stringify(criteria));
   };
 
   const getRoleBadgeClass = (role: string) => {
@@ -873,65 +1021,409 @@ const AdminPanel: React.FC = () => {
             <div className="glass rounded-xl p-4 mb-6">
               <h3 className="text-sm font-medium mb-3">Grade Criteria Settings</h3>
               <p className="text-xs text-foreground/70 mb-4">
-                Define passing percentage and grade ranges for different grade levels.
+                Define passing percentage and grade ranges for different grade levels. Grades 12-13 have separate criteria for main and sub subjects.
               </p>
               
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {gradeCriteria.map((criteria, index) => (
-                  <div key={index} className="glass p-4 rounded-lg">
+              <div className="grid grid-cols-1 gap-6">
+                {gradeCriteria.map((criteria, criteriaIndex) => (
+                  <div key={criteriaIndex} className="glass p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-medium">{criteria.grade}</h4>
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs">Passing %: </label>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          max="100" 
-                          value={criteria.passingPercentage}
-                          onChange={(e) => updateGradeCriteria(index, 'passingPercentage', parseInt(e.target.value))}
-                          className="w-16 glass px-2 py-1 rounded text-sm text-center"
-                        />
+                      <div className="flex items-center gap-4">
+                        {editingGradeId === criteria.grade ? (
+                          <button 
+                            onClick={() => {
+                              setEditingGradeId(null);
+                              toast({
+                                title: "Changes Saved",
+                                description: `Grade criteria for ${criteria.grade} has been updated.`
+                              });
+                            }}
+                            className="flex items-center gap-1 text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded"
+                          >
+                            <Save size={14} />
+                            <span>Save Changes</span>
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => setEditingGradeId(criteria.grade)}
+                            className="flex items-center gap-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                          >
+                            <Edit size={14} />
+                            <span>Edit Criteria</span>
+                          </button>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs">Passing %: </label>
+                          <input 
+                            type="number" 
+                            min="0" 
+                            max="100" 
+                            value={criteria.passingPercentage}
+                            onChange={(e) => updateGradeCriteria(criteriaIndex, 'passingPercentage', parseInt(e.target.value) || 0)}
+                            className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                            disabled={editingGradeId !== criteria.grade}
+                          />
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="text-left">
-                          <tr className="border-b border-white/10">
-                            <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
-                            <th className="pb-2 font-medium text-foreground/70 text-sm">Min %</th>
-                            <th className="pb-2 font-medium text-foreground/70 text-sm">Max %</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {criteria.gradeRanges.map((range, rangeIndex) => (
-                            <tr key={rangeIndex} className="border-b border-white/5">
-                              <td className="py-2">{range.grade}</td>
-                              <td className="py-2">
-                                <input 
-                                  type="number" 
-                                  min="0" 
-                                  max="100" 
-                                  value={range.minPercentage}
-                                  onChange={(e) => updateGradeRange(index, rangeIndex, 'minPercentage', parseInt(e.target.value))}
-                                  className="w-16 glass px-2 py-1 rounded text-sm text-center"
-                                />
-                              </td>
-                              <td className="py-2">
-                                <input 
-                                  type="number" 
-                                  min="0" 
-                                  max="100" 
-                                  value={range.maxPercentage}
-                                  onChange={(e) => updateGradeRange(index, rangeIndex, 'maxPercentage', parseInt(e.target.value))}
-                                  className="w-16 glass px-2 py-1 rounded text-sm text-center"
-                                />
-                              </td>
+                    {/* Standard Grading Criteria */}
+                    <div className="mb-5">
+                      <div className="flex justify-between items-center mb-2">
+                        <h5 className="text-sm font-medium">Standard Grading Scale</h5>
+                        {editingGradeId === criteria.grade && (
+                          <button 
+                            onClick={() => { 
+                              setEditingRangeType('standard'); 
+                              document.getElementById(`add-range-${criteriaIndex}`)?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="flex items-center gap-1 text-xs bg-primary hover:bg-primary/80 text-white px-2 py-1 rounded"
+                          >
+                            <Plus size={14} />
+                            <span>Add Grade</span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="text-left">
+                            <tr className="border-b border-white/10">
+                              <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
+                              <th className="pb-2 font-medium text-foreground/70 text-sm">Min %</th>
+                              <th className="pb-2 font-medium text-foreground/70 text-sm">Max %</th>
+                              {editingGradeId === criteria.grade && (
+                                <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
+                              )}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {criteria.gradeRanges.map((range, rangeIndex) => (
+                              <tr key={rangeIndex} className="border-b border-white/5">
+                                <td className="py-2">
+                                  {editingGradeId === criteria.grade ? (
+                                    <input
+                                      type="text"
+                                      value={range.grade}
+                                      onChange={(e) => {
+                                        const updatedCriteria = [...gradeCriteria];
+                                        updatedCriteria[criteriaIndex].gradeRanges[rangeIndex].grade = e.target.value;
+                                        setGradeCriteria(updatedCriteria);
+                                        saveGradeCriteria(updatedCriteria);
+                                      }}
+                                      className="w-16 glass px-2 py-1 rounded text-sm"
+                                    />
+                                  ) : (
+                                    range.grade
+                                  )}
+                                </td>
+                                <td className="py-2">
+                                  <input 
+                                    type="number" 
+                                    min="0" 
+                                    max="100" 
+                                    value={range.minPercentage}
+                                    onChange={(e) => updateGradeRange(criteriaIndex, rangeIndex, 'minPercentage', parseInt(e.target.value) || 0)}
+                                    className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                    disabled={editingGradeId !== criteria.grade}
+                                  />
+                                </td>
+                                <td className="py-2">
+                                  <input 
+                                    type="number" 
+                                    min="0" 
+                                    max="100" 
+                                    value={range.maxPercentage}
+                                    onChange={(e) => updateGradeRange(criteriaIndex, rangeIndex, 'maxPercentage', parseInt(e.target.value) || 0)}
+                                    className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                    disabled={editingGradeId !== criteria.grade}
+                                  />
+                                </td>
+                                {editingGradeId === criteria.grade && (
+                                  <td className="py-2">
+                                    <button 
+                                      onClick={() => removeGradeRange(criteriaIndex, rangeIndex)}
+                                      className="p-1 text-red-500 hover:bg-red-100/20 rounded"
+                                    >
+                                      <Minus size={14} />
+                                    </button>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
+                    
+                    {/* Advanced Criteria for Grades 12-13 */}
+                    {criteria.hasAdvancedCriteria && (
+                      <>
+                        {/* Main Subjects */}
+                        <div className="mb-5">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                              <h5 className="text-sm font-medium">Main Subjects</h5>
+                              <div className="flex items-center gap-1">
+                                <label className="text-xs">Passing %: </label>
+                                <input 
+                                  type="number" 
+                                  min="0" 
+                                  max="100" 
+                                  value={criteria.mainPassingPercentage || 0}
+                                  onChange={(e) => updateGradeCriteria(criteriaIndex, 'mainPassingPercentage', parseInt(e.target.value) || 0)}
+                                  className="w-16 glass px-2 py-1 rounded text-xs text-center"
+                                  disabled={editingGradeId !== criteria.grade}
+                                />
+                              </div>
+                            </div>
+                            {editingGradeId === criteria.grade && (
+                              <button 
+                                onClick={() => { 
+                                  setEditingRangeType('main'); 
+                                  document.getElementById(`add-range-${criteriaIndex}`)?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="flex items-center gap-1 text-xs bg-primary hover:bg-primary/80 text-white px-2 py-1 rounded"
+                              >
+                                <Plus size={14} />
+                                <span>Add Grade</span>
+                              </button>
+                            )}
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead className="text-left">
+                                <tr className="border-b border-white/10">
+                                  <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
+                                  <th className="pb-2 font-medium text-foreground/70 text-sm">Min %</th>
+                                  <th className="pb-2 font-medium text-foreground/70 text-sm">Max %</th>
+                                  {editingGradeId === criteria.grade && (
+                                    <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
+                                  )}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {criteria.mainSubjectsRanges?.map((range, rangeIndex) => (
+                                  <tr key={rangeIndex} className="border-b border-white/5">
+                                    <td className="py-2">
+                                      {editingGradeId === criteria.grade ? (
+                                        <input
+                                          type="text"
+                                          value={range.grade}
+                                          onChange={(e) => {
+                                            const updatedCriteria = [...gradeCriteria];
+                                            if (updatedCriteria[criteriaIndex].mainSubjectsRanges) {
+                                              updatedCriteria[criteriaIndex].mainSubjectsRanges![rangeIndex].grade = e.target.value;
+                                              setGradeCriteria(updatedCriteria);
+                                              saveGradeCriteria(updatedCriteria);
+                                            }
+                                          }}
+                                          className="w-16 glass px-2 py-1 rounded text-sm"
+                                        />
+                                      ) : (
+                                        range.grade
+                                      )}
+                                    </td>
+                                    <td className="py-2">
+                                      <input 
+                                        type="number" 
+                                        min="0" 
+                                        max="100" 
+                                        value={range.minPercentage}
+                                        onChange={(e) => updateGradeRange(criteriaIndex, rangeIndex, 'minPercentage', parseInt(e.target.value) || 0, 'main')}
+                                        className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                        disabled={editingGradeId !== criteria.grade}
+                                      />
+                                    </td>
+                                    <td className="py-2">
+                                      <input 
+                                        type="number" 
+                                        min="0" 
+                                        max="100" 
+                                        value={range.maxPercentage}
+                                        onChange={(e) => updateGradeRange(criteriaIndex, rangeIndex, 'maxPercentage', parseInt(e.target.value) || 0, 'main')}
+                                        className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                        disabled={editingGradeId !== criteria.grade}
+                                      />
+                                    </td>
+                                    {editingGradeId === criteria.grade && (
+                                      <td className="py-2">
+                                        <button 
+                                          onClick={() => removeGradeRange(criteriaIndex, rangeIndex, 'main')}
+                                          className="p-1 text-red-500 hover:bg-red-100/20 rounded"
+                                        >
+                                          <Minus size={14} />
+                                        </button>
+                                      </td>
+                                    )}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        
+                        {/* Sub Subjects */}
+                        <div className="mb-5">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                              <h5 className="text-sm font-medium">Sub Subjects</h5>
+                              <div className="flex items-center gap-1">
+                                <label className="text-xs">Passing %: </label>
+                                <input 
+                                  type="number" 
+                                  min="0" 
+                                  max="100" 
+                                  value={criteria.subPassingPercentage || 0}
+                                  onChange={(e) => updateGradeCriteria(criteriaIndex, 'subPassingPercentage', parseInt(e.target.value) || 0)}
+                                  className="w-16 glass px-2 py-1 rounded text-xs text-center"
+                                  disabled={editingGradeId !== criteria.grade}
+                                />
+                              </div>
+                            </div>
+                            {editingGradeId === criteria.grade && (
+                              <button 
+                                onClick={() => { 
+                                  setEditingRangeType('sub'); 
+                                  document.getElementById(`add-range-${criteriaIndex}`)?.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="flex items-center gap-1 text-xs bg-primary hover:bg-primary/80 text-white px-2 py-1 rounded"
+                              >
+                                <Plus size={14} />
+                                <span>Add Grade</span>
+                              </button>
+                            )}
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead className="text-left">
+                                <tr className="border-b border-white/10">
+                                  <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
+                                  <th className="pb-2 font-medium text-foreground/70 text-sm">Min %</th>
+                                  <th className="pb-2 font-medium text-foreground/70 text-sm">Max %</th>
+                                  {editingGradeId === criteria.grade && (
+                                    <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
+                                  )}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {criteria.subSubjectsRanges?.map((range, rangeIndex) => (
+                                  <tr key={rangeIndex} className="border-b border-white/5">
+                                    <td className="py-2">
+                                      {editingGradeId === criteria.grade ? (
+                                        <input
+                                          type="text"
+                                          value={range.grade}
+                                          onChange={(e) => {
+                                            const updatedCriteria = [...gradeCriteria];
+                                            if (updatedCriteria[criteriaIndex].subSubjectsRanges) {
+                                              updatedCriteria[criteriaIndex].subSubjectsRanges![rangeIndex].grade = e.target.value;
+                                              setGradeCriteria(updatedCriteria);
+                                              saveGradeCriteria(updatedCriteria);
+                                            }
+                                          }}
+                                          className="w-16 glass px-2 py-1 rounded text-sm"
+                                        />
+                                      ) : (
+                                        range.grade
+                                      )}
+                                    </td>
+                                    <td className="py-2">
+                                      <input 
+                                        type="number" 
+                                        min="0" 
+                                        max="100" 
+                                        value={range.minPercentage}
+                                        onChange={(e) => updateGradeRange(criteriaIndex, rangeIndex, 'minPercentage', parseInt(e.target.value) || 0, 'sub')}
+                                        className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                        disabled={editingGradeId !== criteria.grade}
+                                      />
+                                    </td>
+                                    <td className="py-2">
+                                      <input 
+                                        type="number" 
+                                        min="0" 
+                                        max="100" 
+                                        value={range.maxPercentage}
+                                        onChange={(e) => updateGradeRange(criteriaIndex, rangeIndex, 'maxPercentage', parseInt(e.target.value) || 0, 'sub')}
+                                        className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                        disabled={editingGradeId !== criteria.grade}
+                                      />
+                                    </td>
+                                    {editingGradeId === criteria.grade && (
+                                      <td className="py-2">
+                                        <button 
+                                          onClick={() => removeGradeRange(criteriaIndex, rangeIndex, 'sub')}
+                                          className="p-1 text-red-500 hover:bg-red-100/20 rounded"
+                                        >
+                                          <Minus size={14} />
+                                        </button>
+                                      </td>
+                                    )}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Add New Grade Range Form */}
+                    {editingGradeId === criteria.grade && (
+                      <div id={`add-range-${criteriaIndex}`} className="mt-4 p-3 bg-white/5 rounded-lg">
+                        <h5 className="text-sm font-medium mb-2">
+                          Add New Grade Range - {
+                            editingRangeType === 'standard' 
+                              ? 'Standard' 
+                              : editingRangeType === 'main' 
+                                ? 'Main Subjects' 
+                                : 'Sub Subjects'
+                          }
+                        </h5>
+                        <div className="flex flex-wrap gap-3 items-end">
+                          <div>
+                            <label className="text-xs text-foreground/70 mb-1 block">Grade Label</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., A+, B, C+"
+                              value={newGradeRange.grade}
+                              onChange={(e) => setNewGradeRange({...newGradeRange, grade: e.target.value})}
+                              className="w-20 glass px-2 py-1 rounded text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-foreground/70 mb-1 block">Min Percentage</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={newGradeRange.minPercentage}
+                              onChange={(e) => setNewGradeRange({...newGradeRange, minPercentage: parseInt(e.target.value) || 0})}
+                              className="w-20 glass px-2 py-1 rounded text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-foreground/70 mb-1 block">Max Percentage</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={newGradeRange.maxPercentage}
+                              onChange={(e) => setNewGradeRange({...newGradeRange, maxPercentage: parseInt(e.target.value) || 0})}
+                              className="w-20 glass px-2 py-1 rounded text-sm"
+                            />
+                          </div>
+                          <button
+                            onClick={() => addGradeRange(criteriaIndex, editingRangeType)}
+                            className="flex items-center gap-1 text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded h-[30px]"
+                          >
+                            <Check size={14} />
+                            <span>Add</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
