@@ -17,6 +17,7 @@ import {
   ClipboardList
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
+import { useTheme } from "../hooks/useTheme";
 
 interface SidebarLinkProps {
   to: string;
@@ -49,6 +50,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, text, badge }) => {
 
 const Sidebar: React.FC = () => {
   const { unreadCount } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
   
   return (
     <aside className="w-60 h-full overflow-y-auto glass border-r border-white/10 flex flex-col fixed left-0 top-0 bottom-0 z-30">
@@ -95,14 +97,40 @@ const Sidebar: React.FC = () => {
       </nav>
       
       <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-            <span className="text-primary font-medium">BL</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <span className="text-primary font-medium">BL</span>
+            </div>
+            <div>
+              <div className="text-sm font-medium">Billy Lachoumanan</div>
+              <div className="text-xs text-foreground/60">Superuser</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm font-medium">Billy Lachoumanan</div>
-            <div className="text-xs text-foreground/60">Superuser</div>
-          </div>
+          
+          <button 
+            onClick={toggleTheme}
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-700">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            )}
+          </button>
         </div>
       </div>
     </aside>

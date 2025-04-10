@@ -14,11 +14,13 @@ interface ResultPreviewProps {
     marks: number;
     grade: string;
     remarks: string;
+    isMainSubject?: boolean;
   }[];
+  daysAbsent?: number;
   onClose: () => void;
 }
 
-const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, onClose }) => {
+const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbsent = 0, onClose }) => {
   const totalMarks = results.reduce((sum, subject) => sum + subject.marks, 0);
   const average = totalMarks / results.length;
   const overallGrade = calculateOverallGrade(average);
@@ -70,6 +72,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, onClose
             <div>
               <p><span className="font-semibold">Grade:</span> {student.grade}</p>
               <p><span className="font-semibold">Section:</span> {student.section}</p>
+              <p><span className="font-semibold">Days Absent:</span> {daysAbsent}</p>
             </div>
           </div>
           
@@ -78,6 +81,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, onClose
               <thead className="bg-gray-100 dark:bg-gray-800">
                 <tr>
                   <th className="text-left py-3 px-4 font-medium">Subject</th>
+                  <th className="text-center py-3 px-4 font-medium">Type</th>
                   <th className="text-center py-3 px-4 font-medium">Marks</th>
                   <th className="text-center py-3 px-4 font-medium">Grade</th>
                   <th className="text-left py-3 px-4 font-medium">Remarks</th>
@@ -87,6 +91,10 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, onClose
                 {results.map((result, index) => (
                   <tr key={index} className="border-t border-gray-200 dark:border-gray-700">
                     <td className="py-3 px-4">{result.subject}</td>
+                    <td className="py-3 px-4 text-center">
+                      {result.isMainSubject !== undefined ? 
+                        (result.isMainSubject ? "Main" : "Sub") : "-"}
+                    </td>
                     <td className="py-3 px-4 text-center">{result.marks}</td>
                     <td className="py-3 px-4 text-center">{result.grade}</td>
                     <td className="py-3 px-4">{result.remarks}</td>
@@ -96,12 +104,14 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, onClose
               <tfoot className="bg-gray-50 dark:bg-gray-800/50 font-medium">
                 <tr>
                   <td className="py-3 px-4">Total</td>
+                  <td className="py-3 px-4"></td>
                   <td className="py-3 px-4 text-center">{totalMarks}</td>
                   <td className="py-3 px-4 text-center">{overallGrade}</td>
                   <td className="py-3 px-4"></td>
                 </tr>
                 <tr>
                   <td className="py-3 px-4">Average</td>
+                  <td className="py-3 px-4"></td>
                   <td className="py-3 px-4 text-center">{average.toFixed(2)}</td>
                   <td colSpan={2} className="py-3 px-4"></td>
                 </tr>

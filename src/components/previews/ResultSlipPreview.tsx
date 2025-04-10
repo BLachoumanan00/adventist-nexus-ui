@@ -28,6 +28,7 @@ interface ResultSlipPreviewProps {
   schoolName?: string;
   schoolAddress?: string;
   examName?: string;
+  daysAbsent?: number;
   onClose: () => void;
 }
 
@@ -39,6 +40,7 @@ const ResultSlipPreview: React.FC<ResultSlipPreviewProps> = ({
   schoolName = "Adventist College",
   schoolAddress = "Royal Road, Rose Hill, Mauritius",
   examName = "Term 1 Examination",
+  daysAbsent = 0,
   onClose
 }) => {
   const getGradeColor = (grade: string) => {
@@ -95,6 +97,7 @@ const ResultSlipPreview: React.FC<ResultSlipPreviewProps> = ({
             <div>
               <p><strong>Class:</strong> Grade {student.grade}-{student.section}</p>
               <p><strong>Rank:</strong> {student.rank}</p>
+              <p><strong>Days Absent:</strong> {daysAbsent}</p>
             </div>
           </div>
           
@@ -158,10 +161,10 @@ const ResultSlipPreview: React.FC<ResultSlipPreviewProps> = ({
             <div className="text-center">
               {signature && (
                 <div className="mb-2 h-20">
-                  <img src={signature} alt="Principal Signature" className="h-full object-contain mx-auto" />
+                  <img src={signature} alt="Rector Signature" className="h-full object-contain mx-auto" />
                 </div>
               )}
-              <p>Principal</p>
+              <p>Rector</p>
             </div>
           </div>
         </div>

@@ -28,7 +28,7 @@ interface TermReportPreviewProps {
   schoolName?: string;
   schoolAddress?: string;
   examName?: string;
-  attendance?: { present: number; total: number };
+  daysAbsent?: number;
   onClose: () => void;
 }
 
@@ -40,7 +40,7 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
   schoolName = "Adventist College",
   schoolAddress = "Royal Road, Rose Hill, Mauritius",
   examName = "Term 1 Examination",
-  attendance = { present: 85, total: 90 },
+  daysAbsent = 0,
   onClose
 }) => {
   const getGradeColor = (grade: string) => {
@@ -96,7 +96,7 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
             </div>
             <div>
               <p><strong>Class:</strong> Grade {student.grade}-{student.section}</p>
-              <p><strong>Attendance:</strong> {attendance.present}/{attendance.total} days ({Math.round((attendance.present/attendance.total)*100)}%)</p>
+              <p><strong>Days Absent:</strong> {daysAbsent}</p>
             </div>
           </div>
           
@@ -177,10 +177,10 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
             <div className="text-center">
               {signature && (
                 <div className="mb-2 h-20">
-                  <img src={signature} alt="Principal Signature" className="h-full object-contain mx-auto" />
+                  <img src={signature} alt="Rector Signature" className="h-full object-contain mx-auto" />
                 </div>
               )}
-              <p>Principal</p>
+              <p>Rector</p>
             </div>
           </div>
         </div>
