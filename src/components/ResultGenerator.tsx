@@ -1033,9 +1033,28 @@ const ResultGenerator: React.FC = () => {
           
           <div className="h-[calc(100vh-14rem)] overflow-y-auto glass p-4 rounded-lg">
             {previewMode === 'slip' ? (
-              <ResultSlipPreview student={student} school={schoolDetails} />
+              <ResultSlipPreview 
+                student={student}
+                subjects={student.subjects}
+                schoolLogo={schoolDetails.logo}
+                signature={schoolDetails.principalSignature}
+                schoolName={schoolDetails.name}
+                schoolAddress={schoolDetails.address}
+                examName={`${student.term} ${student.year}`}
+                onClose={() => {}} // This is required but not used in this context
+              />
             ) : (
-              <TermReportPreview student={student} school={schoolDetails} />
+              <TermReportPreview 
+                student={student}
+                subjects={student.subjects}
+                schoolLogo={schoolDetails.logo}
+                signature={schoolDetails.principalSignature}
+                schoolName={schoolDetails.name}
+                schoolAddress={schoolDetails.address}
+                examName={`${student.term} ${student.year}`}
+                attendance={student.attendance}
+                onClose={() => {}} // This is required but not used in this context
+              />
             )}
           </div>
         </div>
