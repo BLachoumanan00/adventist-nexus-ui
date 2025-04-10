@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Download,
@@ -9,7 +8,8 @@ import {
   Plus,
   Trash2,
   FileUp,
-  Settings
+  Settings,
+  Edit
 } from "lucide-react";
 import ResultSlipPreview from "./previews/ResultSlipPreview";
 import TermReportPreview from "./previews/TermReportPreview";
@@ -59,7 +59,7 @@ const ResultGenerator: React.FC = () => {
   const { logActivity } = useActivityLogger();
   
   const [editMode, setEditMode] = useState(true);
-  const [previewMode, setPreviewMode] = useState<'slip' | 'report'>('slip');
+  const [previewMode, setPreviewMode<'slip' | 'report'>('slip');
   const [schoolDetails, setSchoolDetails] = useState<School>({
     name: "Sunshine International School",
     logo: null,
@@ -687,7 +687,10 @@ const ResultGenerator: React.FC = () => {
                 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => document.getElementById('addSubjectModal')?.showModal()}
+                    onClick={() => {
+                      const modal = document.getElementById('addSubjectModal') as HTMLDialogElement;
+                      if (modal) modal.showModal();
+                    }}
                     className="text-xs flex items-center gap-1 glass px-2 py-1 rounded"
                   >
                     <Plus size={12} />
@@ -932,53 +935,4 @@ const ResultGenerator: React.FC = () => {
               {!editMode && (
                 <>
                   <button
-                    onClick={() => setEditMode(true)}
-                    className="glass px-3 py-1.5 rounded-lg text-sm flex items-center gap-1"
-                  >
-                    <Edit size={14} />
-                    <span>Edit</span>
-                  </button>
-                  
-                  <button
-                    onClick={downloadResult}
-                    className="glass px-3 py-1.5 rounded-lg text-sm flex items-center gap-1"
-                  >
-                    <Download size={14} />
-                    <span>Download</span>
-                  </button>
-                  
-                  <button
-                    onClick={printResult}
-                    className="glass px-3 py-1.5 rounded-lg text-sm flex items-center gap-1"
-                  >
-                    <Printer size={14} />
-                    <span>Print</span>
-                  </button>
-                </>
-              )}
-              
-              <select
-                value={previewMode}
-                onChange={(e) => setPreviewMode(e.target.value as 'slip' | 'report')}
-                className="glass px-3 py-1.5 rounded-lg text-sm"
-              >
-                <option value="slip">Result Slip</option>
-                <option value="report">Term Report</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="h-[calc(100vh-14rem)] overflow-y-auto glass p-4 rounded-lg">
-            {previewMode === 'slip' ? (
-              <ResultSlipPreview student={student} school={schoolDetails} />
-            ) : (
-              <TermReportPreview student={student} school={schoolDetails} />
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default ResultGenerator;
+                    onClick
