@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
-import { Download, FileText, Search, Eye, Filter } from "lucide-react";
+import { Download, FileText, Search, Eye, Filter, FileBarChart } from "lucide-react";
 import ResultPreview from "../components/ResultPreview";
+import { useToast } from "../hooks/use-toast";
 
 interface StudentResult {
   id: string;
@@ -99,6 +100,39 @@ const sampleStudents: StudentResult[] = [
     total: 245,
     average: 49,
     overallGrade: "D"
+  },
+  // Adding Grade 7 students
+  {
+    id: "ACM23101",
+    name: "Emma Thompson",
+    grade: "7",
+    section: "A",
+    subjects: [
+      { subject: "Mathematics", marks: 88, grade: "B+", remarks: "Shows good aptitude" },
+      { subject: "English", marks: 92, grade: "A", remarks: "Excellent communication" },
+      { subject: "Science", marks: 85, grade: "B+", remarks: "Good understanding" },
+      { subject: "History", marks: 78, grade: "B", remarks: "Strong historical knowledge" },
+      { subject: "Computer Science", marks: 90, grade: "A", remarks: "Naturally talented" },
+    ],
+    total: 433,
+    average: 86.6,
+    overallGrade: "B+"
+  },
+  {
+    id: "ACM23102",
+    name: "James Wilson",
+    grade: "7",
+    section: "A",
+    subjects: [
+      { subject: "Mathematics", marks: 75, grade: "B", remarks: "Good progress" },
+      { subject: "English", marks: 80, grade: "B", remarks: "Consistent effort" },
+      { subject: "Science", marks: 82, grade: "B", remarks: "Shows interest" },
+      { subject: "History", marks: 70, grade: "C+", remarks: "More focus needed" },
+      { subject: "Computer Science", marks: 85, grade: "B+", remarks: "Good practical skills" },
+    ],
+    total: 392,
+    average: 78.4,
+    overallGrade: "B"
   }
 ];
 
@@ -108,6 +142,7 @@ const Results: React.FC = () => {
   const [selectedSection, setSelectedSection] = useState('All');
   const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const { toast } = useToast();
   
   const filteredStudents = sampleStudents.filter(student => {
     const matchesSearch = 
@@ -128,6 +163,33 @@ const Results: React.FC = () => {
   const closePreview = () => {
     setShowPreview(false);
   };
+
+  const generateBulkResults = () => {
+    // In a real application, this would generate PDFs and create a zip file
+    // For now, we'll just simulate it
+    const studentsToGenerate = selectedGrade === 'All' ? filteredStudents : 
+      filteredStudents.filter(s => s.grade === selectedGrade);
+
+    toast({
+      title: "Results Generated",
+      description: `Generated ${studentsToGenerate.length} result slips for ${selectedGrade === 'All' ? 'all grades' : 'Grade ' + selectedGrade}`
+    });
+  };
+
+  const generateBulkReports = () => {
+    // In a real application, this would generate PDFs and create a zip file
+    // For now, we'll just simulate it
+    const studentsToGenerate = selectedGrade === 'All' ? filteredStudents : 
+      filteredStudents.filter(s => s.grade === selectedGrade);
+
+    toast({
+      title: "Reports Generated",
+      description: `Generated ${studentsToGenerate.length} term reports for ${selectedGrade === 'All' ? 'all grades' : 'Grade ' + selectedGrade}`
+    });
+  };
+
+  const uniqueGrades = ['All', ...new Set(sampleStudents.map(student => student.grade))].sort();
+  const uniqueSections = ['All', ...new Set(sampleStudents.map(student => student.section))].sort();
 
   return (
     <div className="animate-fade-in">
@@ -159,13 +221,9 @@ const Results: React.FC = () => {
                   onChange={(e) => setSelectedGrade(e.target.value)}
                   className="w-full rounded-lg glass border-none px-4 py-2"
                 >
-                  <option value="All">All Grades</option>
-                  <option value="7">Grade 7</option>
-                  <option value="8">Grade 8</option>
-                  <option value="9">Grade 9</option>
-                  <option value="10">Grade 10</option>
-                  <option value="11">Grade 11</option>
-                  <option value="12">Grade 12</option>
+                  {uniqueGrades.map(grade => (
+                    <option key={grade} value={grade}>{grade === 'All' ? 'All Grades' : `Grade ${grade}`}</option>
+                  ))}
                 </select>
               </div>
               
@@ -175,10 +233,9 @@ const Results: React.FC = () => {
                   onChange={(e) => setSelectedSection(e.target.value)}
                   className="w-full rounded-lg glass border-none px-4 py-2"
                 >
-                  <option value="All">All Sections</option>
-                  <option value="A">Section A</option>
-                  <option value="B">Section B</option>
-                  <option value="C">Section C</option>
+                  {uniqueSections.map(section => (
+                    <option key={section} value={section}>{section === 'All' ? 'All Sections' : `Section ${section}`}</option>
+                  ))}
                 </select>
               </div>
               
@@ -247,10 +304,21 @@ const Results: React.FC = () => {
           </table>
         </div>
         
-        <div className="mt-6 flex justify-end">
-          <button className="btn-primary flex items-center gap-2">
+        <div className="mt-6 flex flex-wrap gap-4 justify-end">
+          <button 
+            className="btn-primary flex items-center gap-2"
+            onClick={generateBulkResults}
+          >
             <Download size={18} />
-            <span>Generate All Results</span>
+            <span>Generate Result Slips</span>
+          </button>
+          
+          <button 
+            className="glass hover:bg-white/20 transition-colors px-4 py-2 rounded-lg flex items-center gap-2"
+            onClick={generateBulkReports}
+          >
+            <FileBarChart size={18} />
+            <span>Generate Term Reports</span>
           </button>
         </div>
       </div>

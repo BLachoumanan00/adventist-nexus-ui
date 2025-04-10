@@ -112,7 +112,7 @@ const Sidebar: React.FC = () => {
           
           <button 
             onClick={toggleTheme}
-            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20"
+            className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
