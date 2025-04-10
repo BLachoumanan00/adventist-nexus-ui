@@ -59,7 +59,7 @@ const ResultGenerator: React.FC = () => {
   const { logActivity } = useActivityLogger();
   
   const [editMode, setEditMode] = useState(true);
-  const [previewMode, setPreviewMode<'slip' | 'report'>('slip');
+  const [previewMode, setPreviewMode] = useState<'slip' | 'report'>('slip');
   const [schoolDetails, setSchoolDetails] = useState<School>({
     name: "Sunshine International School",
     logo: null,
@@ -935,4 +935,3 @@ const ResultGenerator: React.FC = () => {
               {!editMode && (
                 <>
                   <button
-                    onClick
