@@ -40,7 +40,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.setAttribute("data-theme", theme);
     
     // Apply theme to body element as well for wider compatibility
-    document.body.className = theme;
+    document.body.className = theme === "dark" ? "dark" : "light";
     
     console.log("Theme changed to:", theme);
   }, [theme]);

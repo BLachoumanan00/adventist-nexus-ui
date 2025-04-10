@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from "react";
-import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog, AlertCircle } from "lucide-react";
+import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog, AlertCircle, UserPlus, UserMinus, School, GraduationCap, BookOpenCheck } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 
 interface User {
   id: number;
@@ -11,6 +12,37 @@ interface User {
   department?: string;
   addedOn: string;
   isSuperUser?: boolean;
+}
+
+interface Student {
+  id: number;
+  name: string;
+  grade: string;
+  section: string;
+  rollNo: string;
+  parentName: string;
+  contactNo: string;
+  addedOn: string;
+}
+
+interface Teacher {
+  id: number;
+  name: string;
+  email: string;
+  department: string;
+  qualification: string;
+  joinDate: string;
+  contactNo: string;
+}
+
+interface GradeCriteria {
+  grade: string;
+  passingPercentage: number;
+  gradeRanges: {
+    grade: string;
+    minPercentage: number;
+    maxPercentage: number;
+  }[];
 }
 
 interface CurrentUser {
@@ -28,6 +60,94 @@ const AdminPanel: React.FC = () => {
   const [newUserDepartment, setNewUserDepartment] = useState('');
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('users');
+
+  // Student management state
+  const [students, setStudents] = useState<Student[]>([
+    { id: 1, name: 'John Carter', grade: 'Grade 3', section: 'A', rollNo: 'S1001', parentName: 'David Carter', contactNo: '555-123-4567', addedOn: '2023-07-15' },
+    { id: 2, name: 'Emma Wilson', grade: 'Grade 5', section: 'B', rollNo: 'S1002', parentName: 'Mary Wilson', contactNo: '555-234-5678', addedOn: '2023-08-10' },
+    { id: 3, name: 'Michael Chen', grade: 'Grade 8', section: 'A', rollNo: 'S1003', parentName: 'James Chen', contactNo: '555-345-6789', addedOn: '2023-06-22' },
+    { id: 4, name: 'Sophia Kumar', grade: 'Grade 10', section: 'C', rollNo: 'S1004', parentName: 'Rahul Kumar', contactNo: '555-456-7890', addedOn: '2023-09-01' },
+  ]);
+  const [newStudent, setNewStudent] = useState<Omit<Student, 'id' | 'addedOn'>>({
+    name: '',
+    grade: '',
+    section: '',
+    rollNo: '',
+    parentName: '',
+    contactNo: '',
+  });
+
+  // Teacher management state
+  const [teachers, setTeachers] = useState<Teacher[]>([
+    { id: 1, name: 'Dr. Sarah Johnson', email: 'sjohnson@adventistcollege.mu', department: 'Science', qualification: 'PhD, Chemistry', joinDate: '2020-05-10', contactNo: '555-987-6543' },
+    { id: 2, name: 'Prof. Michael Brown', email: 'mbrown@adventistcollege.mu', department: 'Mathematics', qualification: 'MSc, Applied Mathematics', joinDate: '2018-08-15', contactNo: '555-876-5432' },
+    { id: 3, name: 'Ms. Emily Davis', email: 'edavis@adventistcollege.mu', department: 'English', qualification: 'BA, English Literature', joinDate: '2021-01-20', contactNo: '555-765-4321' },
+  ]);
+  const [newTeacher, setNewTeacher] = useState<Omit<Teacher, 'id'>>({
+    name: '',
+    email: '',
+    department: '',
+    qualification: '',
+    joinDate: new Date().toISOString().split('T')[0],
+    contactNo: '',
+  });
+
+  // Grade criteria management state
+  const [gradeCriteria, setGradeCriteria] = useState<GradeCriteria[]>([
+    {
+      grade: 'Grade 1-3',
+      passingPercentage: 40,
+      gradeRanges: [
+        { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
+        { grade: 'A', minPercentage: 80, maxPercentage: 89 },
+        { grade: 'B', minPercentage: 70, maxPercentage: 79 },
+        { grade: 'C', minPercentage: 60, maxPercentage: 69 },
+        { grade: 'D', minPercentage: 40, maxPercentage: 59 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 39 },
+      ]
+    },
+    {
+      grade: 'Grade 4-6',
+      passingPercentage: 45,
+      gradeRanges: [
+        { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
+        { grade: 'A', minPercentage: 80, maxPercentage: 89 },
+        { grade: 'B', minPercentage: 70, maxPercentage: 79 },
+        { grade: 'C', minPercentage: 60, maxPercentage: 69 },
+        { grade: 'D', minPercentage: 45, maxPercentage: 59 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 44 },
+      ]
+    },
+    {
+      grade: 'Grade 7-10',
+      passingPercentage: 50,
+      gradeRanges: [
+        { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
+        { grade: 'A', minPercentage: 80, maxPercentage: 89 },
+        { grade: 'B', minPercentage: 70, maxPercentage: 79 },
+        { grade: 'C', minPercentage: 60, maxPercentage: 69 },
+        { grade: 'D', minPercentage: 50, maxPercentage: 59 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 49 },
+      ]
+    },
+    {
+      grade: 'Grade 11-12',
+      passingPercentage: 55,
+      gradeRanges: [
+        { grade: 'A+', minPercentage: 90, maxPercentage: 100 },
+        { grade: 'A', minPercentage: 80, maxPercentage: 89 },
+        { grade: 'B+', minPercentage: 75, maxPercentage: 79 },
+        { grade: 'B', minPercentage: 70, maxPercentage: 74 },
+        { grade: 'C+', minPercentage: 65, maxPercentage: 69 },
+        { grade: 'C', minPercentage: 60, maxPercentage: 64 },
+        { grade: 'D', minPercentage: 55, maxPercentage: 59 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 54 },
+      ]
+    },
+  ]);
+  const [selectedGradeCriteria, setSelectedGradeCriteria] = useState<string>('');
+  const [editingGradeRange, setEditingGradeRange] = useState<number | null>(null);
 
   // Load current user on component mount
   useEffect(() => {
@@ -36,7 +156,36 @@ const AdminPanel: React.FC = () => {
       const user = JSON.parse(userStr);
       setCurrentUser(user as CurrentUser);
     }
+
+    // Load existing students and teachers from localStorage
+    const savedStudents = localStorage.getItem('students');
+    if (savedStudents) {
+      setStudents(JSON.parse(savedStudents));
+    }
+
+    const savedTeachers = localStorage.getItem('teachers');
+    if (savedTeachers) {
+      setTeachers(JSON.parse(savedTeachers));
+    }
+
+    const savedGradeCriteria = localStorage.getItem('gradeCriteria');
+    if (savedGradeCriteria) {
+      setGradeCriteria(JSON.parse(savedGradeCriteria));
+    }
   }, []);
+
+  // Save to localStorage when data changes
+  useEffect(() => {
+    localStorage.setItem('students', JSON.stringify(students));
+  }, [students]);
+
+  useEffect(() => {
+    localStorage.setItem('teachers', JSON.stringify(teachers));
+  }, [teachers]);
+
+  useEffect(() => {
+    localStorage.setItem('gradeCriteria', JSON.stringify(gradeCriteria));
+  }, [gradeCriteria]);
 
   // Update email domain
   const formatEmail = (email: string) => {
@@ -59,6 +208,20 @@ const AdminPanel: React.FC = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.department && user.department.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const filteredStudents = students.filter(student => 
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    student.grade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.section.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.parentName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredTeachers = teachers.filter(teacher => 
+    teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    teacher.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    teacher.qualification.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddUser = () => {
@@ -145,6 +308,111 @@ const AdminPanel: React.FC = () => {
     });
   };
 
+  const handleAddStudent = () => {
+    if (!newStudent.name || !newStudent.grade || !newStudent.rollNo) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill all required fields (Name, Grade, and Roll No).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const studentId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
+    
+    const student: Student = {
+      ...newStudent,
+      id: studentId,
+      addedOn: new Date().toISOString().split('T')[0]
+    };
+    
+    setStudents([...students, student]);
+    setNewStudent({
+      name: '',
+      grade: '',
+      section: '',
+      rollNo: '',
+      parentName: '',
+      contactNo: '',
+    });
+    
+    toast({
+      title: "Student Added Successfully",
+      description: `${student.name} has been added to ${student.grade}.`,
+    });
+  };
+
+  const handleDeleteStudent = (id: number) => {
+    const studentToDelete = students.find(student => student.id === id);
+    
+    setStudents(students.filter(student => student.id !== id));
+    
+    toast({
+      title: "Student Deleted",
+      description: `${studentToDelete?.name} has been removed.`,
+    });
+  };
+
+  const handleAddTeacher = () => {
+    if (!newTeacher.name || !newTeacher.email || !newTeacher.department) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill all required fields (Name, Email, and Department).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const teacherId = teachers.length > 0 ? Math.max(...teachers.map(t => t.id)) + 1 : 1;
+    const formattedEmail = formatEmail(newTeacher.email);
+    
+    const teacher: Teacher = {
+      ...newTeacher,
+      id: teacherId,
+      email: formattedEmail
+    };
+    
+    setTeachers([...teachers, teacher]);
+    setNewTeacher({
+      name: '',
+      email: '',
+      department: '',
+      qualification: '',
+      joinDate: new Date().toISOString().split('T')[0],
+      contactNo: '',
+    });
+    
+    toast({
+      title: "Teacher Added Successfully",
+      description: `${teacher.name} has been added to the ${teacher.department} department.`,
+    });
+  };
+
+  const handleDeleteTeacher = (id: number) => {
+    const teacherToDelete = teachers.find(teacher => teacher.id === id);
+    
+    setTeachers(teachers.filter(teacher => teacher.id !== id));
+    
+    toast({
+      title: "Teacher Deleted",
+      description: `${teacherToDelete?.name} has been removed.`,
+    });
+  };
+
+  const updateGradeCriteria = (index: number, field: string, value: number) => {
+    const updatedCriteria = [...gradeCriteria];
+    if (field === 'passingPercentage') {
+      updatedCriteria[index].passingPercentage = value;
+    }
+    setGradeCriteria(updatedCriteria);
+  };
+
+  const updateGradeRange = (criteriaIndex: number, rangeIndex: number, field: string, value: number) => {
+    const updatedCriteria = [...gradeCriteria];
+    updatedCriteria[criteriaIndex].gradeRanges[rangeIndex][field as 'minPercentage' | 'maxPercentage'] = value;
+    setGradeCriteria(updatedCriteria);
+  };
+
   const getRoleBadgeClass = (role: string) => {
     switch(role) {
       case 'Admin': 
@@ -168,13 +436,13 @@ const AdminPanel: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-3">
             <UserCog size={24} className="text-theme-purple" />
-            <h2 className="text-xl font-semibold">User Management</h2>
+            <h2 className="text-xl font-semibold">Administration</h2>
           </div>
           
           <div className="relative">
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 pr-4 py-2 rounded-full glass border-none focus:ring-2 ring-primary/30 outline-none w-full md:w-64"
@@ -183,133 +451,493 @@ const AdminPanel: React.FC = () => {
           </div>
         </div>
         
-        <div className="glass rounded-xl p-4 mb-6">
-          <h3 className="text-sm font-medium mb-3">Assign New User</h3>
+        <Tabs defaultValue="users" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="glass mb-6 w-full flex justify-start overflow-x-auto">
+            <TabsTrigger value="users" className="px-4 py-2">
+              <UserCog size={16} className="mr-2" />
+              Users & Permissions
+            </TabsTrigger>
+            <TabsTrigger value="students" className="px-4 py-2">
+              <UserPlus size={16} className="mr-2" />
+              Students
+            </TabsTrigger>
+            <TabsTrigger value="teachers" className="px-4 py-2">
+              <GraduationCap size={16} className="mr-2" />
+              Teachers
+            </TabsTrigger>
+            <TabsTrigger value="grades" className="px-4 py-2">
+              <BookOpenCheck size={16} className="mr-2" />
+              Grade Criteria
+            </TabsTrigger>
+          </TabsList>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-            <div>
-              <label className="text-xs text-foreground/70 mb-1 block">Email Address</label>
-              <input
-                type="email"
-                placeholder="Email"
-                value={newUserEmail}
-                onChange={(e) => setNewUserEmail(e.target.value)}
-                className="w-full rounded-lg glass border-none px-4 py-2"
-              />
-              <p className="text-xs text-foreground/50 mt-1">
-                Domain @adventistcollege.mu will be added if not specified
+          <TabsContent value="users">
+            <div className="glass rounded-xl p-4 mb-6">
+              <h3 className="text-sm font-medium mb-3">Assign New User</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                  <p className="text-xs text-foreground/50 mt-1">
+                    Domain @adventistcollege.mu will be added if not specified
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Name (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Department (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Department"
+                    value={newUserDepartment}
+                    onChange={(e) => setNewUserDepartment(e.target.value)}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Role</label>
+                  <select 
+                    value={newUserRole} 
+                    onChange={(e) => setNewUserRole(e.target.value as 'Teacher' | 'Admin' | 'Clerk')}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  >
+                    <option value="Teacher">Teacher</option>
+                    {currentUser?.isSuperUser && <option value="Admin">Admin</option>}
+                    <option value="Clerk">Clerk</option>
+                  </select>
+                  {newUserRole === 'Admin' && !currentUser?.isSuperUser && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center">
+                      <AlertCircle size={12} className="mr-1" />
+                      Only superuser can assign admin role
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddUser}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <PlusCircle size={18} />
+                  <span>Add User</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="text-left">
+                  <tr className="border-b border-white/10">
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Name</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Email</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Role</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Department</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Added On</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map(user => (
+                    <tr key={user.id} className={`border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors ${
+                      isSuperUser(user.email) ? 'bg-blue-50/10 dark:bg-blue-900/10' : ''
+                    }`}>
+                      <td className="py-3">
+                        {user.name}
+                        {isSuperUser(user.email) && (
+                          <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-xs rounded-full">
+                            Superuser
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3">{user.email}</td>
+                      <td className="py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(user.role)}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="py-3">{user.department || '-'}</td>
+                      <td className="py-3 text-foreground/70 text-sm">{user.addedOn}</td>
+                      <td className="py-3">
+                        <div className="flex gap-2">
+                          <button className="p-1 rounded hover:bg-white/10 transition-colors">
+                            <Edit size={16} className="text-foreground/70" />
+                          </button>
+                          <button 
+                            className="p-1 rounded hover:bg-white/10 transition-colors"
+                            onClick={() => handleDeleteUser(user.id)}
+                            disabled={isSuperUser(user.email) || (user.role === 'Admin' && !currentUser?.isSuperUser)}
+                          >
+                            <Trash size={16} className={
+                              (isSuperUser(user.email) || (user.role === 'Admin' && !currentUser?.isSuperUser)) 
+                                ? "text-foreground/30" 
+                                : "text-foreground/70"
+                            } />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="students">
+            <div className="glass rounded-xl p-4 mb-6">
+              <h3 className="text-sm font-medium mb-3">Add New Student</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Student Name*</label>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={newStudent.name}
+                    onChange={(e) => setNewStudent({...newStudent, name: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Grade/Class*</label>
+                  <select
+                    value={newStudent.grade}
+                    onChange={(e) => setNewStudent({...newStudent, grade: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  >
+                    <option value="">Select Grade</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="Grade 11">Grade 11</option>
+                    <option value="Grade 12">Grade 12</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Section</label>
+                  <select
+                    value={newStudent.section}
+                    onChange={(e) => setNewStudent({...newStudent, section: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  >
+                    <option value="">Select Section</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Roll Number*</label>
+                  <input
+                    type="text"
+                    placeholder="Roll No/Student ID"
+                    value={newStudent.rollNo}
+                    onChange={(e) => setNewStudent({...newStudent, rollNo: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Parent/Guardian Name</label>
+                  <input
+                    type="text"
+                    placeholder="Parent's Name"
+                    value={newStudent.parentName}
+                    onChange={(e) => setNewStudent({...newStudent, parentName: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Contact Number</label>
+                  <input
+                    type="text"
+                    placeholder="Contact Number"
+                    value={newStudent.contactNo}
+                    onChange={(e) => setNewStudent({...newStudent, contactNo: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddStudent}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <UserPlus size={18} />
+                  <span>Add Student</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="text-left">
+                  <tr className="border-b border-white/10">
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Roll No</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Name</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Section</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Parent/Guardian</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Contact</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.map(student => (
+                    <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                      <td className="py-3">{student.rollNo}</td>
+                      <td className="py-3">{student.name}</td>
+                      <td className="py-3">{student.grade}</td>
+                      <td className="py-3">{student.section}</td>
+                      <td className="py-3">{student.parentName || '-'}</td>
+                      <td className="py-3">{student.contactNo || '-'}</td>
+                      <td className="py-3">
+                        <div className="flex gap-2">
+                          <button className="p-1 rounded hover:bg-white/10 transition-colors">
+                            <Edit size={16} className="text-foreground/70" />
+                          </button>
+                          <button 
+                            className="p-1 rounded hover:bg-white/10 transition-colors"
+                            onClick={() => handleDeleteStudent(student.id)}
+                          >
+                            <Trash size={16} className="text-foreground/70" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="teachers">
+            <div className="glass rounded-xl p-4 mb-6">
+              <h3 className="text-sm font-medium mb-3">Add New Teacher</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Teacher Name*</label>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={newTeacher.name}
+                    onChange={(e) => setNewTeacher({...newTeacher, name: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Email Address*</label>
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={newTeacher.email}
+                    onChange={(e) => setNewTeacher({...newTeacher, email: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                  <p className="text-xs text-foreground/50 mt-1">
+                    Domain @adventistcollege.mu will be added if not specified
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Department*</label>
+                  <input
+                    type="text"
+                    placeholder="Department"
+                    value={newTeacher.department}
+                    onChange={(e) => setNewTeacher({...newTeacher, department: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Qualification</label>
+                  <input
+                    type="text"
+                    placeholder="Qualification"
+                    value={newTeacher.qualification}
+                    onChange={(e) => setNewTeacher({...newTeacher, qualification: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Join Date</label>
+                  <input
+                    type="date"
+                    value={newTeacher.joinDate}
+                    onChange={(e) => setNewTeacher({...newTeacher, joinDate: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-xs text-foreground/70 mb-1 block">Contact Number</label>
+                  <input
+                    type="text"
+                    placeholder="Contact Number"
+                    value={newTeacher.contactNo}
+                    onChange={(e) => setNewTeacher({...newTeacher, contactNo: e.target.value})}
+                    className="w-full rounded-lg glass border-none px-4 py-2"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddTeacher}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <UserPlus size={18} />
+                  <span>Add Teacher</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="text-left">
+                  <tr className="border-b border-white/10">
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Name</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Email</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Department</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Qualification</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Join Date</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Contact</th>
+                    <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTeachers.map(teacher => (
+                    <tr key={teacher.id} className="border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
+                      <td className="py-3">{teacher.name}</td>
+                      <td className="py-3">{teacher.email}</td>
+                      <td className="py-3">{teacher.department}</td>
+                      <td className="py-3">{teacher.qualification || '-'}</td>
+                      <td className="py-3">{teacher.joinDate}</td>
+                      <td className="py-3">{teacher.contactNo || '-'}</td>
+                      <td className="py-3">
+                        <div className="flex gap-2">
+                          <button className="p-1 rounded hover:bg-white/10 transition-colors">
+                            <Edit size={16} className="text-foreground/70" />
+                          </button>
+                          <button 
+                            className="p-1 rounded hover:bg-white/10 transition-colors"
+                            onClick={() => handleDeleteTeacher(teacher.id)}
+                          >
+                            <Trash size={16} className="text-foreground/70" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="grades">
+            <div className="glass rounded-xl p-4 mb-6">
+              <h3 className="text-sm font-medium mb-3">Grade Criteria Settings</h3>
+              <p className="text-xs text-foreground/70 mb-4">
+                Define passing percentage and grade ranges for different grade levels.
               </p>
-            </div>
-            
-            <div>
-              <label className="text-xs text-foreground/70 mb-1 block">Name (Optional)</label>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={newUserName}
-                onChange={(e) => setNewUserName(e.target.value)}
-                className="w-full rounded-lg glass border-none px-4 py-2"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs text-foreground/70 mb-1 block">Department (Optional)</label>
-              <input
-                type="text"
-                placeholder="Department"
-                value={newUserDepartment}
-                onChange={(e) => setNewUserDepartment(e.target.value)}
-                className="w-full rounded-lg glass border-none px-4 py-2"
-              />
-            </div>
-            
-            <div>
-              <label className="text-xs text-foreground/70 mb-1 block">Role</label>
-              <select 
-                value={newUserRole} 
-                onChange={(e) => setNewUserRole(e.target.value as 'Teacher' | 'Admin' | 'Clerk')}
-                className="w-full rounded-lg glass border-none px-4 py-2"
-              >
-                <option value="Teacher">Teacher</option>
-                {currentUser?.isSuperUser && <option value="Admin">Admin</option>}
-                <option value="Clerk">Clerk</option>
-              </select>
-              {newUserRole === 'Admin' && !currentUser?.isSuperUser && (
-                <p className="text-xs text-red-500 mt-1 flex items-center">
-                  <AlertCircle size={12} className="mr-1" />
-                  Only superuser can assign admin role
-                </p>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex justify-end">
-            <button
-              onClick={handleAddUser}
-              className="btn-primary flex items-center gap-2"
-            >
-              <PlusCircle size={18} />
-              <span>Add User</span>
-            </button>
-          </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="text-left">
-              <tr className="border-b border-white/10">
-                <th className="pb-2 font-medium text-foreground/70 text-sm">Name</th>
-                <th className="pb-2 font-medium text-foreground/70 text-sm">Email</th>
-                <th className="pb-2 font-medium text-foreground/70 text-sm">Role</th>
-                <th className="pb-2 font-medium text-foreground/70 text-sm">Department</th>
-                <th className="pb-2 font-medium text-foreground/70 text-sm">Added On</th>
-                <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.id} className={`border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors ${
-                  isSuperUser(user.email) ? 'bg-blue-50/10 dark:bg-blue-900/10' : ''
-                }`}>
-                  <td className="py-3">
-                    {user.name}
-                    {isSuperUser(user.email) && (
-                      <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-xs rounded-full">
-                        Superuser
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3">{user.email}</td>
-                  <td className="py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(user.role)}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="py-3">{user.department || '-'}</td>
-                  <td className="py-3 text-foreground/70 text-sm">{user.addedOn}</td>
-                  <td className="py-3">
-                    <div className="flex gap-2">
-                      <button className="p-1 rounded hover:bg-white/10 transition-colors">
-                        <Edit size={16} className="text-foreground/70" />
-                      </button>
-                      <button 
-                        className="p-1 rounded hover:bg-white/10 transition-colors"
-                        onClick={() => handleDeleteUser(user.id)}
-                        disabled={isSuperUser(user.email) || (user.role === 'Admin' && !currentUser?.isSuperUser)}
-                      >
-                        <Trash size={16} className={
-                          (isSuperUser(user.email) || (user.role === 'Admin' && !currentUser?.isSuperUser)) 
-                            ? "text-foreground/30" 
-                            : "text-foreground/70"
-                        } />
-                      </button>
+              
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {gradeCriteria.map((criteria, index) => (
+                  <div key={index} className="glass p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-medium">{criteria.grade}</h4>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs">Passing %: </label>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          max="100" 
+                          value={criteria.passingPercentage}
+                          onChange={(e) => updateGradeCriteria(index, 'passingPercentage', parseInt(e.target.value))}
+                          className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                        />
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="text-left">
+                          <tr className="border-b border-white/10">
+                            <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
+                            <th className="pb-2 font-medium text-foreground/70 text-sm">Min %</th>
+                            <th className="pb-2 font-medium text-foreground/70 text-sm">Max %</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {criteria.gradeRanges.map((range, rangeIndex) => (
+                            <tr key={rangeIndex} className="border-b border-white/5">
+                              <td className="py-2">{range.grade}</td>
+                              <td className="py-2">
+                                <input 
+                                  type="number" 
+                                  min="0" 
+                                  max="100" 
+                                  value={range.minPercentage}
+                                  onChange={(e) => updateGradeRange(index, rangeIndex, 'minPercentage', parseInt(e.target.value))}
+                                  className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                />
+                              </td>
+                              <td className="py-2">
+                                <input 
+                                  type="number" 
+                                  min="0" 
+                                  max="100" 
+                                  value={range.maxPercentage}
+                                  onChange={(e) => updateGradeRange(index, rangeIndex, 'maxPercentage', parseInt(e.target.value))}
+                                  className="w-16 glass px-2 py-1 rounded text-sm text-center"
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
       
       <div className="glass-card">

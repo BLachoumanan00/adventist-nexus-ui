@@ -14,7 +14,9 @@ import {
   Calendar,
   Award,
   FileBarChart,
-  ClipboardList
+  ClipboardList,
+  UserPlus,
+  UserMinus
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
 
@@ -76,8 +78,6 @@ const Sidebar: React.FC = () => {
             <SidebarLink to="/teacher" icon={<GraduationCap size={18} />} text="Teacher Panel" />
             <SidebarLink to="/results" icon={<FileText size={18} />} text="Results" />
             <SidebarLink to="/attendance" icon={<Calendar size={18} />} text="Attendance" />
-            <SidebarLink to="/certificates" icon={<Award size={18} />} text="Certificates" />
-            <SidebarLink to="/result-generator" icon={<FileBarChart size={18} />} text="Result Generator" />
           </div>
         </div>
         
@@ -88,6 +88,8 @@ const Sidebar: React.FC = () => {
           <div className="space-y-1">
             <SidebarLink to="/admin" icon={<Users size={18} />} text="User Management" />
             <SidebarLink to="/upload" icon={<Upload size={18} />} text="Data Upload" />
+            <SidebarLink to="/certificates" icon={<Award size={18} />} text="Certificates" />
+            <SidebarLink to="/result-generator" icon={<FileBarChart size={18} />} text="Result Generator" />
             <SidebarLink to="/activity-logs" icon={<ClipboardList size={18} />} text="Activity Logs" />
             <SidebarLink to="/settings" icon={<Settings size={18} />} text="Settings" />
           </div>
