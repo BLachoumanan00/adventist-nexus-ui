@@ -70,7 +70,6 @@ const Statistics: React.FC = () => {
     { class: "9B", math: 70, science: 65, english: 82 },
   ]);
   
-  // New data for subject pass/fail by class
   const [subjectPassFailData, setSubjectPassFailData] = useState([
     { subject: "Math", passed: 24, failed: 6, class: "7A" },
     { subject: "Science", passed: 22, failed: 8, class: "7A" },
@@ -80,7 +79,6 @@ const Statistics: React.FC = () => {
     { subject: "Computer", passed: 27, failed: 3, class: "7A" },
   ]);
   
-  // New data for class pass/fail pie chart
   const [classPassFailData, setClassPassFailData] = useState([
     { name: "Passed", value: 85, color: "#4ade80", class: "7A" },
     { name: "Failed", value: 15, color: "#f87171", class: "7A" },
@@ -105,7 +103,6 @@ const Statistics: React.FC = () => {
   const [editableSubjectPassFailData, setEditableSubjectPassFailData] = useState([...subjectPassFailData]);
   const [editableClassPassFailData, setEditableClassPassFailData] = useState([...classPassFailData]);
 
-  // Get unique classes from data
   const uniqueClasses = Array.from(
     new Set([
       ...classPerformanceData.map(item => item.class),
@@ -126,19 +123,16 @@ const Statistics: React.FC = () => {
     }
   }, [editMode]);
   
-  // Filter subject pass/fail data based on selected class
   const filteredSubjectPassFailData = subjectPassFailData.filter(
     item => selectedClass === "All" || item.class === selectedClass
   );
   
-  // Filter class pass/fail data based on selected class
   const filteredClassPassFailData = classPassFailData.filter(
     item => selectedClass === "All" ? 
       item.name === "Passed" : // Only show the "Passed" data for all classes in summary
       item.class === selectedClass
   );
   
-  // Load data from localStorage
   useEffect(() => {
     const savedStatisticsData = localStorage.getItem('statisticsData');
     if (savedStatisticsData) {
@@ -158,7 +152,6 @@ const Statistics: React.FC = () => {
     }
   }, []);
   
-  // Autosave functionality
   useEffect(() => {
     if (!autoSaveEnabled || !hasChanges) return;
     
@@ -181,7 +174,6 @@ const Statistics: React.FC = () => {
     hasChanges, autoSaveEnabled
   ]);
   
-  // Mark changes when data is modified
   useEffect(() => {
     setHasChanges(true);
   }, [
@@ -210,7 +202,6 @@ const Statistics: React.FC = () => {
     });
   };
   
-  // Save data to localStorage
   const saveDataToLocalStorage = () => {
     const dataToSave = {
       subjectPerformanceData,
@@ -234,7 +225,6 @@ const Statistics: React.FC = () => {
     });
   };
   
-  // Backup data
   const backupData = () => {
     const dataToBackup = {
       subjectPerformanceData,
@@ -265,7 +255,6 @@ const Statistics: React.FC = () => {
     logActivity("Created Statistics Backup", `Backup file: ${exportFileDefaultName}`);
   };
   
-  // Restore from backup
   const restoreFromBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -275,7 +264,6 @@ const Statistics: React.FC = () => {
       try {
         const parsedData = JSON.parse(event.target?.result as string);
         
-        // Validate and update data
         if (parsedData.subjectPerformanceData) setSubjectPerformanceData(parsedData.subjectPerformanceData);
         if (parsedData.classPerformanceData) setClassPerformanceData(parsedData.classPerformanceData);
         if (parsedData.subjectWiseData) setSubjectWiseData(parsedData.subjectWiseData);
@@ -302,7 +290,6 @@ const Statistics: React.FC = () => {
     reader.readAsText(file);
   };
   
-  // Convert SVG chart to image and download
   const downloadChart = (chartId: string, chartName: string) => {
     const chartElement = chartRefs.current[chartId];
     if (!chartElement) return;
@@ -310,32 +297,25 @@ const Statistics: React.FC = () => {
     const svgElement = chartElement.querySelector('svg');
     if (!svgElement) return;
     
-    // Create a clone of the SVG to modify
     const svgClone = svgElement.cloneNode(true) as SVGElement;
     
-    // Set background to white for better visibility
     svgClone.style.backgroundColor = theme === 'dark' ? '#1f2937' : '#ffffff';
     
-    // Convert SVG to string
     const svgData = new XMLSerializer().serializeToString(svgClone);
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const svgUrl = URL.createObjectURL(svgBlob);
     
-    // Create canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     
     img.onload = function() {
-      // Set canvas dimensions
       canvas.width = img.width;
       canvas.height = img.height;
       
-      // Draw image to canvas
       if (ctx) {
         ctx.drawImage(img, 0, 0);
         
-        // Get image data and download
         canvas.toBlob(function(blob) {
           if (blob) {
             const url = URL.createObjectURL(blob);
@@ -360,19 +340,15 @@ const Statistics: React.FC = () => {
     logActivity("Downloaded Chart", `Downloaded ${chartName} chart for ${selectedGrade}, ${selectedTerm}`);
   };
   
-  // Export statistics data as CSV
   const exportAsCSV = (data: any[], filename: string) => {
     if (!data || !data.length) return;
     
-    // Get headers from first object
     const headers = Object.keys(data[0]);
     
-    // Create CSV content
     const csvRows = [
-      headers.join(','), // Header row
+      headers.join(','),
       ...data.map(row => 
         headers.map(header => {
-          // Handle commas in data by wrapping in quotes
           const cell = row[header]?.toString() || '';
           return cell.includes(',') ? `"${cell}"` : cell;
         }).join(',')
@@ -398,9 +374,7 @@ const Statistics: React.FC = () => {
     logActivity("Exported Data", `Exported ${filename} as CSV`);
   };
   
-  // Export all statistics data to Excel-friendly format
   const exportAllData = () => {
-    // Create workbook-like structure with multiple sheets
     const dataPackage = {
       subjectPerformance: subjectPerformanceData,
       classPerformance: classPerformanceData,
@@ -412,7 +386,6 @@ const Statistics: React.FC = () => {
       classPassFail: classPassFailData
     };
     
-    // Convert to JSON
     const jsonString = JSON.stringify(dataPackage, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -519,7 +492,6 @@ const Statistics: React.FC = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Edit Button */}
               <button 
                 onClick={() => editMode ? handleSaveChanges() : setEditMode(true)}
                 className="btn-primary flex items-center gap-1 text-sm"
@@ -537,7 +509,6 @@ const Statistics: React.FC = () => {
                 )}
               </button>
               
-              {/* Save Button */}
               <button 
                 onClick={saveDataToLocalStorage}
                 className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
@@ -547,7 +518,6 @@ const Statistics: React.FC = () => {
                 <span>Save</span>
               </button>
               
-              {/* Export Button */}
               <button 
                 onClick={exportAllData}
                 className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
@@ -557,7 +527,6 @@ const Statistics: React.FC = () => {
                 <span>Export All</span>
               </button>
               
-              {/* Backup Button */}
               <button 
                 onClick={backupData}
                 className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
@@ -567,7 +536,6 @@ const Statistics: React.FC = () => {
                 <span>Backup</span>
               </button>
               
-              {/* Restore Button */}
               <label className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm cursor-pointer">
                 <Upload size={14} />
                 <span>Restore</span>
@@ -581,7 +549,6 @@ const Statistics: React.FC = () => {
                 />
               </label>
               
-              {/* Auto Save Toggle */}
               <div className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -598,7 +565,6 @@ const Statistics: React.FC = () => {
           </div>
         </div>
         
-        {/* View Mode Tabs */}
         <Tabs defaultValue="overall" className="mb-6" onValueChange={(value) => setViewMode(value as any)}>
           <TabsList className="grid w-full md:w-auto grid-cols-4">
             <TabsTrigger value="overall">Overall</TabsTrigger>
@@ -607,10 +573,8 @@ const Statistics: React.FC = () => {
             <TabsTrigger value="backup">Backup/Restore</TabsTrigger>
           </TabsList>
           
-          {/* Overall Statistics Tab */}
           <TabsContent value="overall">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Subject Performance Chart */}
               <div className="glass rounded-xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium">Subject Performance</h3>
@@ -699,7 +663,6 @@ const Statistics: React.FC = () => {
                 </div>
               </div>
               
-              {/* Grade Distribution Chart */}
               <div className="glass rounded-xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium">Grade Distribution</h3>
@@ -723,4 +686,73 @@ const Statistics: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {editableGradeData.map((item, index) =>
+                        {editableGradeData.map((item, index) => (
+                          <tr key={index} className="border-b border-white/5">
+                            <td className="py-2">{item.name}</td>
+                            <td className="py-2">
+                              <input 
+                                type="number"
+                                value={item.value}
+                                min={0}
+                                onChange={(e) => handleGradeDataChange(index, parseInt(e.target.value) || 0)}
+                                className="w-20 glass rounded px-2 py-1"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="h-80" ref={el => chartRefs.current['gradeDistribution'] = el}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={gradeDistributionData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {gradeDistributionData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value, name, entry) => [`${value} students`, `Grade ${name}`]}
+                          contentStyle={{ 
+                            backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                            color: theme === 'dark' ? '#fff' : '#000',
+                            borderRadius: '8px', 
+                            border: 'none' 
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+                
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => exportAsCSV(gradeDistributionData, 'grade-distribution')}
+                    className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                    disabled={editMode}
+                  >
+                    <FileText size={14} />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+export default Statistics;
