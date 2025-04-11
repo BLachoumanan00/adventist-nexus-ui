@@ -110,6 +110,27 @@ const Statistics: React.FC = () => {
     ])
   ).sort();
 
+  const getGradeNumber = () => {
+    if (selectedGrade === "All Grades") return null;
+    return selectedGrade.replace("Grade ", "");
+  };
+
+  const getFilteredClasses = () => {
+    const gradeNumber = getGradeNumber();
+    
+    if (!gradeNumber) return uniqueClasses;
+    
+    return uniqueClasses.filter(cls => cls.startsWith(gradeNumber));
+  };
+  
+  useEffect(() => {
+    const filteredClasses = getFilteredClasses();
+    
+    if (selectedClass !== "All" && !filteredClasses.includes(selectedClass)) {
+      setSelectedClass("All");
+    }
+  }, [selectedGrade]);
+  
   useEffect(() => {
     if (editMode) {
       setEditableSubjectData([...subjectPerformanceData]);
@@ -485,7 +506,7 @@ const Statistics: React.FC = () => {
                 disabled={editMode}
               >
                 <option value="All">All Classes</option>
-                {uniqueClasses.map(cls => (
+                {getFilteredClasses().map(cls => (
                   <option key={cls} value={cls}>Class {cls}</option>
                 ))}
               </select>

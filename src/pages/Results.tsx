@@ -1,8 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Download, FileText, Search, Eye, Filter, FileBarChart } from "lucide-react";
 import ResultPreview from "../components/ResultPreview";
 import { useToast } from "../hooks/use-toast";
+import ResultSlipPreview from "../components/previews/ResultSlipPreview";
+import TermReportPreview from "../components/previews/TermReportPreview";
 
 interface StudentResult {
   id: string;
@@ -18,6 +20,7 @@ interface StudentResult {
   total: number;
   average: number;
   overallGrade: string;
+  rank?: number; // Added rank property
 }
 
 const sampleStudents: StudentResult[] = [
@@ -142,7 +145,34 @@ const Results: React.FC = () => {
   const [selectedSection, setSelectedSection] = useState('All');
   const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [showResultSlip, setShowResultSlip] = useState(false);
+  const [showTermReport, setShowTermReport] = useState(false);
   const { toast } = useToast();
+  
+  // Calculate ranks for each grade and section
+  useEffect(() => {
+    // Group students by grade and section
+    const gradeSectionGroups: {[key: string]: StudentResult[]} = {};
+    
+    sampleStudents.forEach(student => {
+      const key = `${student.grade}-${student.section}`;
+      if (!gradeSectionGroups[key]) {
+        gradeSectionGroups[key] = [];
+      }
+      gradeSectionGroups[key].push(student);
+    });
+    
+    // Sort each group by average and assign ranks
+    Object.values(gradeSectionGroups).forEach(students => {
+      // Sort by average in descending order
+      students.sort((a, b) => b.average - a.average);
+      
+      // Assign ranks
+      students.forEach((student, index) => {
+        student.rank = index + 1;
+      });
+    });
+  }, []);
   
   const filteredStudents = sampleStudents.filter(student => {
     const matchesSearch = 
@@ -162,6 +192,24 @@ const Results: React.FC = () => {
   
   const closePreview = () => {
     setShowPreview(false);
+  };
+
+  const openResultSlip = (student: StudentResult) => {
+    setSelectedStudent(student);
+    setShowResultSlip(true);
+  };
+
+  const closeResultSlip = () => {
+    setShowResultSlip(false);
+  };
+
+  const openTermReport = (student: StudentResult) => {
+    setSelectedStudent(student);
+    setShowTermReport(true);
+  };
+
+  const closeTermReport = () => {
+    setShowTermReport(false);
   };
 
   const generateBulkResults = () => {
@@ -262,6 +310,7 @@ const Results: React.FC = () => {
                 <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Total</th>
                 <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Average</th>
                 <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Grade</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Rank</th>
                 <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Actions</th>
               </tr>
             </thead>
@@ -285,16 +334,35 @@ const Results: React.FC = () => {
                       {student.overallGrade}
                     </span>
                   </td>
+                  <td className="py-3 text-center">
+                    {student.rank && (
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                        {student.rank}
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3">
                     <div className="flex justify-center gap-2">
                       <button 
                         className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
                         onClick={() => openPreview(student)}
+                        title="View details"
                       >
                         <Eye size={16} className="text-foreground/70" />
                       </button>
-                      <button className="p-1.5 rounded-lg hover:bg-white/20 transition-colors">
-                        <Download size={16} className="text-foreground/70" />
+                      <button 
+                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        onClick={() => openResultSlip(student)}
+                        title="Result slip"
+                      >
+                        <FileText size={16} className="text-foreground/70" />
+                      </button>
+                      <button 
+                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        onClick={() => openTermReport(student)}
+                        title="Term report"
+                      >
+                        <FileBarChart size={16} className="text-foreground/70" />
                       </button>
                     </div>
                   </td>
@@ -333,6 +401,70 @@ const Results: React.FC = () => {
           }}
           results={selectedStudent.subjects}
           onClose={closePreview}
+        />
+      )}
+      
+      {showResultSlip && selectedStudent && (
+        <ResultSlipPreview 
+          student={{
+            id: selectedStudent.id,
+            name: selectedStudent.name,
+            grade: selectedStudent.grade,
+            section: selectedStudent.section,
+            totalMarks: selectedStudent.total,
+            percentage: selectedStudent.average,
+            rank: selectedStudent.rank || 0,
+            overallGrade: selectedStudent.overallGrade,
+            generalRemarks: selectedStudent.average > 80 
+              ? "Excellent performance overall. Keep up the good work!" 
+              : selectedStudent.average > 70 
+              ? "Good performance. Continue to work on improvement."
+              : selectedStudent.average > 60
+              ? "Satisfactory performance. More focus needed in weaker subjects."
+              : "Needs improvement. Extra attention and guidance required."
+          }}
+          subjects={selectedStudent.subjects.map(subject => ({
+            subject: subject.subject,
+            marks: subject.marks,
+            totalMarks: 100,
+            grade: subject.grade,
+            remarks: subject.remarks
+          }))}
+          examName="Term 1 Examination 2025"
+          daysAbsent={Math.floor(Math.random() * 5)}
+          onClose={closeResultSlip}
+        />
+      )}
+      
+      {showTermReport && selectedStudent && (
+        <TermReportPreview 
+          student={{
+            id: selectedStudent.id,
+            name: selectedStudent.name,
+            grade: selectedStudent.grade,
+            section: selectedStudent.section,
+            totalMarks: selectedStudent.total,
+            percentage: selectedStudent.average,
+            rank: selectedStudent.rank || 0,
+            overallGrade: selectedStudent.overallGrade,
+            generalRemarks: selectedStudent.average > 80 
+              ? "Excellent performance overall. Keep up the good work!" 
+              : selectedStudent.average > 70 
+              ? "Good performance. Continue to work on improvement."
+              : selectedStudent.average > 60
+              ? "Satisfactory performance. More focus needed in weaker subjects."
+              : "Needs improvement. Extra attention and guidance required."
+          }}
+          subjects={selectedStudent.subjects.map(subject => ({
+            subject: subject.subject,
+            marks: subject.marks,
+            totalMarks: 100,
+            grade: subject.grade,
+            remarks: subject.remarks
+          }))}
+          examName="Term 1 Examination 2025"
+          daysAbsent={Math.floor(Math.random() * 5)}
+          onClose={closeTermReport}
         />
       )}
     </div>
