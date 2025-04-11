@@ -37,28 +37,80 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
   
   const isPassing = average >= 40;
 
+  // Handle printing the result
+  const handlePrint = () => {
+    const printContent = document.getElementById('resultToPrint');
+    if (!printContent) return;
+    
+    const originalDisplay = document.body.style.display;
+    const printWindow = window.open('', '_blank');
+    
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Result - ${student.name}</title>
+            <style>
+              body { font-family: Arial, sans-serif; color: #000; background: #fff; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              th { background-color: #f2f2f2; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .student-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+              .student-info > div { width: 48%; }
+              .footer { display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+            </style>
+          </head>
+          <body>
+            ${printContent.innerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
+  };
+
+  // Handle download as PDF
+  const handleDownload = () => {
+    // This is a placeholder for PDF download functionality
+    // In a real implementation, you'd use a library like jsPDF
+    alert("PDF download functionality would be implemented here");
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center p-4 z-10">
           <h2 className="text-lg font-semibold">Result Preview</h2>
           <div className="flex gap-2">
-            <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <button 
+              onClick={handlePrint}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Print result"
+            >
               <Printer size={20} />
             </button>
-            <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <button 
+              onClick={handleDownload}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Download result as PDF"
+            >
               <Download size={20} />
             </button>
             <button 
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Close preview"
             >
               <X size={20} />
             </button>
           </div>
         </div>
         
-        <div className="p-6">
+        <div className="p-6" id="resultToPrint">
           <div className="mb-8 text-center">
             <h1 className="text-xl font-bold mb-1">Adventist College Mauritius</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">Term Results</p>

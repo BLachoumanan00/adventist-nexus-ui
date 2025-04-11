@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+
+import React, { useState, useRef } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Download, FileText, ChevronDown } from "lucide-react";
+import { Download, FileText, ChevronDown, FileSpreadsheet } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface SubjectPerformanceProps {
   subjectPassFailData: Array<{
@@ -27,6 +29,7 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
   exportAsCSV
 }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const xlsxExportRef = useRef<HTMLButtonElement>(null);
   
   // Filter subject data based on selected class
   const filteredSubjectData = subjectPassFailData.filter(
@@ -43,12 +46,12 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
   }));
 
   // Group data by subject for the overview chart
-  const subjectGroups = subjectPassFailData.reduce((groups: Record<string, {
+  const subjectGroups: Record<string, {
     subject: string;
     students: number;
     passed: number;
     failed: number;
-  }>, item) => {
+  }> = subjectPassFailData.reduce((groups, item) => {
     if (!groups[item.subject]) {
       groups[item.subject] = {
         subject: item.subject,
@@ -61,14 +64,20 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
     groups[item.subject].passed += item.passed;
     groups[item.subject].failed += item.failed;
     return groups;
-  }, {});
+  }, {} as Record<string, {
+    subject: string;
+    students: number;
+    passed: number;
+    failed: number;
+  }>);
 
   const overviewData = Object.values(subjectGroups);
 
   // Calculate overall pass/fail statistics
-  const totalPassed = overviewData.reduce((sum: number, item: any) => sum + item.passed, 0);
-  const totalFailed = overviewData.reduce((sum: number, item: any) => sum + item.failed, 0);
-  const passRate = Math.round((totalPassed / (totalPassed + totalFailed)) * 100);
+  const totalPassed = overviewData.reduce((sum, item) => sum + item.passed, 0);
+  const totalFailed = overviewData.reduce((sum, item) => sum + item.failed, 0);
+  const totalStudents = totalPassed + totalFailed;
+  const passRate = totalStudents > 0 ? Math.round((totalPassed / totalStudents) * 100) : 0;
   const failRate = 100 - passRate;
 
   // Prepare the pie chart data
@@ -77,9 +86,44 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
     { name: "Fail", value: failRate, color: "#f17831" }
   ];
 
+  // Function to export all data to Excel
+  const exportToExcel = () => {
+    // Create workbook and add worksheets
+    const wb = XLSX.utils.book_new();
+    
+    // Overview data
+    const overviewWs = XLSX.utils.json_to_sheet(overviewData);
+    XLSX.utils.book_append_sheet(wb, overviewWs, "Subject Overview");
+    
+    // Pass/Fail data
+    const passFailData = stackedData.map(item => ({
+      Subject: item.subject,
+      "Pass Count": item.passed,
+      "Fail Count": item.failed,
+      "Total Students": item.total,
+      "Pass Percentage": `${item.passPercentage}%`
+    }));
+    const passFailWs = XLSX.utils.json_to_sheet(passFailData);
+    XLSX.utils.book_append_sheet(wb, passFailWs, "Pass-Fail Distribution");
+    
+    // Overall summary
+    const summaryData = [
+      { Metric: "Total Students", Value: totalStudents },
+      { Metric: "Students Passed", Value: totalPassed },
+      { Metric: "Students Failed", Value: totalFailed },
+      { Metric: "Pass Rate", Value: `${passRate}%` },
+      { Metric: "Fail Rate", Value: `${failRate}%` }
+    ];
+    const summaryWs = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summaryWs, "Overall Summary");
+    
+    // Generate Excel file
+    XLSX.writeFile(wb, `Subject-Performance-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6">
-      {/* Overall Statistics Chart (Similar to uploaded image) */}
+      {/* Overall Statistics Chart */}
       <div className="glass rounded-xl p-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-medium">Subject-wise Pass/Fail Overview</h3>
@@ -98,6 +142,15 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
             >
               <Download size={14} />
               <span>Download</span>
+            </button>
+            <button
+              ref={xlsxExportRef}
+              onClick={exportToExcel}
+              className="text-sm flex items-center gap-1 glass px-2 py-1 rounded text-green-600 dark:text-green-400"
+              disabled={editMode}
+            >
+              <FileSpreadsheet size={14} />
+              <span>Excel</span>
             </button>
           </div>
         </div>
@@ -118,8 +171,12 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 textAnchor="end"
                 tick={{fontSize: 12}}
                 height={60}
+                label={{ value: "Subjects", position: "insideBottom", offset: -15, fill: "rgba(255,255,255,0.5)" }}
               />
-              <YAxis stroke="rgba(255,255,255,0.5)" />
+              <YAxis 
+                stroke="rgba(255,255,255,0.5)"
+                label={{ value: "Number of Students", angle: -90, position: "insideLeft", fill: "rgba(255,255,255,0.5)" }}
+              />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
@@ -130,9 +187,9 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 }}
               />
               <Legend />
-              <Bar dataKey="students" name="No. of Students" fill="#0f5ea2" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="passed" name="No. of Pass" fill="#4ade80" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="failed" name="No. of Fail" fill="#f17831" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="students" name="Total Students" fill="#0f5ea2" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="passed" name="Passed Students" fill="#4ade80" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="failed" name="Failed Students" fill="#f17831" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -143,17 +200,17 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
               <thead className="text-xs">
                 <tr className="border-b border-white/10">
                   <th className="pb-2 text-left">Subject</th>
-                  <th className="pb-2 text-right">No. of Students</th>
-                  <th className="pb-2 text-right">No. of Pass</th>
-                  <th className="pb-2 text-right">No. of Fail</th>
+                  <th className="pb-2 text-right">Total Students</th>
+                  <th className="pb-2 text-right">Passed</th>
+                  <th className="pb-2 text-right">Failed</th>
                   <th className="pb-2 text-right">Pass Rate</th>
                   <th className="pb-2 text-right">Fail Rate</th>
                 </tr>
               </thead>
               <tbody className="text-xs">
-                {overviewData.map((item: any, index: number) => {
+                {overviewData.map((item, index) => {
                   const total = item.passed + item.failed;
-                  const passRate = Math.round((item.passed / total) * 100);
+                  const passRate = total > 0 ? Math.round((item.passed / total) * 100) : 0;
                   const failRate = 100 - passRate;
                   
                   return (
@@ -169,7 +226,7 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 })}
                 <tr className="font-medium bg-white/5">
                   <td className="py-2">OVERALL</td>
-                  <td className="py-2 text-right">{totalPassed + totalFailed}</td>
+                  <td className="py-2 text-right">{totalStudents}</td>
                   <td className="py-2 text-right">{totalPassed}</td>
                   <td className="py-2 text-right">{totalFailed}</td>
                   <td className="py-2 text-right">{passRate}%</td>
@@ -192,31 +249,59 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
         </div>
       </div>
 
-      {/* We keep the original stacked bar charts for pass/fail distribution and pass percentage */}
+      {/* Subject Pass/Fail Distribution and Pass Percentage Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Subject Pass/Fail Chart */}
         <div className="glass rounded-xl p-4">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-medium">Subject-wise Pass/Fail Distribution</h3>
-            <button
-              onClick={() => downloadChart('subjectPassFail', 'Subject-PassFail')}
-              className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
-              disabled={editMode}
-            >
-              <Download size={14} />
-              <span>Download</span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => downloadChart('subjectPassFail', 'Subject-PassFail')}
+                className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                disabled={editMode}
+              >
+                <Download size={14} />
+                <span>Download</span>
+              </button>
+              <button
+                onClick={() => {
+                  const passFailData = stackedData.map(item => ({
+                    Subject: item.subject,
+                    "Pass Count": item.passed,
+                    "Fail Count": item.failed,
+                    "Total Students": item.total
+                  }));
+                  const wb = XLSX.utils.book_new();
+                  const ws = XLSX.utils.json_to_sheet(passFailData);
+                  XLSX.utils.book_append_sheet(wb, ws, "Pass-Fail Distribution");
+                  XLSX.writeFile(wb, `Pass-Fail-Distribution-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
+                }}
+                className="text-sm flex items-center gap-1 glass px-2 py-1 rounded text-green-600 dark:text-green-400"
+                disabled={editMode}
+              >
+                <FileSpreadsheet size={14} />
+                <span>Excel</span>
+              </button>
+            </div>
           </div>
           
           <div className="h-80" ref={el => chartRefs.current['subjectPassFail'] = el}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={stackedData} 
-                margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                margin={{ top: 5, right: 20, bottom: 30, left: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="subject" stroke="rgba(255,255,255,0.5)" />
-                <YAxis stroke="rgba(255,255,255,0.5)" />
+                <XAxis 
+                  dataKey="subject" 
+                  stroke="rgba(255,255,255,0.5)" 
+                  label={{ value: "Subjects", position: "insideBottom", offset: -10, fill: "rgba(255,255,255,0.5)" }}
+                />
+                <YAxis 
+                  stroke="rgba(255,255,255,0.5)" 
+                  label={{ value: "Students Count", angle: -90, position: "insideLeft", fill: "rgba(255,255,255,0.5)" }}
+                />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
@@ -249,25 +334,52 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
         <div className="glass rounded-xl p-4">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-medium">Subject Pass Percentage</h3>
-            <button
-              onClick={() => downloadChart('subjectPassPercentage', 'Subject-Pass-Percentage')}
-              className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
-              disabled={editMode}
-            >
-              <Download size={14} />
-              <span>Download</span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => downloadChart('subjectPassPercentage', 'Subject-Pass-Percentage')}
+                className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                disabled={editMode}
+              >
+                <Download size={14} />
+                <span>Download</span>
+              </button>
+              <button
+                onClick={() => {
+                  const passPercentageData = stackedData.map(item => ({
+                    Subject: item.subject,
+                    "Pass Percentage": `${item.passPercentage}%`
+                  }));
+                  const wb = XLSX.utils.book_new();
+                  const ws = XLSX.utils.json_to_sheet(passPercentageData);
+                  XLSX.utils.book_append_sheet(wb, ws, "Pass Percentage");
+                  XLSX.writeFile(wb, `Pass-Percentage-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
+                }}
+                className="text-sm flex items-center gap-1 glass px-2 py-1 rounded text-green-600 dark:text-green-400"
+                disabled={editMode}
+              >
+                <FileSpreadsheet size={14} />
+                <span>Excel</span>
+              </button>
+            </div>
           </div>
           
           <div className="h-80" ref={el => chartRefs.current['subjectPassPercentage'] = el}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={stackedData} 
-                margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                margin={{ top: 5, right: 20, bottom: 30, left: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="subject" stroke="rgba(255,255,255,0.5)" />
-                <YAxis stroke="rgba(255,255,255,0.5)" domain={[0, 100]} />
+                <XAxis 
+                  dataKey="subject" 
+                  stroke="rgba(255,255,255,0.5)" 
+                  label={{ value: "Subjects", position: "insideBottom", offset: -10, fill: "rgba(255,255,255,0.5)" }}
+                />
+                <YAxis 
+                  stroke="rgba(255,255,255,0.5)" 
+                  domain={[0, 100]} 
+                  label={{ value: "Pass Percentage (%)", angle: -90, position: "insideLeft", fill: "rgba(255,255,255,0.5)" }}
+                />
                 <Tooltip 
                   formatter={(value) => [`${value}%`, 'Pass Percentage']}
                   contentStyle={{ 
@@ -302,18 +414,40 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
         </div>
       </div>
 
-      {/* OVERALL PASS-FAIL Pie Chart */}
+      {/* OVERALL PASS-FAIL Chart */}
       <div className="glass rounded-xl p-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-medium">OVERALL PASS - FAIL</h3>
-          <button
-            onClick={() => downloadChart('overallPassFail', 'Overall-PassFail')}
-            className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
-            disabled={editMode}
-          >
-            <Download size={14} />
-            <span>Download</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => downloadChart('overallPassFail', 'Overall-PassFail')}
+              className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+              disabled={editMode}
+            >
+              <Download size={14} />
+              <span>Download</span>
+            </button>
+            <button
+              onClick={() => {
+                const summaryData = [
+                  { Metric: "Total Students", Value: totalStudents },
+                  { Metric: "Students Passed", Value: totalPassed },
+                  { Metric: "Students Failed", Value: totalFailed },
+                  { Metric: "Pass Rate", Value: `${passRate}%` },
+                  { Metric: "Fail Rate", Value: `${failRate}%` }
+                ];
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(summaryData);
+                XLSX.utils.book_append_sheet(wb, ws, "Overall Summary");
+                XLSX.writeFile(wb, `Overall-Summary-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
+              }}
+              className="text-sm flex items-center gap-1 glass px-2 py-1 rounded text-green-600 dark:text-green-400"
+              disabled={editMode}
+            >
+              <FileSpreadsheet size={14} />
+              <span>Excel</span>
+            </button>
+          </div>
         </div>
         
         <div className="flex flex-col md:flex-row">
@@ -321,11 +455,19 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={pieChartData} 
-                margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                margin={{ top: 5, right: 20, bottom: 30, left: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-                <YAxis stroke="rgba(255,255,255,0.5)" domain={[0, 100]} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="rgba(255,255,255,0.5)" 
+                  label={{ value: "Status", position: "insideBottom", offset: -10, fill: "rgba(255,255,255,0.5)" }}
+                />
+                <YAxis 
+                  stroke="rgba(255,255,255,0.5)" 
+                  domain={[0, 100]} 
+                  label={{ value: "Percentage (%)", angle: -90, position: "insideLeft", fill: "rgba(255,255,255,0.5)" }}
+                />
                 <Tooltip 
                   formatter={(value) => [`${value}%`, '']}
                   contentStyle={{ 
@@ -363,7 +505,7 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 </div>
               </div>
               <div className="mt-4 text-sm">
-                Total Students: <span className="font-medium">{totalPassed + totalFailed}</span>
+                Total Students: <span className="font-medium">{totalStudents}</span>
               </div>
             </div>
           </div>
