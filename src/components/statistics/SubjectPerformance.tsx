@@ -1,9 +1,15 @@
+
 import React, { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Download, FileText, ChevronDown } from "lucide-react";
 
 interface SubjectPerformanceProps {
-  subjectPassFailData: any[];
+  subjectPassFailData: Array<{
+    subject: string;
+    passed: number;
+    failed: number;
+    class: string;
+  }>;
   selectedClass: string;
   editMode: boolean;
   theme: string;
@@ -38,7 +44,12 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
   }));
 
   // Group data by subject for the overview chart
-  const subjectGroups = subjectPassFailData.reduce((groups: any, item) => {
+  const subjectGroups = subjectPassFailData.reduce((groups: Record<string, {
+    subject: string;
+    students: number;
+    passed: number;
+    failed: number;
+  }>, item) => {
     if (!groups[item.subject]) {
       groups[item.subject] = {
         subject: item.subject,
@@ -328,14 +339,11 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 />
                 <Legend />
                 <Bar 
-                  dataKey="value" 
-                  fill={(entry) => entry.color}
+                  dataKey="value"
+                  name="Percentage" 
+                  fill={(entry) => (entry as any).color}
                   radius={[4, 4, 0, 0]}
-                >
-                  {pieChartData.map((entry, index) => (
-                    <Bar key={`cell-${index}`} dataKey="value" fill={entry.color} />
-                  ))}
-                </Bar>
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
