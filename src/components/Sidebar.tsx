@@ -1,3 +1,4 @@
+
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -109,7 +110,13 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
           
-          
+          <button 
+            onClick={toggleTheme} 
+            className="w-8 h-8 flex items-center justify-center rounded-full glass hover:bg-white/10"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         </div>
       </div>
     </aside>
