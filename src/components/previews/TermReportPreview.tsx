@@ -96,18 +96,18 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
             </div>
             <div>
               <p><strong>Class:</strong> Grade {student.grade}-{student.section}</p>
+              <p><strong>Rank:</strong> {student.rank}</p>
               <p><strong>Days Absent:</strong> {daysAbsent}</p>
             </div>
           </div>
           
-          {/* Academic Performance */}
+          {/* Academic Performance - Removed the Total column */}
           <h4 className="font-semibold mb-2">Academic Performance</h4>
           <table className="w-full mb-6 border-collapse">
             <thead className="bg-gray-100 dark:bg-gray-700">
               <tr>
                 <th className="border border-gray-300 dark:border-gray-600 p-2 text-left">Subject</th>
                 <th className="border border-gray-300 dark:border-gray-600 p-2 text-center">Marks</th>
-                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center">Total</th>
                 <th className="border border-gray-300 dark:border-gray-600 p-2 text-center">Grade</th>
                 <th className="border border-gray-300 dark:border-gray-600 p-2 text-left">Remarks</th>
               </tr>
@@ -116,8 +116,7 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
               {subjects.map((subject, index) => (
                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="border border-gray-300 dark:border-gray-600 p-2">{subject.subject}</td>
-                  <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">{subject.marks}</td>
-                  <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">{subject.totalMarks}</td>
+                  <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">{subject.marks}/{subject.totalMarks}</td>
                   <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">
                     <span className={`${getGradeColor(subject.grade)} font-medium`}>
                       {subject.grade}
@@ -129,10 +128,9 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
             </tbody>
             <tfoot className="bg-gray-100 dark:bg-gray-700 font-medium">
               <tr>
-                <td className="border border-gray-300 dark:border-gray-600 p-2">Total</td>
-                <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">{student.totalMarks}</td>
+                <td className="border border-gray-300 dark:border-gray-600 p-2">Overall</td>
                 <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">
-                  {subjects.reduce((sum, subject) => sum + subject.totalMarks, 0)}
+                  {student.percentage.toFixed(1)}%
                 </td>
                 <td className="border border-gray-300 dark:border-gray-600 p-2 text-center">
                   <span className={`${getGradeColor(student.overallGrade)} font-medium`}>
@@ -140,7 +138,7 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
                   </span>
                 </td>
                 <td className="border border-gray-300 dark:border-gray-600 p-2">
-                  {student.percentage.toFixed(1)}% (Rank: {student.rank})
+                  Rank: {student.rank}
                 </td>
               </tr>
             </tfoot>

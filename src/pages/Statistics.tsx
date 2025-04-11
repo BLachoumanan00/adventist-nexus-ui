@@ -6,6 +6,9 @@ import { useToast } from "../hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import { useTheme } from "../hooks/useTheme";
 import { Switch } from "../components/ui/switch";
+import ClassPerformance from "../components/statistics/ClassPerformance";
+import SubjectPerformance from "../components/statistics/SubjectPerformance";
+import BackupRestore from "../components/statistics/BackupRestore";
 
 const Statistics: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState("All Grades");
@@ -769,6 +772,95 @@ const Statistics: React.FC = () => {
                 </div>
               </div>
             </div>
+            
+            <div className="glass rounded-xl p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-medium">Overall Pass/Fail Rate</h3>
+                <button
+                  onClick={() => downloadChart('overallPassFail', 'Overall-PassFail')}
+                  className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
+                  disabled={editMode}
+                >
+                  <Download size={14} />
+                  <span>Download</span>
+                </button>
+              </div>
+              
+              <div className="h-80" ref={el => chartRefs.current['overallPassFail'] = el}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Pass", value: 70, color: "#0f5ea2" },
+                        { name: "Fail", value: 30, color: "#f17831" }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, value, percent }) => `${name}: ${value}% (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {[
+                        { name: "Pass", value: 70, color: "#0f5ea2" },
+                        { name: "Fail", value: 30, color: "#f17831" }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [`${value}%`, '']}
+                      contentStyle={{ 
+                        backgroundColor: theme === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                        color: theme === 'dark' ? '#fff' : '#000',
+                        borderRadius: '8px', 
+                        border: 'none' 
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="class">
+            <ClassPerformance 
+              classPerformanceData={classPerformanceData}
+              classPassFailData={classPassFailData}
+              subjectWiseData={subjectWiseData}
+              selectedClass={selectedClass}
+              editMode={editMode}
+              theme={theme}
+              chartRefs={chartRefs}
+              downloadChart={downloadChart}
+              exportAsCSV={exportAsCSV}
+            />
+          </TabsContent>
+          
+          <TabsContent value="subject">
+            <SubjectPerformance 
+              subjectPassFailData={subjectPassFailData}
+              selectedClass={selectedClass}
+              editMode={editMode}
+              theme={theme}
+              chartRefs={chartRefs}
+              downloadChart={downloadChart}
+              exportAsCSV={exportAsCSV}
+            />
+          </TabsContent>
+          
+          <TabsContent value="backup">
+            <BackupRestore 
+              backupData={backupData}
+              restoreFromBackup={restoreFromBackup}
+              saveDataToLocalStorage={saveDataToLocalStorage}
+              exportAllData={exportAllData}
+              lastSaved={lastSaved}
+              fileInputRef={fileInputRef}
+              editMode={editMode}
+            />
           </TabsContent>
         </Tabs>
       </div>
