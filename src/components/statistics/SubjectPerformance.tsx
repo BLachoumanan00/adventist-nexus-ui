@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Download, FileText, ChevronDown } from "lucide-react";
@@ -338,12 +337,15 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                   }}
                 />
                 <Legend />
-                <Bar 
-                  dataKey="value"
-                  name="Percentage" 
-                  fill={(entry) => (entry as any).color}
-                  radius={[4, 4, 0, 0]}
-                />
+                {pieChartData.map((entry, index) => (
+                  <Bar 
+                    key={`bar-${index}`}
+                    dataKey="value"
+                    name={entry.name}
+                    fill={entry.color}
+                    radius={[4, 4, 0, 0]}
+                  />
+                ))}
               </BarChart>
             </ResponsiveContainer>
           </div>
