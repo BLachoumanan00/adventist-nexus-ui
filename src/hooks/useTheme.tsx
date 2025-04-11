@@ -36,10 +36,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Save theme to localStorage
     localStorage.setItem("theme", theme);
     
-    // Set data-theme attribute for accessibility
+    // Update data-theme attribute for accessibility
     root.setAttribute("data-theme", theme);
     
-    // Update body class
+    // Update body class for global styling
     if (theme === "dark") {
       document.body.classList.add("dark");
       document.body.classList.remove("light");
