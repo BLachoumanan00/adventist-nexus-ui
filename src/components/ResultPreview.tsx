@@ -8,6 +8,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "./ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 interface ResultPreviewProps {
   student: {
@@ -120,15 +126,17 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
           </div>
         </div>
         
-        <div className="p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex flex-wrap gap-4">
+        {/* Enhanced signature selection area with better visibility */}
+        <div className="p-4 bg-gray-200 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-md font-medium mb-3">Signature Options</h3>
+          <div className="flex flex-wrap gap-6">
             <div className="w-full md:w-auto">
-              <label className="block text-sm font-medium mb-1">First Signature</label>
+              <label className="block text-sm font-medium mb-2">First Signature</label>
               <Select value={leftSignatory} onValueChange={setLeftSignatory}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[200px] bg-white dark:bg-gray-700">
                   <SelectValue placeholder="Select signatory" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="bg-white dark:bg-gray-700 z-50">
                   <SelectItem value="Class Teacher">Class Teacher</SelectItem>
                   <SelectItem value="Form Teacher">Form Teacher</SelectItem>
                   <SelectItem value="Section Leader">Section Leader</SelectItem>
@@ -137,12 +145,12 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
               </Select>
             </div>
             <div className="w-full md:w-auto">
-              <label className="block text-sm font-medium mb-1">Second Signature</label>
+              <label className="block text-sm font-medium mb-2">Second Signature</label>
               <Select value={rightSignatory} onValueChange={setRightSignatory}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[200px] bg-white dark:bg-gray-700">
                   <SelectValue placeholder="Select signatory" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="bg-white dark:bg-gray-700 z-50">
                   <SelectItem value="Class Teacher">Class Teacher</SelectItem>
                   <SelectItem value="Form Teacher">Form Teacher</SelectItem>
                   <SelectItem value="Section Leader">Section Leader</SelectItem>
@@ -244,14 +252,14 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
                 {/* Left signature placeholder */}
                 <div className="border-b border-gray-400 w-40 mx-auto"></div>
               </div>
-              <p>{leftSignatory}</p>
+              <p className="font-medium">{leftSignatory}</p>
             </div>
             <div className="text-center">
               <div className="mb-2 h-20">
                 {/* Right signature placeholder */}
                 <div className="border-b border-gray-400 w-40 mx-auto"></div>
               </div>
-              <p>{rightSignatory}</p>
+              <p className="font-medium">{rightSignatory}</p>
             </div>
           </div>
         </div>
