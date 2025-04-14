@@ -1,6 +1,13 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Check, Download, Printer, X } from "lucide-react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "./ui/select";
 
 interface ResultPreviewProps {
   student: {
@@ -21,6 +28,9 @@ interface ResultPreviewProps {
 }
 
 const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbsent = 0, onClose }) => {
+  const [leftSignatory, setLeftSignatory] = useState("Class Teacher");
+  const [rightSignatory, setRightSignatory] = useState("Rector");
+  
   const totalMarks = results.reduce((sum, subject) => sum + subject.marks, 0);
   const average = totalMarks / results.length;
   const overallGrade = calculateOverallGrade(average);
@@ -110,6 +120,39 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
           </div>
         </div>
         
+        <div className="p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex flex-wrap gap-4">
+            <div className="w-full md:w-auto">
+              <label className="block text-sm font-medium mb-1">First Signature</label>
+              <Select value={leftSignatory} onValueChange={setLeftSignatory}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select signatory" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Class Teacher">Class Teacher</SelectItem>
+                  <SelectItem value="Form Teacher">Form Teacher</SelectItem>
+                  <SelectItem value="Section Leader">Section Leader</SelectItem>
+                  <SelectItem value="Rector">Rector</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full md:w-auto">
+              <label className="block text-sm font-medium mb-1">Second Signature</label>
+              <Select value={rightSignatory} onValueChange={setRightSignatory}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select signatory" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Class Teacher">Class Teacher</SelectItem>
+                  <SelectItem value="Form Teacher">Form Teacher</SelectItem>
+                  <SelectItem value="Section Leader">Section Leader</SelectItem>
+                  <SelectItem value="Rector">Rector</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        
         <div className="p-6" id="resultToPrint">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold mb-1">Adventist College Mauritius</h1>
@@ -192,6 +235,23 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
               <p className="text-sm text-right text-gray-600 dark:text-gray-400">
                 Adventist College Management System
               </p>
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-end mt-12">
+            <div className="text-center">
+              <div className="mb-2 h-20">
+                {/* Left signature placeholder */}
+                <div className="border-b border-gray-400 w-40 mx-auto"></div>
+              </div>
+              <p>{leftSignatory}</p>
+            </div>
+            <div className="text-center">
+              <div className="mb-2 h-20">
+                {/* Right signature placeholder */}
+                <div className="border-b border-gray-400 w-40 mx-auto"></div>
+              </div>
+              <p>{rightSignatory}</p>
             </div>
           </div>
         </div>
