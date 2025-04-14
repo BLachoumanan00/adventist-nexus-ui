@@ -13,7 +13,7 @@ interface StudentInfoProps {
 
 const StudentInfoSection: React.FC<StudentInfoProps> = ({ student, daysAbsent }) => {
   return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
       <div>
         <p><span className="font-semibold">Student Name:</span> {student.name}</p>
         <p><span className="font-semibold">Student ID:</span> {student.id}</p>
