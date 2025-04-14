@@ -1,0 +1,69 @@
+
+import React from "react";
+
+interface ResultsTableProps {
+  results: {
+    subject: string;
+    marks: number;
+    grade: string;
+    remarks: string;
+    isMainSubject?: boolean;
+  }[];
+  totalMarks: number;
+  average: number;
+  overallGrade: string;
+}
+
+const ResultsTable: React.FC<ResultsTableProps> = ({ 
+  results, 
+  totalMarks, 
+  average, 
+  overallGrade 
+}) => {
+  return (
+    <div className="border rounded-lg overflow-hidden mb-6">
+      <table className="w-full">
+        <thead className="bg-gray-100 dark:bg-gray-800">
+          <tr>
+            <th className="text-left py-3 px-4 font-medium">Subject</th>
+            <th className="text-center py-3 px-4 font-medium">Type</th>
+            <th className="text-center py-3 px-4 font-medium">Marks</th>
+            <th className="text-center py-3 px-4 font-medium">Grade</th>
+            <th className="text-left py-3 px-4 font-medium">Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {results.map((result, index) => (
+            <tr key={index} className="border-t border-gray-200 dark:border-gray-700">
+              <td className="py-3 px-4">{result.subject}</td>
+              <td className="py-3 px-4 text-center">
+                {result.isMainSubject !== undefined ? 
+                  (result.isMainSubject ? "Main" : "Sub") : "-"}
+              </td>
+              <td className="py-3 px-4 text-center">{result.marks}</td>
+              <td className="py-3 px-4 text-center">{result.grade}</td>
+              <td className="py-3 px-4">{result.remarks}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot className="bg-gray-50 dark:bg-gray-800/50 font-medium">
+          <tr>
+            <td className="py-3 px-4">Total</td>
+            <td className="py-3 px-4"></td>
+            <td className="py-3 px-4 text-center">{totalMarks}</td>
+            <td className="py-3 px-4 text-center">{overallGrade}</td>
+            <td className="py-3 px-4"></td>
+          </tr>
+          <tr>
+            <td className="py-3 px-4">Average</td>
+            <td className="py-3 px-4"></td>
+            <td className="py-3 px-4 text-center">{average.toFixed(2)}</td>
+            <td colSpan={2} className="py-3 px-4"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+};
+
+export default ResultsTable;

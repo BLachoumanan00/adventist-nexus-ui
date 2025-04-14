@@ -1,19 +1,11 @@
 
 import React, { useState } from "react";
-import { Check, Download, Printer, X } from "lucide-react";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "./ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+import { Download, Printer, X } from "lucide-react";
+import SignatureSelector from "./result-preview/SignatureSelector";
+import StudentInfoSection from "./result-preview/StudentInfoSection";
+import ResultsTable from "./result-preview/ResultsTable";
+import SignatureSection from "./result-preview/SignatureSection";
+import ResultStatusFooter from "./result-preview/ResultStatusFooter";
 
 interface ResultPreviewProps {
   student: {
@@ -33,13 +25,19 @@ interface ResultPreviewProps {
   onClose: () => void;
 }
 
-const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbsent = 0, onClose }) => {
+const ResultPreview: React.FC<ResultPreviewProps> = ({ 
+  student, 
+  results, 
+  daysAbsent = 0, 
+  onClose 
+}) => {
   const [leftSignatory, setLeftSignatory] = useState("Class Teacher");
   const [rightSignatory, setRightSignatory] = useState("Rector");
   
   const totalMarks = results.reduce((sum, subject) => sum + subject.marks, 0);
   const average = totalMarks / results.length;
   const overallGrade = calculateOverallGrade(average);
+  const isPassing = average >= 40;
   
   function calculateOverallGrade(avg: number): string {
     if (avg >= 90) return "A";
@@ -50,8 +48,6 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
     if (avg >= 40) return "D";
     return "F";
   }
-  
-  const isPassing = average >= 40;
 
   // Handle printing the result
   const handlePrint = () => {
@@ -126,40 +122,12 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
           </div>
         </div>
         
-        {/* Enhanced signature selection area with better visibility */}
-        <div className="p-4 bg-gray-200 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-md font-medium mb-3">Signature Options</h3>
-          <div className="flex flex-wrap gap-6">
-            <div className="w-full md:w-auto">
-              <label className="block text-sm font-medium mb-2">First Signature</label>
-              <Select value={leftSignatory} onValueChange={setLeftSignatory}>
-                <SelectTrigger className="w-[200px] bg-white dark:bg-gray-700">
-                  <SelectValue placeholder="Select signatory" />
-                </SelectTrigger>
-                <SelectContent position="popper" className="bg-white dark:bg-gray-700 z-50">
-                  <SelectItem value="Class Teacher">Class Teacher</SelectItem>
-                  <SelectItem value="Form Teacher">Form Teacher</SelectItem>
-                  <SelectItem value="Section Leader">Section Leader</SelectItem>
-                  <SelectItem value="Rector">Rector</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full md:w-auto">
-              <label className="block text-sm font-medium mb-2">Second Signature</label>
-              <Select value={rightSignatory} onValueChange={setRightSignatory}>
-                <SelectTrigger className="w-[200px] bg-white dark:bg-gray-700">
-                  <SelectValue placeholder="Select signatory" />
-                </SelectTrigger>
-                <SelectContent position="popper" className="bg-white dark:bg-gray-700 z-50">
-                  <SelectItem value="Class Teacher">Class Teacher</SelectItem>
-                  <SelectItem value="Form Teacher">Form Teacher</SelectItem>
-                  <SelectItem value="Section Leader">Section Leader</SelectItem>
-                  <SelectItem value="Rector">Rector</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
+        <SignatureSelector
+          leftSignatory={leftSignatory}
+          rightSignatory={rightSignatory}
+          setLeftSignatory={setLeftSignatory}
+          setRightSignatory={setRightSignatory}
+        />
         
         <div className="p-6" id="resultToPrint">
           <div className="mb-8 text-center">
@@ -167,101 +135,18 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
             <p className="text-sm text-gray-600 dark:text-gray-400">Term Results</p>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div>
-              <p><span className="font-semibold">Student Name:</span> {student.name}</p>
-              <p><span className="font-semibold">Student ID:</span> {student.id}</p>
-            </div>
-            <div>
-              <p><span className="font-semibold">Grade:</span> {student.grade}</p>
-              <p><span className="font-semibold">Section:</span> {student.section}</p>
-              <p><span className="font-semibold">Days Absent:</span> {daysAbsent}</p>
-            </div>
-          </div>
+          <StudentInfoSection student={student} daysAbsent={daysAbsent} />
           
-          <div className="border rounded-lg overflow-hidden mb-6">
-            <table className="w-full">
-              <thead className="bg-gray-100 dark:bg-gray-800">
-                <tr>
-                  <th className="text-left py-3 px-4 font-medium">Subject</th>
-                  <th className="text-center py-3 px-4 font-medium">Type</th>
-                  <th className="text-center py-3 px-4 font-medium">Marks</th>
-                  <th className="text-center py-3 px-4 font-medium">Grade</th>
-                  <th className="text-left py-3 px-4 font-medium">Remarks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((result, index) => (
-                  <tr key={index} className="border-t border-gray-200 dark:border-gray-700">
-                    <td className="py-3 px-4">{result.subject}</td>
-                    <td className="py-3 px-4 text-center">
-                      {result.isMainSubject !== undefined ? 
-                        (result.isMainSubject ? "Main" : "Sub") : "-"}
-                    </td>
-                    <td className="py-3 px-4 text-center">{result.marks}</td>
-                    <td className="py-3 px-4 text-center">{result.grade}</td>
-                    <td className="py-3 px-4">{result.remarks}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gray-50 dark:bg-gray-800/50 font-medium">
-                <tr>
-                  <td className="py-3 px-4">Total</td>
-                  <td className="py-3 px-4"></td>
-                  <td className="py-3 px-4 text-center">{totalMarks}</td>
-                  <td className="py-3 px-4 text-center">{overallGrade}</td>
-                  <td className="py-3 px-4"></td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4">Average</td>
-                  <td className="py-3 px-4"></td>
-                  <td className="py-3 px-4 text-center">{average.toFixed(2)}</td>
-                  <td colSpan={2} className="py-3 px-4"></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          <ResultsTable 
+            results={results} 
+            totalMarks={totalMarks} 
+            average={average} 
+            overallGrade={overallGrade} 
+          />
           
-          <div className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="flex items-center gap-2">
-              <div className={`p-1 rounded-full ${isPassing ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-                {isPassing ? (
-                  <Check size={18} className="text-green-600 dark:text-green-400" />
-                ) : (
-                  <X size={18} className="text-red-600 dark:text-red-400" />
-                )}
-              </div>
-              <span className="font-medium">
-                {isPassing ? 'Passed' : 'Failed'}
-              </span>
-            </div>
-            
-            <div>
-              <p className="text-sm text-right text-gray-600 dark:text-gray-400">
-                Generated on {new Date().toLocaleDateString('en-GB')}
-              </p>
-              <p className="text-sm text-right text-gray-600 dark:text-gray-400">
-                Adventist College Management System
-              </p>
-            </div>
-          </div>
+          <ResultStatusFooter isPassing={isPassing} />
           
-          <div className="flex justify-between items-end mt-12">
-            <div className="text-center">
-              <div className="mb-2 h-20">
-                {/* Left signature placeholder */}
-                <div className="border-b border-gray-400 w-40 mx-auto"></div>
-              </div>
-              <p className="font-medium">{leftSignatory}</p>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 h-20">
-                {/* Right signature placeholder */}
-                <div className="border-b border-gray-400 w-40 mx-auto"></div>
-              </div>
-              <p className="font-medium">{rightSignatory}</p>
-            </div>
-          </div>
+          <SignatureSection leftSignatory={leftSignatory} rightSignatory={rightSignatory} />
         </div>
       </div>
     </div>
