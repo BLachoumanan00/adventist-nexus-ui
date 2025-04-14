@@ -1,8 +1,10 @@
 
 import React, { useState, useRef } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Download, FileText, ChevronDown, FileSpreadsheet } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Download, FileText, ChevronDown, FileSpreadsheet, Palette } from "lucide-react";
 import * as XLSX from "xlsx";
+import { ChromePicker } from 'react-color';
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface SubjectPerformanceProps {
   subjectPassFailData: Array<{
@@ -19,6 +21,18 @@ interface SubjectPerformanceProps {
   exportAsCSV: (data: any[], filename: string) => void;
 }
 
+// Default chart colors
+const defaultChartColors = {
+  totalStudents: "#0f5ea2",
+  passedStudents: "#4ade80",
+  failedStudents: "#f17831",
+  passedBar: "#4ade80",
+  failedBar: "#f87171",
+  passPercentage: "#60a5fa",
+  pass: "#0f5ea2",
+  fail: "#f17831"
+};
+
 const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
   subjectPassFailData,
   selectedClass,
@@ -30,6 +44,8 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const xlsxExportRef = useRef<HTMLButtonElement>(null);
+  const [chartColors, setChartColors] = useState(defaultChartColors);
+  const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   
   // Filter subject data based on selected class
   const filteredSubjectData = subjectPassFailData.filter(
@@ -82,11 +98,19 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
 
   // Prepare the pie chart data
   const pieChartData = [
-    { name: "Pass", value: passRate, color: "#0f5ea2" },
-    { name: "Fail", value: failRate, color: "#f17831" }
+    { name: "Pass", value: passRate, color: chartColors.pass },
+    { name: "Fail", value: failRate, color: chartColors.fail }
   ];
 
-  // Function to export all data to Excel
+  // Function to update chart colors
+  const handleColorChange = (colorKey: string, color: string) => {
+    setChartColors({
+      ...chartColors,
+      [colorKey]: color
+    });
+  };
+
+  // Function to export all data to Excel with charts
   const exportToExcel = () => {
     // Create workbook and add worksheets
     const wb = XLSX.utils.book_new();
@@ -116,18 +140,56 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
     ];
     const summaryWs = XLSX.utils.json_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(wb, summaryWs, "Overall Summary");
+
+    // Add chart data and setup for Excel to potentially render charts
+    // This is a simplified approach as Excel doesn't fully support chart embedding via XLSX
+    // For actual chart rendering in Excel, consider using a library like ExcelJS
+    
+    // Add chart metadata to help generate charts in Excel
+    const chartMetadataWs = XLSX.utils.aoa_to_sheet([
+      ["Chart Type", "Data Sheet", "Title", "X Axis", "Y Axis", "Series"],
+      ["Bar", "Subject Overview", "Subject-wise Overview", "Subject", "Number of Students", "Total Students,Passed Students,Failed Students"],
+      ["Bar", "Pass-Fail Distribution", "Pass/Fail Distribution", "Subject", "Students Count", "Pass Count,Fail Count"],
+      ["Bar", "Pass-Fail Distribution", "Pass Percentage", "Subject", "Percentage", "Pass Percentage"],
+      ["Pie", "Overall Summary", "Overall Pass/Fail", "Category", "Value", "Pass Rate,Fail Rate"]
+    ]);
+    XLSX.utils.book_append_sheet(wb, chartMetadataWs, "Chart Metadata");
     
     // Generate Excel file
     XLSX.writeFile(wb, `Subject-Performance-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
+  // Color picker component
+  const ColorPickerPopover = ({ colorKey, label }: { colorKey: string, label: string }) => (
+    <Popover open={activeColorPicker === colorKey} onOpenChange={(open) => setActiveColorPicker(open ? colorKey : null)}>
+      <PopoverTrigger asChild>
+        <button
+          className="text-xs flex items-center gap-1 glass px-2 py-1 rounded"
+          aria-label={`Change ${label} color`}
+        >
+          <div 
+            className="w-3 h-3 rounded-full" 
+            style={{ backgroundColor: chartColors[colorKey as keyof typeof chartColors] }}
+          />
+          <span>{label}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="end">
+        <ChromePicker 
+          color={chartColors[colorKey as keyof typeof chartColors]} 
+          onChangeComplete={(color) => handleColorChange(colorKey, color.hex)}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Overall Statistics Chart */}
       <div className="glass rounded-xl p-4">
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
           <h3 className="font-medium">Subject-wise Pass/Fail Overview</h3>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowDetails(!showDetails)}
               className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
@@ -135,6 +197,17 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
               <span>{showDetails ? 'Hide Details' : 'Show Details'}</span>
               <ChevronDown size={14} className={`transform transition-transform ${showDetails ? 'rotate-180' : ''}`} />
             </button>
+            
+            <div className="flex items-center gap-1 glass px-2 py-1 rounded">
+              <Palette size={14} />
+              <span className="text-xs">Colors:</span>
+              <div className="flex gap-1 ml-1">
+                <ColorPickerPopover colorKey="totalStudents" label="Total" />
+                <ColorPickerPopover colorKey="passedStudents" label="Pass" />
+                <ColorPickerPopover colorKey="failedStudents" label="Fail" />
+              </div>
+            </div>
+            
             <button
               onClick={() => downloadChart('subjectOverview', 'Subject-Overview')}
               className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
@@ -187,9 +260,9 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 }}
               />
               <Legend />
-              <Bar dataKey="students" name="Total Students" fill="#0f5ea2" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="passed" name="Passed Students" fill="#4ade80" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="failed" name="Failed Students" fill="#f17831" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="students" name="Total Students" fill={chartColors.totalStudents} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="passed" name="Passed Students" fill={chartColors.passedStudents} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="failed" name="Failed Students" fill={chartColors.failedStudents} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -253,9 +326,18 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Subject Pass/Fail Chart */}
         <div className="glass rounded-xl p-4">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
             <h3 className="font-medium">Subject-wise Pass/Fail Distribution</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-1 glass px-2 py-1 rounded">
+                <Palette size={14} />
+                <span className="text-xs">Colors:</span>
+                <div className="flex gap-1 ml-1">
+                  <ColorPickerPopover colorKey="passedBar" label="Pass" />
+                  <ColorPickerPopover colorKey="failedBar" label="Fail" />
+                </div>
+              </div>
+              
               <button
                 onClick={() => downloadChart('subjectPassFail', 'Subject-PassFail')}
                 className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
@@ -275,6 +357,14 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                   const wb = XLSX.utils.book_new();
                   const ws = XLSX.utils.json_to_sheet(passFailData);
                   XLSX.utils.book_append_sheet(wb, ws, "Pass-Fail Distribution");
+                  
+                  // Add chart metadata
+                  const chartMetadataWs = XLSX.utils.aoa_to_sheet([
+                    ["Chart Type", "Data Sheet", "Title", "X Axis", "Y Axis", "Series"],
+                    ["StackedBar", "Pass-Fail Distribution", "Subject-wise Pass/Fail Distribution", "Subject", "Students Count", "Pass Count,Fail Count"]
+                  ]);
+                  XLSX.utils.book_append_sheet(wb, chartMetadataWs, "Chart Metadata");
+                  
                   XLSX.writeFile(wb, `Pass-Fail-Distribution-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
                 }}
                 className="text-sm flex items-center gap-1 glass px-2 py-1 rounded text-green-600 dark:text-green-400"
@@ -312,8 +402,8 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                   }}
                 />
                 <Legend />
-                <Bar dataKey="passed" name="Passed" stackId="a" fill="#4ade80" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="failed" name="Failed" stackId="a" fill="#f87171" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="passed" name="Passed" stackId="a" fill={chartColors.passedBar} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="failed" name="Failed" stackId="a" fill={chartColors.failedBar} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -332,9 +422,17 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
         
         {/* Subject Pass Percentage Chart */}
         <div className="glass rounded-xl p-4">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
             <h3 className="font-medium">Subject Pass Percentage</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-1 glass px-2 py-1 rounded">
+                <Palette size={14} />
+                <span className="text-xs">Color:</span>
+                <div className="flex gap-1 ml-1">
+                  <ColorPickerPopover colorKey="passPercentage" label="Percentage" />
+                </div>
+              </div>
+              
               <button
                 onClick={() => downloadChart('subjectPassPercentage', 'Subject-Pass-Percentage')}
                 className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
@@ -347,11 +445,19 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 onClick={() => {
                   const passPercentageData = stackedData.map(item => ({
                     Subject: item.subject,
-                    "Pass Percentage": `${item.passPercentage}%`
+                    "Pass Percentage": item.passPercentage
                   }));
                   const wb = XLSX.utils.book_new();
                   const ws = XLSX.utils.json_to_sheet(passPercentageData);
                   XLSX.utils.book_append_sheet(wb, ws, "Pass Percentage");
+                  
+                  // Add chart metadata
+                  const chartMetadataWs = XLSX.utils.aoa_to_sheet([
+                    ["Chart Type", "Data Sheet", "Title", "X Axis", "Y Axis", "Series"],
+                    ["Column", "Pass Percentage", "Subject Pass Percentage", "Subject", "Pass Percentage (%)", "Pass Percentage"]
+                  ]);
+                  XLSX.utils.book_append_sheet(wb, chartMetadataWs, "Chart Metadata");
+                  
                   XLSX.writeFile(wb, `Pass-Percentage-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
                 }}
                 className="text-sm flex items-center gap-1 glass px-2 py-1 rounded text-green-600 dark:text-green-400"
@@ -394,7 +500,7 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                 <Bar 
                   dataKey="passPercentage" 
                   name="Pass Percentage" 
-                  fill="#60a5fa"
+                  fill={chartColors.passPercentage}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -416,9 +522,18 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
 
       {/* OVERALL PASS-FAIL Chart */}
       <div className="glass rounded-xl p-4">
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
           <h3 className="font-medium">OVERALL PASS - FAIL</h3>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-1 glass px-2 py-1 rounded">
+              <Palette size={14} />
+              <span className="text-xs">Colors:</span>
+              <div className="flex gap-1 ml-1">
+                <ColorPickerPopover colorKey="pass" label="Pass" />
+                <ColorPickerPopover colorKey="fail" label="Fail" />
+              </div>
+            </div>
+            
             <button
               onClick={() => downloadChart('overallPassFail', 'Overall-PassFail')}
               className="text-sm flex items-center gap-1 glass px-2 py-1 rounded"
@@ -433,12 +548,28 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
                   { Metric: "Total Students", Value: totalStudents },
                   { Metric: "Students Passed", Value: totalPassed },
                   { Metric: "Students Failed", Value: totalFailed },
-                  { Metric: "Pass Rate", Value: `${passRate}%` },
-                  { Metric: "Fail Rate", Value: `${failRate}%` }
+                  { Metric: "Pass Rate", Value: passRate },
+                  { Metric: "Fail Rate", Value: failRate }
                 ];
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.json_to_sheet(summaryData);
                 XLSX.utils.book_append_sheet(wb, ws, "Overall Summary");
+                
+                // Add pie chart data in a format better for Excel charts
+                const pieData = [
+                  { Category: "Pass", Value: passRate },
+                  { Category: "Fail", Value: failRate }
+                ];
+                const pieWs = XLSX.utils.json_to_sheet(pieData);
+                XLSX.utils.book_append_sheet(wb, pieWs, "Pass Fail Pie");
+                
+                // Add chart metadata
+                const chartMetadataWs = XLSX.utils.aoa_to_sheet([
+                  ["Chart Type", "Data Sheet", "Title", "Category Field", "Value Field"],
+                  ["Pie", "Pass Fail Pie", "Overall Pass/Fail Distribution", "Category", "Value"]
+                ]);
+                XLSX.utils.book_append_sheet(wb, chartMetadataWs, "Chart Metadata");
+                
                 XLSX.writeFile(wb, `Overall-Summary-${selectedClass}-${new Date().toISOString().slice(0,10)}.xlsx`);
               }}
               className="text-sm flex items-center gap-1 glass px-2 py-1 rounded text-green-600 dark:text-green-400"
@@ -496,11 +627,11 @@ const SubjectPerformance: React.FC<SubjectPerformanceProps> = ({
             <div className="text-center">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col items-center p-4 glass rounded-lg">
-                  <div className="text-4xl font-bold text-[#0f5ea2]">{passRate}%</div>
+                  <div className="text-4xl font-bold" style={{ color: chartColors.pass }}>{passRate}%</div>
                   <div className="text-sm mt-1">Pass Rate</div>
                 </div>
                 <div className="flex flex-col items-center p-4 glass rounded-lg">
-                  <div className="text-4xl font-bold text-[#f17831]">{failRate}%</div>
+                  <div className="text-4xl font-bold" style={{ color: chartColors.fail }}>{failRate}%</div>
                   <div className="text-sm mt-1">Fail Rate</div>
                 </div>
               </div>

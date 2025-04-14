@@ -82,7 +82,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-[95%] max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center p-4 z-10">
           <h2 className="text-lg font-semibold">Result Preview</h2>
           <div className="flex gap-2">
@@ -112,7 +112,7 @@ const ResultPreview: React.FC<ResultPreviewProps> = ({ student, results, daysAbs
         
         <div className="p-6" id="resultToPrint">
           <div className="mb-8 text-center">
-            <h1 className="text-xl font-bold mb-1">Adventist College Mauritius</h1>
+            <h1 className="text-2xl font-bold mb-1">Adventist College Mauritius</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">Term Results</p>
           </div>
           
