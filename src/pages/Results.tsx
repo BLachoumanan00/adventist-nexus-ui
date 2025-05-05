@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Download, FileText, Search, Eye, Filter, FileBarChart } from "lucide-react";
 import ResultPreview from "../components/ResultPreview";
@@ -21,6 +20,7 @@ interface StudentResult {
   average: number;
   overallGrade: string;
   rank?: number; // Added rank property
+  selectedSubjects?: string[]; // New property to track selected subjects
 }
 
 const sampleStudents: StudentResult[] = [
@@ -147,7 +147,34 @@ const Results: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [showResultSlip, setShowResultSlip] = useState(false);
   const [showTermReport, setShowTermReport] = useState(false);
+  const [allSubjects, setAllSubjects] = useState<string[]>([]);
   const { toast } = useToast();
+  
+  // Extract all unique subjects on component mount
+  useEffect(() => {
+    const subjects = new Set<string>();
+    sampleStudents.forEach(student => {
+      student.subjects.forEach(subject => {
+        subjects.add(subject.subject);
+      });
+    });
+    setAllSubjects(Array.from(subjects));
+    
+    // Initialize selectedSubjects for each student if not already present
+    const updatedStudents = sampleStudents.map(student => {
+      if (!student.selectedSubjects) {
+        return {
+          ...student,
+          selectedSubjects: student.subjects.map(s => s.subject)
+        };
+      }
+      return student;
+    });
+    
+    // Update the students
+    // Note: We're not actually modifying sampleStudents since it's a constant,
+    // but in a real app you would update your state or database
+  }, []);
   
   // Calculate ranks for each grade and section
   useEffect(() => {
@@ -210,6 +237,25 @@ const Results: React.FC = () => {
 
   const closeTermReport = () => {
     setShowTermReport(false);
+  };
+
+  // Function to handle subject selection changes
+  const handleSubjectsChange = (studentId: string, subjects: string[]) => {
+    const updatedStudent = sampleStudents.find(s => s.id === studentId);
+    if (updatedStudent) {
+      updatedStudent.selectedSubjects = subjects;
+      
+      // Force re-render by updating the selected student if it's the one being edited
+      if (selectedStudent && selectedStudent.id === studentId) {
+        setSelectedStudent({...updatedStudent});
+      }
+      
+      // In a real app, you would save this to your database
+      toast({
+        title: "Subjects Updated",
+        description: `Updated subject selection for ${updatedStudent.name}`
+      });
+    }
   };
 
   const generateBulkResults = () => {
@@ -400,6 +446,9 @@ const Results: React.FC = () => {
             section: selectedStudent.section
           }}
           results={selectedStudent.subjects}
+          availableSubjects={allSubjects}
+          selectedSubjects={selectedStudent.selectedSubjects || selectedStudent.subjects.map(s => s.subject)}
+          onSubjectsChange={(subjects) => handleSubjectsChange(selectedStudent.id, subjects)}
           onClose={closePreview}
         />
       )}
@@ -423,13 +472,24 @@ const Results: React.FC = () => {
               ? "Satisfactory performance. More focus needed in weaker subjects."
               : "Needs improvement. Extra attention and guidance required."
           }}
-          subjects={selectedStudent.subjects.map(subject => ({
-            subject: subject.subject,
-            marks: subject.marks,
-            totalMarks: 100,
-            grade: subject.grade,
-            remarks: subject.remarks
-          }))}
+          subjects={selectedStudent.selectedSubjects 
+            ? selectedStudent.subjects
+                .filter(subject => selectedStudent.selectedSubjects?.includes(subject.subject))
+                .map(subject => ({
+                  subject: subject.subject,
+                  marks: subject.marks,
+                  totalMarks: 100,
+                  grade: subject.grade,
+                  remarks: subject.remarks
+                }))
+            : selectedStudent.subjects.map(subject => ({
+                subject: subject.subject,
+                marks: subject.marks,
+                totalMarks: 100,
+                grade: subject.grade,
+                remarks: subject.remarks
+              }))
+          }
           examName="Term 1 Examination 2025"
           daysAbsent={Math.floor(Math.random() * 5)}
           onClose={closeResultSlip}
@@ -455,13 +515,24 @@ const Results: React.FC = () => {
               ? "Satisfactory performance. More focus needed in weaker subjects."
               : "Needs improvement. Extra attention and guidance required."
           }}
-          subjects={selectedStudent.subjects.map(subject => ({
-            subject: subject.subject,
-            marks: subject.marks,
-            totalMarks: 100,
-            grade: subject.grade,
-            remarks: subject.remarks
-          }))}
+          subjects={selectedStudent.selectedSubjects 
+            ? selectedStudent.subjects
+                .filter(subject => selectedStudent.selectedSubjects?.includes(subject.subject))
+                .map(subject => ({
+                  subject: subject.subject,
+                  marks: subject.marks,
+                  totalMarks: 100,
+                  grade: subject.grade,
+                  remarks: subject.remarks
+                }))
+            : selectedStudent.subjects.map(subject => ({
+                subject: subject.subject,
+                marks: subject.marks,
+                totalMarks: 100,
+                grade: subject.grade,
+                remarks: subject.remarks
+              }))
+          }
           examName="Term 1 Examination 2025"
           daysAbsent={Math.floor(Math.random() * 5)}
           onClose={closeTermReport}
