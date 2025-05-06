@@ -10,10 +10,17 @@ import {
 } from './ui/table';
 import { X, Plus, Save, Check } from 'lucide-react';
 import { useToast } from "../hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export interface StudentSubject {
   id: string;
   name: string;
+  grade?: string; // Add grade property to subjects
 }
 
 export interface StudentWithSubjects {
@@ -128,7 +135,7 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
                     className="flex items-center gap-1 bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
                   >
                     <Plus size={14} />
-                    {subject.name}
+                    {subject.name} {subject.grade && `(Grade ${subject.grade})`}
                   </div>
                 ))}
             </div>
@@ -143,7 +150,7 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
                   key={subject.id}
                   className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-full text-sm"
                 >
-                  {subject.name}
+                  {subject.name} {subject.grade && `(Grade ${subject.grade})`}
                 </div>
               ))}
             </div>
