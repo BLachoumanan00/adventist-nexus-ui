@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog, AlertCircle, UserPlus, UserMinus, School, GraduationCap, BookOpenCheck, Save, Plus, Minus, Check } from "lucide-react";
+import { CheckCircle, Edit, PlusCircle, Search, Shield, Trash, UserCog, AlertCircle, UserPlus, UserMinus, School, GraduationCap, BookOpenCheck, Save, Plus, Minus, Check, User, Book } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import GradeCriteriaTab from "../components/GradeCriteriaTab";
+import StudentSubjectsManager, { StudentSubject, StudentWithSubjects } from "../components/StudentSubjectsManager";
 
 interface User {
   id: number;
@@ -73,6 +74,13 @@ interface GradeCriteriaStructure {
     sub?: GradeThreshold[];
     default?: GradeThreshold[];
   };
+}
+
+// Add new interfaces for subjects
+interface Subject {
+  id: string;
+  name: string;
+  gradeLevel: string;
 }
 
 const AdminPanel: React.FC = () => {
@@ -255,6 +263,34 @@ const AdminPanel: React.FC = () => {
   // State for the GradeCriteriaTab component
   const [gradeCriteriaByGrade, setGradeCriteriaByGrade] = useState<GradeCriteriaStructure>({});
 
+  // Add state for selected student and subjects
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithSubjects | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>([
+    { id: "math", name: "Mathematics", gradeLevel: "All" },
+    { id: "eng", name: "English", gradeLevel: "All" },
+    { id: "sci", name: "Science", gradeLevel: "All" },
+    { id: "his", name: "History", gradeLevel: "All" },
+    { id: "geo", name: "Geography", gradeLevel: "All" },
+    { id: "cs", name: "Computer Science", gradeLevel: "All" },
+    { id: "art", name: "Art", gradeLevel: "All" },
+    { id: "music", name: "Music", gradeLevel: "All" },
+    { id: "pe", name: "Physical Education", gradeLevel: "All" },
+    { id: "chem", name: "Chemistry", gradeLevel: "High School" },
+    { id: "phys", name: "Physics", gradeLevel: "High School" },
+    { id: "bio", name: "Biology", gradeLevel: "High School" },
+  ]);
+  const [newSubject, setNewSubject] = useState({ name: "", gradeLevel: "All" });
+  const [showAddSubject, setShowAddSubject] = useState(false);
+
+  // Convert regular students to students with subjects
+  const [studentsWithSubjects, setStudentsWithSubjects] = useState<StudentWithSubjects[]>([]);
+
+  const [newGradeRange, setNewGradeRange] = useState<GradeRange>({
+    grade: '',
+    minPercentage: 0,
+    maxPercentage: 0
+  });
+
   // Convert the old format to the new format for GradeCriteriaTab
   useEffect(() => {
     // Initialize the structure
@@ -293,15 +329,9 @@ const AdminPanel: React.FC = () => {
     setGradeCriteriaByGrade(newCriteria);
   }, [gradeCriteria]);
 
-  const [newGradeRange, setNewGradeRange] = useState<GradeRange>({
-    grade: '',
-    minPercentage: 0,
-    maxPercentage: 0
-  });
-
   // Load current user on component mount
   useEffect(() => {
-    const userStr = localStorage.getItem('currentUser');
+    const userStr = localStorage.getItem('user');
     if (userStr) {
       const user = JSON.parse(userStr);
       setCurrentUser(user as CurrentUser);
@@ -334,6 +364,24 @@ const AdminPanel: React.FC = () => {
         // On error, keep the default state
       }
     }
+    
+    // Load students and their subjects from localStorage
+    const savedStudentsWithSubjects = localStorage.getItem('studentsWithSubjects');
+    if (savedStudentsWithSubjects) {
+      setStudentsWithSubjects(JSON.parse(savedStudentsWithSubjects));
+    } else if (students.length > 0) {
+      // Convert regular students to students with subjects if not already saved
+      const initialStudentsWithSubjects = students.map(student => ({
+        ...student,
+        subjects: [] // Initially no subjects assigned
+      }));
+      setStudentsWithSubjects(initialStudentsWithSubjects);
+    }
+
+    const savedSubjects = localStorage.getItem('subjects');
+    if (savedSubjects) {
+      setSubjects(JSON.parse(savedSubjects));
+    }
   }, []);
 
   // Save to localStorage when data changes
@@ -348,6 +396,35 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('gradeCriteria', JSON.stringify(gradeCriteria));
   }, [gradeCriteria]);
+  
+  // Save subjects and students with subjects to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('subjects', JSON.stringify(subjects));
+  }, [subjects]);
+
+  useEffect(() => {
+    localStorage.setItem('studentsWithSubjects', JSON.stringify(studentsWithSubjects));
+  }, [studentsWithSubjects]);
+
+  // When a new student is added, add them to studentsWithSubjects as well
+  useEffect(() => {
+    // Only run this if students length changed and studentsWithSubjects is already loaded
+    if (students.length > 0 && studentsWithSubjects.length > 0) {
+      // Find students that are in students but not in studentsWithSubjects
+      const newStudents = students.filter(student => 
+        !studentsWithSubjects.some(s => s.id === student.id)
+      );
+      
+      if (newStudents.length > 0) {
+        const newStudentsWithSubjects = newStudents.map(student => ({
+          ...student,
+          subjects: [] // Initially no subjects assigned
+        }));
+        
+        setStudentsWithSubjects([...studentsWithSubjects, ...newStudentsWithSubjects]);
+      }
+    }
+  }, [students, studentsWithSubjects]);
 
   // Handle grade criteria changes from the GradeCriteriaTab component
   const handleGradeCriteriaChange = (gradeNumber: number, criteria: GradeThreshold[], isMain?: boolean) => {
@@ -437,6 +514,15 @@ const AdminPanel: React.FC = () => {
     teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     teacher.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
     teacher.qualification.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const filteredStudentsWithSubjects = studentsWithSubjects.filter(student => 
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    student.grade.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.section.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.parentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // Also search by subjects
+    student.subjects.some(subj => subj.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAddUser = () => {
@@ -541,7 +627,16 @@ const AdminPanel: React.FC = () => {
       addedOn: new Date().toISOString().split('T')[0]
     };
     
+    // Add to both students arrays
     setStudents([...students, student]);
+    
+    const studentWithSubjects: StudentWithSubjects = {
+      ...student,
+      subjects: []
+    };
+    
+    setStudentsWithSubjects([...studentsWithSubjects, studentWithSubjects]);
+    
     setNewStudent({
       name: '',
       grade: '',
@@ -561,6 +656,11 @@ const AdminPanel: React.FC = () => {
     const studentToDelete = students.find(student => student.id === id);
     
     setStudents(students.filter(student => student.id !== id));
+    setStudentsWithSubjects(studentsWithSubjects.filter(student => student.id !== id));
+    
+    if (selectedStudent && selectedStudent.id === id) {
+      setSelectedStudent(null);
+    }
     
     toast({
       title: "Student Deleted",
@@ -746,6 +846,78 @@ const AdminPanel: React.FC = () => {
   const isSuperUser = (email: string) => {
     return email.toLowerCase() === 'blachoumanan@adventistcollege.mu';
   };
+  
+  const handleAddSubject = () => {
+    if (!newSubject.name.trim()) {
+      toast({
+        title: "Subject Name Required",
+        description: "Please enter a name for the subject.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const subjectId = newSubject.name.toLowerCase().replace(/\s+/g, '-');
+    
+    // Check if subject already exists
+    if (subjects.some(subject => subject.id === subjectId)) {
+      toast({
+        title: "Subject Already Exists",
+        description: "This subject has already been added.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const subject: Subject = {
+      id: subjectId,
+      name: newSubject.name,
+      gradeLevel: newSubject.gradeLevel
+    };
+    
+    setSubjects([...subjects, subject]);
+    setNewSubject({ name: "", gradeLevel: "All" });
+    setShowAddSubject(false);
+    
+    toast({
+      title: "Subject Added",
+      description: `${subject.name} has been added to the curriculum.`,
+    });
+  };
+
+  const handleDeleteSubject = (id: string) => {
+    // Remove subject from all students
+    const updatedStudents = studentsWithSubjects.map(student => ({
+      ...student,
+      subjects: student.subjects.filter(subj => subj.id !== id)
+    }));
+    
+    setStudentsWithSubjects(updatedStudents);
+    
+    // Remove subject from subjects list
+    setSubjects(subjects.filter(subject => subject.id !== id));
+    
+    toast({
+      title: "Subject Deleted",
+      description: "Subject has been removed from the curriculum.",
+    });
+  };
+
+  const handleSaveStudentSubjects = (studentId: number, newSubjects: StudentSubject[]) => {
+    const updatedStudents = studentsWithSubjects.map(student => {
+      if (student.id === studentId) {
+        return { ...student, subjects: newSubjects };
+      }
+      return student;
+    });
+    
+    setStudentsWithSubjects(updatedStudents);
+    
+    // If the selected student is being edited, update it too
+    if (selectedStudent && selectedStudent.id === studentId) {
+      setSelectedStudent({ ...selectedStudent, subjects: newSubjects });
+    }
+  };
 
   return (
     <div className="animate-fade-in">
@@ -777,6 +949,10 @@ const AdminPanel: React.FC = () => {
             <TabsTrigger value="students" className="px-4 py-2">
               <UserPlus size={16} className="mr-2" />
               Students
+            </TabsTrigger>
+            <TabsTrigger value="subjects" className="px-4 py-2">
+              <Book size={16} className="mr-2" />
+              Subjects
             </TabsTrigger>
             <TabsTrigger value="teachers" className="px-4 py-2">
               <GraduationCap size={16} className="mr-2" />
@@ -1012,45 +1188,181 @@ const AdminPanel: React.FC = () => {
               </div>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="text-left">
-                  <tr className="border-b border-white/10">
-                    <th className="pb-2 font-medium text-foreground/70 text-sm">Roll No</th>
-                    <th className="pb-2 font-medium text-foreground/70 text-sm">Name</th>
-                    <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
-                    <th className="pb-2 font-medium text-foreground/70 text-sm">Section</th>
-                    <th className="pb-2 font-medium text-foreground/70 text-sm">Parent/Guardian</th>
-                    <th className="pb-2 font-medium text-foreground/70 text-sm">Contact</th>
-                    <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStudents.map(student => (
-                    <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors">
-                      <td className="py-3">{student.rollNo}</td>
-                      <td className="py-3">{student.name}</td>
-                      <td className="py-3">{student.grade}</td>
-                      <td className="py-3">{student.section}</td>
-                      <td className="py-3">{student.parentName || '-'}</td>
-                      <td className="py-3">{student.contactNo || '-'}</td>
-                      <td className="py-3">
-                        <div className="flex gap-2">
-                          <button className="p-1 rounded hover:bg-white/10 transition-colors">
-                            <Edit size={16} className="text-foreground/70" />
-                          </button>
-                          <button 
-                            className="p-1 rounded hover:bg-white/10 transition-colors"
-                            onClick={() => handleDeleteStudent(student.id)}
-                          >
-                            <Trash size={16} className="text-foreground/70" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="text-left">
+                      <tr className="border-b border-white/10">
+                        <th className="pb-2 font-medium text-foreground/70 text-sm">Roll No</th>
+                        <th className="pb-2 font-medium text-foreground/70 text-sm">Name</th>
+                        <th className="pb-2 font-medium text-foreground/70 text-sm">Grade</th>
+                        <th className="pb-2 font-medium text-foreground/70 text-sm">Section</th>
+                        <th className="pb-2 font-medium text-foreground/70 text-sm">Parent/Guardian</th>
+                        <th className="pb-2 font-medium text-foreground/70 text-sm">Subjects</th>
+                        <th className="pb-2 font-medium text-foreground/70 text-sm">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStudentsWithSubjects.map(student => (
+                        <tr 
+                          key={student.id} 
+                          className={`border-b border-white/5 hover:bg-white/5 dark:hover:bg-white/5 transition-colors ${
+                            selectedStudent?.id === student.id ? 'bg-blue-50/10 dark:bg-blue-900/10' : ''
+                          }`}
+                          onClick={() => setSelectedStudent(student)}
+                        >
+                          <td className="py-3">{student.rollNo}</td>
+                          <td className="py-3">{student.name}</td>
+                          <td className="py-3">{student.grade}</td>
+                          <td className="py-3">{student.section}</td>
+                          <td className="py-3">{student.parentName || '-'}</td>
+                          <td className="py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {student.subjects.slice(0, 2).map(subject => (
+                                <span 
+                                  key={subject.id}
+                                  className="px-1.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs rounded"
+                                >
+                                  {subject.name}
+                                </span>
+                              ))}
+                              {student.subjects.length > 2 && (
+                                <span className="px-1.5 py-0.5 bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 text-xs rounded">
+                                  +{student.subjects.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            <div className="flex gap-2">
+                              <button 
+                                className="p-1 rounded hover:bg-white/10 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedStudent(student);
+                                }}
+                              >
+                                <Edit size={16} className="text-foreground/70" />
+                              </button>
+                              <button 
+                                className="p-1 rounded hover:bg-white/10 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteStudent(student.id);
+                                }}
+                              >
+                                <Trash size={16} className="text-foreground/70" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <div className="glass rounded-xl p-4 h-fit">
+                {selectedStudent ? (
+                  <StudentSubjectsManager
+                    student={selectedStudent}
+                    availableSubjects={subjects.map(s => ({ id: s.id, name: s.name }))}
+                    onSave={handleSaveStudentSubjects}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-foreground/60">
+                    <User size={40} className="mx-auto mb-3 opacity-30" />
+                    <h3 className="font-medium">No Student Selected</h3>
+                    <p className="text-sm">Select a student to manage their subjects</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="subjects">
+            <div className="glass rounded-xl p-4 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-medium">Curriculum Subjects</h3>
+                {showAddSubject ? (
+                  <button
+                    onClick={() => setShowAddSubject(false)}
+                    className="text-sm text-foreground/70 hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowAddSubject(true)}
+                    className="btn-primary flex items-center gap-2 text-sm"
+                  >
+                    <Plus size={16} />
+                    <span>Add Subject</span>
+                  </button>
+                )}
+              </div>
+              
+              {showAddSubject && (
+                <div className="glass border border-white/10 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs text-foreground/70 mb-1 block">Subject Name*</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Mathematics"
+                        value={newSubject.name}
+                        onChange={(e) => setNewSubject({...newSubject, name: e.target.value})}
+                        className="w-full rounded-lg glass border-none px-4 py-2"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-xs text-foreground/70 mb-1 block">Grade Level</label>
+                      <select
+                        value={newSubject.gradeLevel}
+                        onChange={(e) => setNewSubject({...newSubject, gradeLevel: e.target.value})}
+                        className="w-full rounded-lg glass border-none px-4 py-2"
+                      >
+                        <option value="All">All Grades</option>
+                        <option value="Primary">Primary School</option>
+                        <option value="Middle">Middle School</option>
+                        <option value="High">High School</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-end">
+                      <button
+                        onClick={handleAddSubject}
+                        className="btn-primary flex items-center gap-2"
+                      >
+                        <Check size={16} />
+                        <span>Add Subject</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {subjects.map(subject => (
+                  <div 
+                    key={subject.id} 
+                    className="glass border border-white/5 rounded-lg p-3 flex justify-between items-center"
+                  >
+                    <div>
+                      <h4 className="font-medium">{subject.name}</h4>
+                      <p className="text-xs text-foreground/60">{subject.gradeLevel}</p>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteSubject(subject.id)}
+                      className="text-foreground/50 hover:text-red-500 transition-colors"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </TabsContent>
           
