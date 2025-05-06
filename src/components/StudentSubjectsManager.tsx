@@ -75,6 +75,22 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
     });
   };
 
+  // Group available subjects by grade
+  const getSubjectsByGrade = () => {
+    const grades = ['7', '8', '9', '10', '11', '12', '13'];
+    const subjectsByGrade: Record<string, StudentSubject[]> = {
+      'All': availableSubjects.filter(s => !s.grade || s.grade === 'All')
+    };
+    
+    grades.forEach(grade => {
+      subjectsByGrade[grade] = availableSubjects.filter(s => s.grade === grade);
+    });
+    
+    return subjectsByGrade;
+  };
+
+  const subjectsByGrade = getSubjectsByGrade();
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -125,19 +141,55 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
           
           <div>
             <h4 className="text-sm font-medium mb-2">Available Subjects</h4>
-            <div className="flex flex-wrap gap-2">
-              {availableSubjects
-                .filter(subject => !selectedSubjects.some(s => s.id === subject.id))
-                .map(subject => (
-                  <div 
-                    key={subject.id}
-                    onClick={() => handleAddSubject(subject)}
-                    className="flex items-center gap-1 bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-full mb-2 flex items-center justify-between bg-secondary px-3 py-2 rounded-md text-sm">
+                Select Grade Level
+                <span className="ml-2">▼</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 bg-background border border-border">
+                <DropdownMenuItem 
+                  className="cursor-pointer hover:bg-secondary" 
+                  onSelect={() => {/* Show all subjects */}}
+                >
+                  All Grades
+                </DropdownMenuItem>
+                {['7', '8', '9', '10', '11', '12', '13'].map(grade => (
+                  <DropdownMenuItem 
+                    key={grade} 
+                    className="cursor-pointer hover:bg-secondary"
+                    onSelect={() => {/* Filter subjects by grade */}}
                   >
-                    <Plus size={14} />
-                    {subject.name} {subject.grade && `(Grade ${subject.grade})`}
-                  </div>
+                    Grade {grade}
+                  </DropdownMenuItem>
                 ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <div className="space-y-3">
+              {Object.entries(subjectsByGrade).map(([grade, subjects]) => (
+                subjects.length > 0 && (
+                  <div key={grade} className="space-y-2">
+                    <h5 className="text-xs font-medium text-muted-foreground">
+                      {grade === 'All' ? 'General Subjects' : `Grade ${grade}`}
+                    </h5>
+                    <div className="flex flex-wrap gap-2">
+                      {subjects
+                        .filter(subject => !selectedSubjects.some(s => s.id === subject.id))
+                        .map(subject => (
+                          <div 
+                            key={subject.id}
+                            onClick={() => handleAddSubject(subject)}
+                            className="flex items-center gap-1 bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                          >
+                            <Plus size={14} />
+                            {subject.name} {subject.grade && subject.grade !== 'All' && `(Grade ${subject.grade})`}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )
+              ))}
             </div>
           </div>
         </div>
@@ -150,7 +202,7 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
                   key={subject.id}
                   className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-full text-sm"
                 >
-                  {subject.name} {subject.grade && `(Grade ${subject.grade})`}
+                  {subject.name} {subject.grade && subject.grade !== 'All' && `(Grade ${subject.grade})`}
                 </div>
               ))}
             </div>
