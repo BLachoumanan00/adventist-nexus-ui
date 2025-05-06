@@ -13,11 +13,12 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
-  const { theme } = useTheme(); // Import the theme from the useTheme hook
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    const loggedInUser = localStorage.getItem('currentUser');
+    // Check for logged in user with consistent key naming
+    const loggedInUser = localStorage.getItem('user');
     if (loggedInUser) {
       navigate('/dashboard');
     }
@@ -54,7 +55,8 @@ const Login: React.FC = () => {
         // Log user activity
         logActivity("User Login", `${user.name} logged in`);
         
-        localStorage.setItem('currentUser', JSON.stringify(userObj));
+        // Use consistent key naming for storing user data
+        localStorage.setItem('user', JSON.stringify(userObj));
         
         toast({
           title: "Login Successful",

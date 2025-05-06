@@ -12,6 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole = [] 
 }) => {
   const location = useLocation();
+  // Use consistent key naming for getting user data
   const userString = localStorage.getItem('user');
   const user = userString ? JSON.parse(userString) : null;
   
