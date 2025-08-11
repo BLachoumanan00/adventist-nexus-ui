@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow
 } from './ui/table';
-import { X, Plus, Save, Check } from 'lucide-react';
+import { X, Plus, Save, Edit3, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from "../hooks/use-toast";
 import {
   DropdownMenu,
@@ -16,6 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Button } from "./ui/button";
+import { Alert, AlertDescription } from "./ui/alert";
 
 export interface StudentSubject {
   id: string;
@@ -48,35 +50,97 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
 }) => {
   const [selectedSubjects, setSelectedSubjects] = useState<StudentSubject[]>(student.subjects || []);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedGradeFilter, setSelectedGradeFilter] = useState<string>('All');
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Reset selected subjects when student changes
   useEffect(() => {
-    setSelectedSubjects(student.subjects || []);
-    setIsEditing(false);
+    try {
+      setSelectedSubjects(student.subjects || []);
+      setIsEditing(false);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load student subjects');
+      console.error('Error loading student subjects:', err);
+    }
   }, [student]);
 
-  const handleAddSubject = (subject: StudentSubject) => {
-    if (!selectedSubjects.some(s => s.id === subject.id)) {
-      setSelectedSubjects([...selectedSubjects, subject]);
+  // Validate subject data
+  const validateSubject = useCallback((subject: StudentSubject): boolean => {
+    return !!(subject?.id && subject?.name);
+  }, []);
+
+  const handleAddSubject = useCallback((subject: StudentSubject) => {
+    try {
+      if (!validateSubject(subject)) {
+        throw new Error('Invalid subject data');
+      }
+      
+      if (!selectedSubjects.some(s => s.id === subject.id)) {
+        setSelectedSubjects(prev => [...prev, subject]);
+        toast({
+          title: "Subject Added",
+          description: `${subject.name} added to ${student.name}'s subjects`,
+        });
+      }
+    } catch (err) {
+      setError('Failed to add subject');
+      console.error('Error adding subject:', err);
     }
-  };
+  }, [selectedSubjects, validateSubject, student.name, toast]);
 
-  const handleRemoveSubject = (subjectId: string) => {
-    setSelectedSubjects(selectedSubjects.filter(s => s.id !== subjectId));
-  };
+  const handleRemoveSubject = useCallback((subjectId: string) => {
+    try {
+      const subject = selectedSubjects.find(s => s.id === subjectId);
+      setSelectedSubjects(prev => prev.filter(s => s.id !== subjectId));
+      
+      if (subject) {
+        toast({
+          title: "Subject Removed",
+          description: `${subject.name} removed from ${student.name}'s subjects`,
+        });
+      }
+    } catch (err) {
+      setError('Failed to remove subject');
+      console.error('Error removing subject:', err);
+    }
+  }, [selectedSubjects, student.name, toast]);
 
-  const handleSave = () => {
-    onSave(student.id, selectedSubjects);
-    setIsEditing(false);
-    toast({
-      title: "Subjects Updated",
-      description: `Updated subjects for ${student.name}`,
-    });
-  };
+  const handleSave = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Validate all selected subjects
+      const invalidSubjects = selectedSubjects.filter(s => !validateSubject(s));
+      if (invalidSubjects.length > 0) {
+        throw new Error(`Invalid subjects detected: ${invalidSubjects.map(s => s.name || 'Unknown').join(', ')}`);
+      }
+      
+      await onSave(student.id, selectedSubjects);
+      setIsEditing(false);
+      
+      toast({
+        title: "Subjects Updated Successfully",
+        description: `Updated ${selectedSubjects.length} subjects for ${student.name}`,
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save subjects';
+      setError(errorMessage);
+      toast({
+        title: "Save Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedSubjects, validateSubject, onSave, student.id, student.name, toast]);
 
-  // Group available subjects by grade
-  const getSubjectsByGrade = () => {
+  // Group available subjects by grade with filtering
+  const getFilteredSubjectsByGrade = useCallback(() => {
     const grades = ['7', '8', '9', '10', '11', '12', '13'];
     const subjectsByGrade: Record<string, StudentSubject[]> = {
       'All': availableSubjects.filter(s => !s.grade || s.grade === 'All')
@@ -86,48 +150,105 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
       subjectsByGrade[grade] = availableSubjects.filter(s => s.grade === grade);
     });
     
-    return subjectsByGrade;
-  };
+    // Apply grade filter
+    if (selectedGradeFilter === 'All') {
+      return subjectsByGrade;
+    } else {
+      return {
+        [selectedGradeFilter]: subjectsByGrade[selectedGradeFilter] || []
+      };
+    }
+  }, [availableSubjects, selectedGradeFilter]);
 
-  const subjectsByGrade = getSubjectsByGrade();
+  const filteredSubjectsByGrade = getFilteredSubjectsByGrade();
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">{student.name}'s Subjects</h3>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">{student.name}'s Subjects</h3>
+          <p className="text-sm text-muted-foreground">
+            {selectedSubjects.length} subject{selectedSubjects.length !== 1 ? 's' : ''} assigned
+          </p>
+        </div>
+        
         {!isEditing ? (
-          <button 
+          <Button 
             onClick={() => setIsEditing(true)}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+            variant="outline"
+            size="sm"
+            className="gap-2"
           >
+            <Edit3 size={16} />
             Edit Subjects
-          </button>
+          </Button>
         ) : (
-          <button 
-            onClick={handleSave}
-            className="flex items-center gap-1 px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition"
-          >
-            <Save size={14} />
-            Save Changes
-          </button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => {
+                setIsEditing(false);
+                setSelectedSubjects(student.subjects || []);
+                setError(null);
+              }}
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave}
+              size="sm"
+              disabled={isLoading}
+              className="gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
         )}
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive" className="animate-fade-in">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       
       {isEditing ? (
-        <div className="glass p-4 rounded-lg space-y-4">
-          <div>
-            <h4 className="text-sm font-medium mb-2">Current Subjects</h4>
+        <div className="space-y-6">
+          {/* Current Subjects Section */}
+          <div className="glass-card">
+            <h4 className="text-sm font-semibold mb-3 text-foreground">Current Subjects</h4>
             {selectedSubjects.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {selectedSubjects.map(subject => (
                   <div 
                     key={subject.id}
-                    className="flex items-center gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-full text-sm"
+                    className="group flex items-center gap-2 bg-primary/10 text-primary px-3 py-2 rounded-lg text-sm border border-primary/20 transition-all hover:bg-primary/20"
                   >
-                    {subject.name}
+                    <span className="font-medium">{subject.name}</span>
+                    {subject.grade && subject.grade !== 'All' && (
+                      <span className="text-xs bg-primary/20 px-1.5 py-0.5 rounded">
+                        Grade {subject.grade}
+                      </span>
+                    )}
                     <button 
                       onClick={() => handleRemoveSubject(subject.id)}
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800"
+                      className="text-primary hover:text-destructive transition-colors ml-1"
+                      disabled={isLoading}
                     >
                       <X size={14} />
                     </button>
@@ -135,30 +256,43 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-foreground/60">No subjects added yet</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <Plus size={24} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No subjects added yet</p>
+                <p className="text-xs">Select subjects below to get started</p>
+              </div>
             )}
           </div>
           
-          <div>
-            <h4 className="text-sm font-medium mb-2">Available Subjects</h4>
+          {/* Available Subjects Section */}
+          <div className="glass-card">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-foreground">Available Subjects</h4>
+              <span className="text-xs text-muted-foreground">
+                {availableSubjects.length} total subjects
+              </span>
+            </div>
             
+            {/* Grade Filter */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="w-full mb-2 flex items-center justify-between bg-secondary px-3 py-2 rounded-md text-sm">
-                Select Grade Level
-                <span className="ml-2">▼</span>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto mb-4 justify-between">
+                  {selectedGradeFilter === 'All' ? 'All Grades' : `Grade ${selectedGradeFilter}`}
+                  <span className="ml-2">▼</span>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-background border border-border">
+              <DropdownMenuContent className="w-56">
                 <DropdownMenuItem 
-                  className="cursor-pointer hover:bg-secondary" 
-                  onSelect={() => {/* Show all subjects */}}
+                  onSelect={() => setSelectedGradeFilter('All')}
+                  className="cursor-pointer"
                 >
                   All Grades
                 </DropdownMenuItem>
                 {['7', '8', '9', '10', '11', '12', '13'].map(grade => (
                   <DropdownMenuItem 
                     key={grade} 
-                    className="cursor-pointer hover:bg-secondary"
-                    onSelect={() => {/* Filter subjects by grade */}}
+                    onSelect={() => setSelectedGradeFilter(grade)}
+                    className="cursor-pointer"
                   >
                     Grade {grade}
                   </DropdownMenuItem>
@@ -166,48 +300,79 @@ const StudentSubjectsManager: React.FC<StudentSubjectsManagerProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <div className="space-y-3">
-              {Object.entries(subjectsByGrade).map(([grade, subjects]) => (
-                subjects.length > 0 && (
+            {/* Subjects List */}
+            <div className="space-y-4">
+              {Object.entries(filteredSubjectsByGrade).map(([grade, subjects]) => {
+                const availableSubjectsForGrade = subjects.filter(subject => 
+                  !selectedSubjects.some(s => s.id === subject.id)
+                );
+                
+                return availableSubjectsForGrade.length > 0 && (
                   <div key={grade} className="space-y-2">
-                    <h5 className="text-xs font-medium text-muted-foreground">
+                    <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       {grade === 'All' ? 'General Subjects' : `Grade ${grade}`}
                     </h5>
-                    <div className="flex flex-wrap gap-2">
-                      {subjects
-                        .filter(subject => !selectedSubjects.some(s => s.id === subject.id))
-                        .map(subject => (
-                          <div 
-                            key={subject.id}
-                            onClick={() => handleAddSubject(subject)}
-                            className="flex items-center gap-1 bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 px-2 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
-                          >
-                            <Plus size={14} />
-                            {subject.name} {subject.grade && subject.grade !== 'All' && `(Grade ${subject.grade})`}
-                          </div>
-                        ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {availableSubjectsForGrade.map(subject => (
+                        <button
+                          key={subject.id}
+                          onClick={() => handleAddSubject(subject)}
+                          disabled={isLoading}
+                          className="flex items-center gap-2 p-3 text-left bg-secondary/30 hover:bg-secondary/60 text-secondary-foreground rounded-lg text-sm transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed border border-secondary/20"
+                        >
+                          <Plus size={16} className="text-muted-foreground" />
+                          <span className="font-medium">{subject.name}</span>
+                          {subject.grade && subject.grade !== 'All' && (
+                            <span className="text-xs bg-muted px-1.5 py-0.5 rounded ml-auto">
+                              Grade {subject.grade}
+                            </span>
+                          )}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                )
-              ))}
+                );
+              })}
+              
+              {Object.values(filteredSubjectsByGrade).every(subjects => 
+                subjects.filter(subject => !selectedSubjects.some(s => s.id === subject.id)).length === 0
+              ) && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <AlertCircle size={24} className="mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No available subjects for the selected grade</p>
+                  <p className="text-xs">Try selecting a different grade level</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       ) : (
-        <div className="glass p-4 rounded-lg">
+        /* View Mode */
+        <div className="glass-card">
           {selectedSubjects.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {selectedSubjects.map(subject => (
-                <div 
-                  key={subject.id}
-                  className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-full text-sm"
-                >
-                  {subject.name} {subject.grade && subject.grade !== 'All' && `(Grade ${subject.grade})`}
-                </div>
-              ))}
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {selectedSubjects.map(subject => (
+                  <div 
+                    key={subject.id}
+                    className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg text-sm border"
+                  >
+                    <span className="font-medium text-foreground">{subject.name}</span>
+                    {subject.grade && subject.grade !== 'All' && (
+                      <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded">
+                        Grade {subject.grade}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
-            <p className="text-sm text-foreground/60">No subjects assigned</p>
+            <div className="text-center py-8 text-muted-foreground">
+              <AlertCircle size={24} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No subjects assigned to this student</p>
+              <p className="text-xs">Click "Edit Subjects" to add some subjects</p>
+            </div>
           )}
         </div>
       )}
