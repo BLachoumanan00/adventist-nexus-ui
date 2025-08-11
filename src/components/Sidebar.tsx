@@ -28,15 +28,16 @@ interface SidebarLinkProps {
   badge?: number;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, text, badge }) => {
+const SidebarLink: React.FC<SidebarLinkProps & { onClick?: () => void }> = ({ to, icon, text, badge, onClick }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
 
   return (
     <NavLink
       to={to}
-      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-        isActive ? "bg-primary/20 text-primary" : "hover:bg-white/10"
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors touch-manipulation ${
+        isActive ? "bg-primary/20 text-primary" : "hover:bg-white/10 active:bg-white/20"
       }`}
     >
       {icon}
@@ -50,14 +51,38 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, icon, text, badge }) => {
   );
 };
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  isMobile?: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose, isMobile = false }) => {
   const { unreadCount } = useNotifications();
   const { theme, toggleTheme } = useTheme();
   
+  const handleLinkClick = () => {
+    if (isMobile && onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className="w-60 h-full overflow-y-auto glass border-r border-white/10 flex flex-col fixed left-0 top-0 bottom-0 z-30">
-      <div className="p-4 border-b border-white/10">
+    <aside className={`w-60 h-full overflow-y-auto glass border-r border-white/10 flex flex-col fixed left-0 top-0 bottom-0 z-50 transition-transform duration-300 ${
+      isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
+    }`}>
+      <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <h1 className="text-lg font-bold whitespace-nowrap">School Management</h1>
+        {isMobile && (
+          <button 
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
       
       <nav className="flex-1 p-2">
@@ -66,9 +91,9 @@ const Sidebar: React.FC = () => {
             General
           </div>
           <div className="space-y-1">
-            <SidebarLink to="/dashboard" icon={<BarChart size={18} />} text="Dashboard" />
-            <SidebarLink to="/notifications" icon={<Bell size={18} />} text="Notifications" badge={unreadCount} />
-            <SidebarLink to="/statistics" icon={<PieChart size={18} />} text="Statistics" />
+            <SidebarLink to="/dashboard" icon={<BarChart size={18} />} text="Dashboard" onClick={handleLinkClick} />
+            <SidebarLink to="/notifications" icon={<Bell size={18} />} text="Notifications" badge={unreadCount} onClick={handleLinkClick} />
+            <SidebarLink to="/statistics" icon={<PieChart size={18} />} text="Statistics" onClick={handleLinkClick} />
           </div>
         </div>
         
@@ -77,9 +102,9 @@ const Sidebar: React.FC = () => {
             Academic
           </div>
           <div className="space-y-1">
-            <SidebarLink to="/teacher" icon={<GraduationCap size={18} />} text="Teacher Panel" />
-            <SidebarLink to="/results" icon={<FileText size={18} />} text="Results" />
-            <SidebarLink to="/attendance" icon={<Calendar size={18} />} text="Attendance" />
+            <SidebarLink to="/teacher" icon={<GraduationCap size={18} />} text="Teacher Panel" onClick={handleLinkClick} />
+            <SidebarLink to="/results" icon={<FileText size={18} />} text="Results" onClick={handleLinkClick} />
+            <SidebarLink to="/attendance" icon={<Calendar size={18} />} text="Attendance" onClick={handleLinkClick} />
           </div>
         </div>
         
@@ -88,12 +113,12 @@ const Sidebar: React.FC = () => {
             Administration
           </div>
           <div className="space-y-1">
-            <SidebarLink to="/admin" icon={<Users size={18} />} text="User Management" />
-            <SidebarLink to="/upload" icon={<Upload size={18} />} text="Data Upload" />
-            <SidebarLink to="/certificates" icon={<Award size={18} />} text="Certificates" />
-            <SidebarLink to="/result-generator" icon={<FileBarChart size={18} />} text="Result Generator" />
-            <SidebarLink to="/activity-logs" icon={<ClipboardList size={18} />} text="Activity Logs" />
-            <SidebarLink to="/settings" icon={<Settings size={18} />} text="Settings" />
+            <SidebarLink to="/admin" icon={<Users size={18} />} text="User Management" onClick={handleLinkClick} />
+            <SidebarLink to="/upload" icon={<Upload size={18} />} text="Data Upload" onClick={handleLinkClick} />
+            <SidebarLink to="/certificates" icon={<Award size={18} />} text="Certificates" onClick={handleLinkClick} />
+            <SidebarLink to="/result-generator" icon={<FileBarChart size={18} />} text="Result Generator" onClick={handleLinkClick} />
+            <SidebarLink to="/activity-logs" icon={<ClipboardList size={18} />} text="Activity Logs" onClick={handleLinkClick} />
+            <SidebarLink to="/settings" icon={<Settings size={18} />} text="Settings" onClick={handleLinkClick} />
           </div>
         </div>
       </nav>

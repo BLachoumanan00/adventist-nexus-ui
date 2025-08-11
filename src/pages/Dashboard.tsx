@@ -28,7 +28,7 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         <div className="dashboard-card flex items-center">
           <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50 mr-4">
             <Users className="text-theme-blue" />
@@ -60,7 +60,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="glass-card lg:col-span-2">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold">Performance Overview</h2>
@@ -71,7 +71,7 @@ const Dashboard: React.FC = () => {
             </select>
           </div>
           
-          <div className="h-64 w-full rounded-lg">
+          <div className="h-48 sm:h-64 w-full rounded-lg">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={performanceData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"} />
@@ -123,7 +123,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
         <div className="glass-card">
           <h2 className="text-lg font-semibold mb-4">Subject Distribution</h2>
           <div className="h-48 flex items-center justify-center">
@@ -143,9 +143,9 @@ const Dashboard: React.FC = () => {
           </ul>
         </div>
         
-        <div className="glass-card md:col-span-2">
+        <div className="glass-card sm:col-span-2 lg:col-span-2">
           <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
               { label: 'Add Student', icon: Users, path: '/admin', action: 'Student Management' },
               { label: 'Enter Marks', icon: LineChart, path: '/teacher', action: 'Teacher Panel' },
@@ -154,11 +154,11 @@ const Dashboard: React.FC = () => {
             ].map((item, i) => (
               <button 
                 key={i} 
-                className="p-4 rounded-xl bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 flex flex-col items-center gap-2 transition-colors"
+                className="p-3 sm:p-4 rounded-xl bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 active:bg-white/70 dark:active:bg-white/15 flex flex-col items-center gap-2 transition-colors touch-manipulation"
                 onClick={() => handleQuickAccess(item.path, item.action)}
               >
-                <item.icon size={24} className="text-theme-purple" />
-                <span className="text-xs font-medium">{item.label}</span>
+                <item.icon size={20} className="text-theme-purple" />
+                <span className="text-xs font-medium text-center leading-tight">{item.label}</span>
               </button>
             ))}
           </div>

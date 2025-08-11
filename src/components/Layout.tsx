@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -10,20 +10,44 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Set dynamic sidebar width variable for responsive layout
   React.useEffect(() => {
     document.documentElement.style.setProperty(
       "--sidebar-width",
-      isMobile ? "0px" : "240px"  // Increased from 16rem (256px) to ensure text fits
+      isMobile ? "0px" : "240px"
     );
   }, [isMobile]);
 
+  // Close sidebar when clicking outside on mobile
+  const handleBackdropClick = () => {
+    if (isMobile && sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-blue-950">
-      <Sidebar />
-      <Header notificationCount={3} />
-      <main className="pt-20 pb-6 px-3 sm:px-6 ml-0 md:ml-[var(--sidebar-width)] transition-all duration-300">
+      {/* Mobile backdrop */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={handleBackdropClick}
+        />
+      )}
+      
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)}
+        isMobile={isMobile}
+      />
+      <Header 
+        notificationCount={3} 
+        onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        isMobile={isMobile}
+      />
+      <main className="pt-16 pb-6 px-3 sm:px-6 ml-0 md:ml-[var(--sidebar-width)] transition-all duration-300">
         <div className="max-w-7xl mx-auto">
           {children}
         </div>
