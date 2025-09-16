@@ -294,26 +294,26 @@ const Results: React.FC = () => {
         </div>
         
         <div className="glass rounded-xl p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <div className="flex-1">
+          <div className="flex flex-col gap-4 mb-4">
+            <div className="w-full">
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Search by name or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg glass border-none focus:ring-2 ring-primary/30 outline-none"
+                  className="w-full pl-10 pr-4 py-3 text-base rounded-lg glass border-none focus:ring-2 ring-primary/30 outline-none touch-manipulation"
                 />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" size={16} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" size={18} />
               </div>
             </div>
             
-            <div className="flex gap-4">
-              <div className="w-40">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 min-w-0">
                 <select
                   value={selectedGrade}
                   onChange={(e) => setSelectedGrade(e.target.value)}
-                  className="w-full rounded-lg glass border-none px-4 py-2"
+                  className="w-full rounded-lg glass border-none px-4 py-3 text-base touch-manipulation"
                 >
                   {uniqueGrades.map(grade => (
                     <option key={grade} value={grade}>{grade === 'All' ? 'All Grades' : `Grade ${grade}`}</option>
@@ -321,11 +321,11 @@ const Results: React.FC = () => {
                 </select>
               </div>
               
-              <div className="w-40">
+              <div className="flex-1 min-w-0">
                 <select
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
-                  className="w-full rounded-lg glass border-none px-4 py-2"
+                  className="w-full rounded-lg glass border-none px-4 py-3 text-base touch-manipulation"
                 >
                   {uniqueSections.map(section => (
                     <option key={section} value={section}>{section === 'All' ? 'All Sections' : `Section ${section}`}</option>
@@ -333,9 +333,10 @@ const Results: React.FC = () => {
                 </select>
               </div>
               
-              <button className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg">
-                <Filter size={16} />
-                <span>More Filters</span>
+              <button className="flex items-center justify-center gap-2 glass px-4 py-3 rounded-lg touch-manipulation hover:bg-white/10 transition-colors min-h-[48px]">
+                <Filter size={18} />
+                <span className="hidden sm:inline">More Filters</span>
+                <span className="sm:hidden">Filters</span>
               </button>
             </div>
           </div>
@@ -345,7 +346,8 @@ const Results: React.FC = () => {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
@@ -390,21 +392,21 @@ const Results: React.FC = () => {
                   <td className="py-3">
                     <div className="flex justify-center gap-2">
                       <button 
-                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        className="p-2 rounded-lg hover:bg-white/20 transition-colors touch-manipulation"
                         onClick={() => openPreview(student)}
                         title="View details"
                       >
                         <Eye size={16} className="text-foreground/70" />
                       </button>
                       <button 
-                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        className="p-2 rounded-lg hover:bg-white/20 transition-colors touch-manipulation"
                         onClick={() => openResultSlip(student)}
                         title="Result slip"
                       >
                         <FileText size={16} className="text-foreground/70" />
                       </button>
                       <button 
-                        className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
+                        className="p-2 rounded-lg hover:bg-white/20 transition-colors touch-manipulation"
                         onClick={() => openTermReport(student)}
                         title="Term report"
                       >
@@ -418,20 +420,88 @@ const Results: React.FC = () => {
           </table>
         </div>
         
-        <div className="mt-6 flex flex-wrap gap-4 justify-end">
+        {/* Mobile/Tablet Card Layout */}
+        <div className="block lg:hidden space-y-4">
+          {filteredStudents.map((student) => (
+            <div key={student.id} className="glass rounded-lg p-4">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{student.name}</h3>
+                  <p className="text-sm text-foreground/60">{student.id}</p>
+                  <p className="text-sm text-foreground/60">Grade {student.grade} - Section {student.section}</p>
+                </div>
+                <div className="text-right">
+                  {student.rank && (
+                    <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 mb-2">
+                      Rank {student.rank}
+                    </span>
+                  )}
+                  <div>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                      student.overallGrade === "A" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                      student.overallGrade.includes("B") ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                      student.overallGrade.includes("C") ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                      student.overallGrade === "D" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
+                      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    }`}>
+                      {student.overallGrade}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-white/5 dark:bg-black/20 rounded-lg">
+                <div className="text-center">
+                  <div className="text-sm text-foreground/60">Total</div>
+                  <div className="text-lg font-semibold">{student.total}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-foreground/60">Average</div>
+                  <div className="text-lg font-semibold">{student.average.toFixed(1)}</div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <button 
+                  className="flex-1 flex items-center justify-center gap-2 glass px-3 py-3 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
+                  onClick={() => openPreview(student)}
+                >
+                  <Eye size={18} />
+                  <span>View</span>
+                </button>
+                <button 
+                  className="flex-1 flex items-center justify-center gap-2 glass px-3 py-3 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
+                  onClick={() => openResultSlip(student)}
+                >
+                  <FileText size={18} />
+                  <span>Result</span>
+                </button>
+                <button 
+                  className="flex-1 flex items-center justify-center gap-2 glass px-3 py-3 rounded-lg hover:bg-white/10 transition-colors touch-manipulation"
+                  onClick={() => openTermReport(student)}
+                >
+                  <FileBarChart size={18} />
+                  <span>Report</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-6 flex flex-col sm:flex-row gap-4">
           <button 
-            className="btn-primary flex items-center gap-2"
+            className="bg-primary text-primary-foreground px-6 py-3 rounded-lg flex items-center justify-center gap-2 touch-manipulation hover:opacity-90 transition-opacity min-h-[48px] flex-1 sm:flex-initial"
             onClick={generateBulkResults}
           >
-            <Download size={18} />
+            <Download size={20} />
             <span>Generate Result Slips</span>
           </button>
           
           <button 
-            className="glass hover:bg-white/20 transition-colors px-4 py-2 rounded-lg flex items-center gap-2"
+            className="glass hover:bg-white/10 transition-colors px-6 py-3 rounded-lg flex items-center justify-center gap-2 touch-manipulation min-h-[48px] flex-1 sm:flex-initial"
             onClick={generateBulkReports}
           >
-            <FileBarChart size={18} />
+            <FileBarChart size={20} />
             <span>Generate Term Reports</span>
           </button>
         </div>

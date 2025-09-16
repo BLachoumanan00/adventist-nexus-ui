@@ -116,5 +116,53 @@
     .touch-manipulation {
       @apply select-none;
     }
+    
+    /* Ensure minimum touch target sizes */
+    button, 
+    input[type="button"], 
+    input[type="submit"], 
+    input[type="reset"], 
+    [role="button"] {
+      min-height: 44px;
+    }
+    
+    /* Better spacing for mobile forms */
+    input, 
+    select, 
+    textarea {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
+  
+  /* Mobile-first responsive utilities */
+  .mobile-card-stack {
+    @apply flex flex-col gap-4;
+  }
+  
+  .mobile-button {
+    @apply w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg touch-manipulation min-h-[48px];
+  }
+  
+  .mobile-input {
+    @apply w-full px-4 py-3 rounded-lg text-base touch-manipulation;
+  }
+  
+  /* Improved mobile table alternatives */
+  .mobile-table-card {
+    @apply block lg:hidden space-y-4;
+  }
+  
+  .desktop-table {
+    @apply hidden lg:block;
+  }
+  
+  /* Touch-friendly navigation */
+  .mobile-nav {
+    @apply flex flex-col sm:flex-row gap-2 sm:gap-4;
+  }
+  
+  /* Better mobile modals */
+  .mobile-modal {
+    @apply w-full h-full sm:w-auto sm:h-auto sm:max-w-lg sm:max-h-[90vh];
   }
 }
