@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, MoreHorizontal, Edit, Trash2, User, BookOpen } from 'lucide-react';
+import { Plus, MoreHorizontal, Edit, Trash2, User, BookOpen, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import SearchAndFilter from '@/components/SearchAndFilter';
 import { EmptyState, CardSkeleton } from '@/components/LoadingStates';
+import StudentDetailsDialog from './StudentDetailsDialog';
 import { useStudents } from '@/hooks/useStudents';
+import { useSupabaseAutoSave } from '@/hooks/useSupabaseAutoSave';
 import { Student } from '@/lib/supabase';
 
 interface EnhancedStudentListProps {
@@ -32,6 +34,15 @@ const EnhancedStudentList: React.FC<EnhancedStudentListProps> = ({
   } = useStudents();
 
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [detailsStudent, setDetailsStudent] = useState<Student | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+
+  // Auto-save functionality
+  useSupabaseAutoSave({
+    data: students,
+    table: 'students',
+    enabled: true
+  });
 
   const grades = [
     { value: 'Grade 1', label: 'Grade 1' },
@@ -52,6 +63,16 @@ const EnhancedStudentList: React.FC<EnhancedStudentListProps> = ({
     if (window.confirm(`Are you sure you want to remove ${student.full_name}?`)) {
       await deleteStudent(student.id);
     }
+  };
+
+  const handleViewDetails = (student: Student) => {
+    setDetailsStudent(student);
+    setShowDetailsDialog(true);
+  };
+
+  const handleSaveStudent = (updatedStudent: Student) => {
+    // Update the student in the list
+    onEditStudent(updatedStudent);
   };
 
   const getInitials = (name: string) => {
@@ -106,7 +127,7 @@ const EnhancedStudentList: React.FC<EnhancedStudentListProps> = ({
           icon={<User className="h-12 w-12 text-muted-foreground" />}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="mobile-responsive-grid">
           {students.map((student) => (
             <Card key={student.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
@@ -133,6 +154,10 @@ const EnhancedStudentList: React.FC<EnhancedStudentListProps> = ({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleViewDetails(student)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEditStudent(student)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Student
@@ -152,11 +177,11 @@ const EnhancedStudentList: React.FC<EnhancedStudentListProps> = ({
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
+                <CardContent className="pt-0">
                 <div className="space-y-2">
                   {student.parent_name && (
                     <div className="text-xs">
-                      <span className="text-muted-foreground">Parent:</span>{' '}
+                      <span className="text-muted-foreground">Responsible Party:</span>{' '}
                       {student.parent_name}
                     </div>
                   )}
@@ -188,6 +213,17 @@ const EnhancedStudentList: React.FC<EnhancedStudentListProps> = ({
           <span> (filtered from total)</span>
         )}
       </div>
+
+      {/* Student Details Dialog */}
+      <StudentDetailsDialog
+        student={detailsStudent}
+        isOpen={showDetailsDialog}
+        onClose={() => {
+          setShowDetailsDialog(false);
+          setDetailsStudent(null);
+        }}
+        onSave={handleSaveStudent}
+      />
     </div>
   );
 };

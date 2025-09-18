@@ -47,8 +47,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         isMobile={isMobile}
       />
-      <main className="pt-16 pb-6 px-3 sm:px-6 ml-0 md:ml-[var(--sidebar-width)] transition-all duration-300">
-        <div className="max-w-7xl mx-auto">
+      <main className="pt-16 pb-4 px-2 sm:px-4 lg:px-6 xl:px-8 ml-0 md:ml-[var(--sidebar-width)] transition-all duration-300 min-h-[calc(100vh-4rem)]">
+        <div className="w-full max-w-none lg:max-w-7xl xl:max-w-full mx-auto">
           {children}
         </div>
       </main>
