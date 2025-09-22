@@ -538,13 +538,13 @@ const TeacherPanel: React.FC = () => {
               Showing {students.length} students in {selectedClass} {selectedSection} for {selectedSubject}
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <button 
-                className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
+                className="flex items-center justify-center gap-1 glass px-3 py-2 sm:py-1.5 rounded-lg text-sm w-full sm:w-auto"
                 onClick={handleImportMarks}
               >
                 <Upload size={14} />
-                <span>Import</span>
+                <span className="hidden xs:inline sm:inline">Import</span>
               </button>
               <input 
                 type="file" 
@@ -555,26 +555,26 @@ const TeacherPanel: React.FC = () => {
               />
               
               <button 
-                className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
+                className="flex items-center justify-center gap-1 glass px-3 py-2 sm:py-1.5 rounded-lg text-sm w-full sm:w-auto"
                 onClick={handleExportMarks}
               >
                 <Download size={14} />
-                <span>Export</span>
+                <span className="hidden xs:inline sm:inline">Export</span>
               </button>
               
               <button 
-                className="flex items-center gap-1 glass px-3 py-1.5 rounded-lg text-sm"
+                className="flex items-center justify-center gap-1 glass px-3 py-2 sm:py-1.5 rounded-lg text-sm w-full sm:w-auto"
                 onClick={() => setBulkEditMode(!bulkEditMode)}
               >
                 {bulkEditMode ? (
                   <>
                     <Edit size={14} />
-                    <span>Single Edit</span>
+                    <span className="hidden xs:inline sm:inline">Single Edit</span>
                   </>
                 ) : (
                   <>
                     <Edit size={14} />
-                    <span>Bulk Edit</span>
+                    <span className="hidden xs:inline sm:inline">Bulk Edit</span>
                   </>
                 )}
               </button>
