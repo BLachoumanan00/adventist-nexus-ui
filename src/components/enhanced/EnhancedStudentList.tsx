@@ -185,6 +185,12 @@ const EnhancedStudentList: React.FC<EnhancedStudentListProps> = ({
                       {student.parent_name}
                     </div>
                   )}
+                  {student.grade_level && (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Grade:</span>{' '}
+                      Grade {student.grade_level}
+                    </div>
+                  )}
                   {student.parent_phone && (
                     <div className="text-xs">
                       <span className="text-muted-foreground">Phone:</span>{' '}

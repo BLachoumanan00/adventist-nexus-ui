@@ -179,6 +179,45 @@
     }
   }
 
+  /* Enhanced mobile components */
+  .mobile-select {
+    @apply w-full min-h-[48px] touch-manipulation;
+  }
+
+  .mobile-textarea {
+    @apply w-full min-h-[120px] p-4 text-base touch-manipulation;
+  }
+
+  .touch-button {
+    @apply min-h-[48px] px-6 py-3 touch-manipulation;
+  }
+
+  .mobile-card-responsive {
+    @apply w-full max-w-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl;
+  }
+
+  /* Status badges */
+  .status-active {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+  }
+
+  .status-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+  }
+
+  .status-error {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+  }
+
+  /* Responsive container improvements */
+  .container-responsive {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .full-width-mobile {
+    @apply w-full sm:w-auto;
+  }
+
   /* Tablet optimizations */
   @media (min-width: 768px) and (max-width: 1024px) {
     .tablet-responsive {
