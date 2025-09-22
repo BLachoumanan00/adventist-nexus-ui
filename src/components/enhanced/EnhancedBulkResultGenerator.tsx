@@ -145,7 +145,7 @@ const EnhancedBulkResultGenerator: React.FC = () => {
   const getStudentsByGrade = () => {
     if (!selectedGrade) return students;
     const gradeNumber = parseInt(selectedGrade);
-    return students.filter(student => parseInt(student.grade?.replace('Grade ', '') || '0') === gradeNumber);
+    return students.filter(student => student.grade_level === gradeNumber);
   };
 
   const generateManualResults = () => {

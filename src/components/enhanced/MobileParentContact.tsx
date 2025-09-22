@@ -26,16 +26,17 @@ interface CommunicationRecord {
   id: string;
   student_id: string;
   student_name: string;
-  recipient_name: string;
-  recipient_phone?: string;
-  recipient_email?: string;
+  recipient_name: string | null;
+  recipient_phone?: string | null;
+  recipient_email?: string | null;
   message_type: 'attendance' | 'behavior' | 'academic' | 'general';
-  subject: string;
+  subject: string | null;
   message: string;
   method: 'sms' | 'email' | 'call';
   status: 'pending' | 'sent' | 'delivered' | 'failed';
-  sent_at?: string;
+  sent_at?: string | null;
   created_at: string;
+  students?: { full_name: string };
 }
 
 const MobileParentContact: React.FC = () => {
@@ -81,14 +82,20 @@ const MobileParentContact: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('communications')
-        .select('*')
+        .select(`
+          *,
+          students!communications_student_id_fkey(full_name)
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
       setCommunications((data || []).map(item => ({
         ...item,
-        student_name: item.student_name || 'Unknown Student'
+        message_type: item.message_type as 'attendance' | 'behavior' | 'academic' | 'general',
+        method: item.method as 'sms' | 'email' | 'call',
+        status: item.status as 'pending' | 'sent' | 'delivered' | 'failed',
+        student_name: item.students?.full_name || 'Unknown Student'
       })));
     } catch (error) {
       console.error('Error loading communications:', error);
@@ -303,7 +310,7 @@ const MobileParentContact: React.FC = () => {
                     <div className="flex flex-col">
                       <span className="font-medium">{student.full_name}</span>
                       <span className="text-sm text-muted-foreground">
-                        {student.grade} • ID: {student.student_id}
+                        Grade {student.grade_level} • ID: {student.student_id}
                       </span>
                     </div>
                   </SelectItem>

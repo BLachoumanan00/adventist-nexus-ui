@@ -32,6 +32,7 @@ export interface Student {
   parent_phone?: string;
   parent_email?: string;
   class_id?: string;
+  grade_level?: number;
   school_id: string;
   enrollment_date: string;
   is_active: boolean;
