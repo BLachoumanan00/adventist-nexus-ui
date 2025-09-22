@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase, Result } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import { Result, TablesInsert } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export const useResults = () => {
@@ -40,7 +41,7 @@ export const useResults = () => {
     }
   };
 
-  const addResult = async (resultData: Omit<Result, 'id' | 'created_at' | 'updated_at'>) => {
+  const addResult = async (resultData: TablesInsert<'results'>) => {
     try {
       const { data, error } = await supabase
         .from('results')

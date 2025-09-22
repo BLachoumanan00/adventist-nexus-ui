@@ -174,9 +174,8 @@ const BulkResultGenerator: React.FC = () => {
           student_id: result.studentId,
           subject_id: bulkData.subject, // In real app, this would be the subject ID
           exam_type: bulkData.examType,
-          exam_name: bulkData.examName,
-          marks: result.marks,
-          max_marks: bulkData.maxMarks,
+          marks_obtained: result.marks,
+          total_marks: bulkData.maxMarks,
           grade: result.grade,
           remarks: result.remarks,
           exam_date: bulkData.examDate,

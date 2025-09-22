@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase, Student } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import { Student, TablesInsert, TablesUpdate } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export const useStudents = () => {
@@ -19,7 +20,7 @@ export const useStudents = () => {
       const { data, error } = await supabase
         .from('students')
         .select('*')
-        .eq('is_active', true)
+        .eq('status', 'active')
         .order('full_name');
 
       if (error) throw error;
@@ -36,7 +37,7 @@ export const useStudents = () => {
     }
   };
 
-  const addStudent = async (studentData: Omit<Student, 'id' | 'created_at' | 'updated_at'>) => {
+  const addStudent = async (studentData: TablesInsert<'students'>) => {
     try {
       const { data, error } = await supabase
         .from('students')
@@ -98,7 +99,7 @@ export const useStudents = () => {
     try {
       const { error } = await supabase
         .from('students')
-        .update({ is_active: false })
+        .update({ status: 'inactive' })
         .eq('id', id);
 
       if (error) throw error;

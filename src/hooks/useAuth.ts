@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase, Profile } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 export interface AuthState {

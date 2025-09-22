@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, Plus, Trash2, Edit, Save, X } from 'lucide-react';
-import { Student } from '@/lib/supabase';
+import { Student } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 
@@ -258,24 +258,24 @@ const StudentDetailsDialog: React.FC<StudentDetailsDialogProps> = ({
                         disabled={!editMode}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="gender">Gender</Label>
-                      <Input
-                        id="gender"
-                        value={editedStudent.gender || ''}
-                        onChange={(e) => setEditedStudent({ ...editedStudent, gender: e.target.value })}
-                        disabled={!editMode}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={editedStudent.phone || ''}
-                        onChange={(e) => setEditedStudent({ ...editedStudent, phone: e.target.value })}
-                        disabled={!editMode}
-                      />
-                    </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="emergency_contact">Emergency Contact</Label>
+                       <Input
+                         id="emergency_contact"
+                         value={editedStudent.emergency_contact || ''}
+                         onChange={(e) => setEditedStudent({ ...editedStudent, emergency_contact: e.target.value })}
+                         disabled={!editMode}
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="emergency_phone">Emergency Phone</Label>
+                       <Input
+                         id="emergency_phone"
+                         value={editedStudent.emergency_phone || ''}
+                         onChange={(e) => setEditedStudent({ ...editedStudent, emergency_phone: e.target.value })}
+                         disabled={!editMode}
+                       />
+                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="classId">Class</Label>
                       <Input

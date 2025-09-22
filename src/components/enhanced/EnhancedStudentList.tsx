@@ -10,7 +10,7 @@ import { EmptyState, CardSkeleton } from '@/components/LoadingStates';
 import StudentDetailsDialog from './StudentDetailsDialog';
 import { useStudents } from '@/hooks/useStudents';
 import { useSupabaseAutoSave } from '@/hooks/useSupabaseAutoSave';
-import { Student } from '@/lib/supabase';
+import { Student } from '@/lib/types';
 
 interface EnhancedStudentListProps {
   onAddStudent: () => void;

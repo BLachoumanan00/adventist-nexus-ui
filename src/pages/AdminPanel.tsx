@@ -11,7 +11,7 @@ import SubjectManagement from "@/components/SubjectManagement";
 import GradeCriteriaTab from "@/components/GradeCriteriaTab";
 import { useStudents } from "@/hooks/useStudents";
 import { useSupabaseAutoSave } from "@/hooks/useSupabaseAutoSave";
-import { Student } from "@/lib/supabase";
+import { Student, TablesInsert } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminPanel: React.FC = () => {
@@ -42,7 +42,7 @@ const AdminPanel: React.FC = () => {
     if (editingStudent) {
       await updateStudent(editingStudent.id, studentData);
     } else {
-      await addStudent(studentData as Omit<Student, 'id' | 'created_at' | 'updated_at'>);
+      await addStudent(studentData as TablesInsert<'students'>);
     }
     setShowStudentDialog(false);
     setEditingStudent(null);
