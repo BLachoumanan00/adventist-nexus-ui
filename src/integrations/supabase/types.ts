@@ -504,7 +504,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_own_student_record: {
+        Args: { student_uuid: string }
+        Returns: boolean
+      }
+      is_teacher_of_student: {
+        Args: { student_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
