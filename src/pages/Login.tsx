@@ -1,79 +1,43 @@
 
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, Key, LogIn, User, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Key, LogIn, User } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { useActivityLogger } from "../hooks/useActivityLogger";
 import { useTheme } from "../hooks/useTheme";
+import { useAuthContext } from "../components/AuthProvider";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { signIn, loading, isAuthenticated } = useAuthContext();
 
   React.useEffect(() => {
-    // Check for logged in user with consistent key naming
-    const loggedInUser = localStorage.getItem('user');
-    if (loggedInUser) {
+    if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const formatEmail = (email: string) => {
     if (!email.includes('@')) return `${email}@adventistcollege.mu`;
     return email;
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
-    setTimeout(() => {
-      const formattedEmail = formatEmail(email);
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find((u: any) => 
-        u.email.toLowerCase() === formattedEmail.toLowerCase() && 
-        u.password === password
-      );
-      
-      if (user) {
-        // Only blachoumanan@adventistcollege.mu can be superuser
-        const isSuperUser = formattedEmail.toLowerCase() === 'blachoumanan@adventistcollege.mu';
-        
-        const userObj = {
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          isSuperUser // Only true for the correct email
-        };
-        
-        // Log user activity
-        logActivity("User Login", `${user.name} logged in`);
-        
-        // Use consistent key naming for storing user data
-        localStorage.setItem('user', JSON.stringify(userObj));
-        
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${user.name}!`,
-        });
-        
-        navigate('/dashboard');
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password.",
-          variant: "destructive",
-        });
-      }
-      
-      setLoading(false);
-    }, 1000);
+    const formattedEmail = formatEmail(email);
+    const { error } = await signIn(formattedEmail, password);
+    
+    if (!error) {
+      logActivity("User Login", `User logged in with ${formattedEmail}`);
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -139,7 +103,7 @@ const Login: React.FC = () => {
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Logging in...</span>
+                <span>Signing in...</span>
               </>
             ) : (
               <>

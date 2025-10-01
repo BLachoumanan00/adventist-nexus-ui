@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Key, UserPlus, User, Mail } from "lucide-react";
 import { useTheme } from "../hooks/useTheme";
 import { useToast } from "../hooks/use-toast";
+import { useAuthContext } from "../components/AuthProvider";
 
 const SignUp: React.FC = () => {
   const [name, setName] = useState("");
@@ -12,12 +13,12 @@ const SignUp: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { toast } = useToast();
+  const { signUp, loading } = useAuthContext();
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
@@ -28,55 +29,29 @@ const SignUp: React.FC = () => {
       });
       return;
     }
-    
-    setIsLoading(true);
+
+    if (password.length < 6) {
+      toast({
+        title: "Weak Password",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Format email if domain is missing
     const formattedEmail = !email.includes('@') 
       ? `${email}@adventistcollege.mu` 
       : email;
     
-    // Get existing users or create empty array
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const { error } = await signUp(formattedEmail, password, {
+      full_name: name,
+      role: 'teacher'
+    });
     
-    // Check if user already exists
-    const userExists = users.some((user: any) => 
-      user.email.toLowerCase() === formattedEmail.toLowerCase()
-    );
-    
-    if (userExists) {
-      setIsLoading(false);
-      toast({
-        title: "Registration Failed",
-        description: "User with this email already exists.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Create new user
-    const newUser = {
-      name,
-      email: formattedEmail,
-      password,
-      role: "Teacher", // Default role for new users
-      createdAt: new Date().toISOString()
-    };
-    
-    // Add to users array
-    users.push(newUser);
-    
-    // Save to localStorage
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Registration Successful",
-        description: "Your account has been created. You can now log in.",
-      });
+    if (!error) {
       navigate('/login');
-    }, 1000);
+    }
   };
 
   return (
@@ -174,11 +149,11 @@ const SignUp: React.FC = () => {
           <button 
             type="submit" 
             className={`btn-primary w-full py-3 flex items-center justify-center gap-2 ${
-              isLoading ? 'opacity-80' : ''
+              loading ? 'opacity-80' : ''
             }`}
-            disabled={isLoading}
+            disabled={loading}
           >
-            {isLoading ? (
+            {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Creating Account...</span>
