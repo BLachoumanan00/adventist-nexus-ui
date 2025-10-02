@@ -7,7 +7,7 @@ export const useStudents = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [gradeFilter, setGradeFilter] = useState<string>('');
+  const [gradeFilter, setGradeFilter] = useState<string>('all');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export const useStudents = () => {
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.student_id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGrade = !gradeFilter || student.class_id === gradeFilter;
+    const matchesGrade = !gradeFilter || gradeFilter === 'all' || student.class_id === gradeFilter;
     return matchesSearch && matchesGrade;
   });
 

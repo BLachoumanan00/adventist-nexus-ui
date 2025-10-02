@@ -23,11 +23,11 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   filters,
   showFilterCount = true
 }) => {
-  const activeFiltersCount = filters.filter(f => f.value).length;
+  const activeFiltersCount = filters.filter(f => f.value && f.value !== 'all').length;
 
   const clearAllFilters = () => {
     onSearchChange('');
-    filters.forEach(filter => filter.onChange(''));
+    filters.forEach(filter => filter.onChange('all'));
   };
 
   return (
@@ -66,7 +66,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
               <SelectValue placeholder={filter.label} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All {filter.label}</SelectItem>
+              <SelectItem value="all">All {filter.label}</SelectItem>
               {filter.options.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
