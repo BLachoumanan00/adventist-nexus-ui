@@ -1,71 +1,79 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* iOS-inspired color palette */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 13%;
 
-    --primary: 221.2 83% 53.9%;
-    --primary-foreground: 210 40% 98%;
+    /* iOS Blue */
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 252 100% 79%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 17% 95%;
+    --secondary-foreground: 0 0% 13%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 17% 95%;
+    --muted-foreground: 0 0% 46%;
 
-    --accent: 252 100% 79%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 211 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83% 53.9%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 211 100% 50%;
     
-    --radius: 1rem;
+    --radius: 0.75rem;
+    
+    /* iOS-specific shadows */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 209 100% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 25%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 63%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 209 100% 60%;
+    
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -74,29 +82,51 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer components {
-  .glass {
-    @apply bg-white/60 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-lg;
+  /* iOS-style glass effect */
+  .ios-glass {
+    @apply bg-white/80 dark:bg-black/60 backdrop-blur-2xl border border-black/10 dark:border-white/10;
+    box-shadow: var(--shadow-md);
   }
   
-  .glass-card {
-    @apply glass rounded-2xl p-3 sm:p-4 lg:p-6;
+  .ios-card {
+    @apply bg-card rounded-2xl border border-border;
+    box-shadow: var(--shadow-sm);
   }
   
-  .nav-item {
-    @apply flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 rounded-xl text-foreground/80 hover:text-foreground hover:bg-white/20 dark:hover:bg-white/10 transition-all touch-manipulation min-h-[44px];
+  /* iOS-style buttons */
+  .ios-button {
+    @apply px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium shadow-sm hover:opacity-90 active:scale-[0.98] transition-all touch-manipulation min-h-[50px] text-base;
   }
   
-  .nav-item.active {
-    @apply bg-primary/10 text-primary font-medium;
+  .ios-button-secondary {
+    @apply px-6 py-3 bg-secondary text-secondary-foreground rounded-xl font-medium hover:bg-secondary/80 active:scale-[0.98] transition-all touch-manipulation min-h-[50px] text-base;
   }
   
-  .btn-primary {
-    @apply px-3 sm:px-4 py-2 bg-primary text-primary-foreground rounded-lg shadow hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation min-h-[44px];
+  /* iOS-style inputs */
+  .ios-input {
+    @apply w-full px-4 py-3 bg-secondary rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all min-h-[50px] text-base;
+  }
+  
+  /* iOS-style navigation */
+  .ios-nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/70 hover:text-foreground hover:bg-secondary/50 transition-all touch-manipulation min-h-[44px];
+  }
+  
+  .ios-nav-item.active {
+    @apply bg-primary/10 text-primary font-semibold;
+  }
+  
+  /* iOS-style section header */
+  .ios-section-header {
+    @apply text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-4;
   }
   
   .card-hover {
