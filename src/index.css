@@ -301,4 +301,29 @@
   .mobile-modal {
     @apply w-full h-full sm:w-auto sm:h-auto sm:max-w-lg sm:max-h-[90vh];
   }
+  
+  /* Touch-friendly improvements */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Ensure all interactive elements are touch-friendly on mobile */
+  @media (max-width: 768px) {
+    button:not(.no-min-height), 
+    a.button, 
+    [role="button"]:not(.no-min-height) {
+      min-height: 48px;
+    }
+    
+    input, select, textarea {
+      min-height: 48px;
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
 }

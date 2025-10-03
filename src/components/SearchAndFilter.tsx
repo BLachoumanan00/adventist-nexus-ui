@@ -31,22 +31,22 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   };
 
   return (
-    <div className="space-y-4 mb-6">
+    <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
         <Input
           placeholder="Search students, subjects, or IDs..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 pr-10"
+          className="pl-10 pr-10 min-h-[48px] text-base touch-manipulation"
         />
         {searchTerm && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onSearchChange('')}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 min-h-[32px] no-min-height touch-manipulation"
           >
             <X className="h-3 w-3" />
           </Button>
@@ -54,33 +54,35 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 items-stretch sm:items-center">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <span className="text-sm font-medium">Filters:</span>
         </div>
         
-        {filters.map((filter, index) => (
-          <Select key={index} value={filter.value} onValueChange={filter.onChange}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder={filter.label} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All {filter.label}</SelectItem>
-              {filter.options.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 flex-1">
+          {filters.map((filter, index) => (
+            <Select key={index} value={filter.value} onValueChange={filter.onChange}>
+              <SelectTrigger className="w-full sm:w-[160px] min-h-[48px] sm:min-h-[40px] touch-manipulation">
+                <SelectValue placeholder={filter.label} />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-background border border-border">
+                <SelectItem value="all">All {filter.label}</SelectItem>
+                {filter.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ))}
+        </div>
 
         {/* Active filters count and clear all */}
         {(searchTerm || activeFiltersCount > 0) && (
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
             {showFilterCount && activeFiltersCount > 0 && (
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="flex-shrink-0">
                 {activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} active
               </Badge>
             )}
@@ -88,7 +90,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
               variant="outline"
               size="sm"
               onClick={clearAllFilters}
-              className="text-xs"
+              className="text-xs min-h-[40px] sm:min-h-[36px] touch-manipulation flex-1 sm:flex-initial"
             >
               Clear All
             </Button>
