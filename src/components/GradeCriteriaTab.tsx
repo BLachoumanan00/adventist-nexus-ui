@@ -115,7 +115,7 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
   return (
     <div className="glass p-4 rounded-lg">
       <Tabs defaultValue="7">
-        <TabsList className="w-full flex overflow-x-auto mb-4 bg-white/10 p-1 rounded-lg">
+        <TabsList className="w-full flex overflow-x-auto mb-4 bg-secondary/50 p-1 rounded-lg">
           {gradeLevels.map(grade => (
             <TabsTrigger 
               key={grade} 
@@ -227,7 +227,7 @@ const GradeCriteriaEditor: React.FC<GradeCriteriaEditorProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full mb-4">
           <thead>
-            <tr className="bg-white/10">
+            <tr className="bg-secondary/30">
               <th className="p-2 text-left">Grade</th>
               <th className="p-2 text-left">Min %</th>
               <th className="p-2 text-left">Max %</th>

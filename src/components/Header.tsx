@@ -90,24 +90,29 @@ const Header: React.FC<HeaderProps> = ({ notificationCount = 0, onMenuClick, isM
             
             <div className="relative">
               <button 
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 dark:bg-black/20 dark:hover:bg-black/40 transition-colors touch-manipulation"
+                className="p-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors touch-manipulation"
                 onClick={() => setShowNotifications(prev => !prev)}
                 aria-label="Notifications"
               >
                 <Bell size={isMobile ? 18 : 20} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center rounded-full">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
               </button>
             </div>
             
-            <ThemeToggle />
+              <ThemeToggle />
+              {user?.role === 'teacher' && (
+                <div className="px-3 py-1 bg-destructive/20 text-destructive rounded-full text-xs font-medium">
+                  Limited Access - Need Admin Role
+                </div>
+              )}
             
             <button 
               onClick={handleLogout}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 dark:bg-black/20 dark:hover:bg-black/40 transition-colors touch-manipulation"
+              className="p-2 rounded-full bg-secondary hover:bg-secondary/80 transition-colors touch-manipulation"
               title="Log out"
               aria-label="Log out"
             >

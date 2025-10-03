@@ -52,8 +52,8 @@ const ResultSlipPreview: React.FC<ResultSlipPreviewProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-10">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 my-auto relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm overflow-y-auto py-10">
+      <div className="bg-card rounded-lg shadow-xl max-w-4xl w-full mx-4 my-auto relative">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 p-1 rounded-full bg-gray-200 dark:bg-gray-700"
