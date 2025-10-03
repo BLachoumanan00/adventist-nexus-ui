@@ -21,7 +21,24 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
+    // Listen for auth changes FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        // Only synchronous state updates here
+        setState(prev => ({ ...prev, session, user: session?.user ?? null }));
+        
+        // Defer Supabase calls with setTimeout to prevent deadlocks
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        } else {
+          setState(prev => ({ ...prev, profile: null, loading: false }));
+        }
+      }
+    );
+
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setState(prev => ({ ...prev, session, user: session?.user ?? null }));
       if (session?.user) {
@@ -30,19 +47,6 @@ export const useAuth = () => {
         setState(prev => ({ ...prev, loading: false }));
       }
     });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setState(prev => ({ ...prev, session, user: session?.user ?? null }));
-        
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setState(prev => ({ ...prev, profile: null, loading: false }));
-        }
-      }
-    );
 
     return () => subscription.unsubscribe();
   }, []);
@@ -53,7 +57,7 @@ export const useAuth = () => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       
