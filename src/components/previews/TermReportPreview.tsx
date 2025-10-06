@@ -30,6 +30,7 @@ interface TermReportPreviewProps {
   examName?: string;
   daysAbsent?: number;
   onClose: () => void;
+  isEmbedded?: boolean;
 }
 
 const TermReportPreview: React.FC<TermReportPreviewProps> = ({
@@ -41,7 +42,8 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
   schoolAddress = "Royal Road, Rose Hill, Mauritius",
   examName = "Term 1 Examination",
   daysAbsent = 0,
-  onClose
+  onClose,
+  isEmbedded = false
 }) => {
   const getGradeColor = (grade: string) => {
     if (grade.includes('A')) return "text-green-600 dark:text-green-400";
@@ -51,23 +53,26 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
     return "text-red-600 dark:text-red-400";
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm overflow-y-auto py-10">
-      <div className="bg-card rounded-lg shadow-xl max-w-4xl w-full mx-4 my-auto relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-full bg-gray-200 dark:bg-gray-700"
-        >
-          <X size={20} />
-        </button>
-        
-        {/* Print button */}
-        <button 
-          onClick={() => window.print()} 
-          className="absolute top-4 right-16 px-4 py-1 bg-primary text-white rounded-md"
-        >
-          Print
-        </button>
+  const content = (
+    <div className={isEmbedded ? "bg-card rounded-lg" : "bg-card rounded-lg shadow-xl max-w-4xl w-full mx-4 my-auto relative"}>
+      {!isEmbedded && (
+        <>
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-secondary/80 hover:bg-secondary backdrop-blur-sm transition-colors"
+          >
+            <X size={20} className="text-secondary-foreground" />
+          </button>
+          
+          {/* Print button */}
+          <button 
+            onClick={() => window.print()} 
+            className="absolute top-4 right-16 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Print
+          </button>
+        </>
+      )}
         
         <div className="p-8 print:p-0" id="printable-term-report">
           {/* Header */}
@@ -183,6 +188,11 @@ const TermReportPreview: React.FC<TermReportPreviewProps> = ({
           </div>
         </div>
       </div>
+  );
+
+  return isEmbedded ? content : (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm overflow-y-auto py-10">
+      {content}
     </div>
   );
 };

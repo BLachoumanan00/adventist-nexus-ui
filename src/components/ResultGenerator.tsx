@@ -1668,7 +1668,8 @@ const ResultGenerator: React.FC = () => {
                 schoolAddress={schoolDetails.address}
                 examName={`${student.term} ${student.year}`}
                 daysAbsent={student.daysAbsent}
-                onClose={() => {}} // This is required but not used in this context
+                onClose={() => {}}
+                isEmbedded={true}
               />
             ) : (
               <TermReportPreview 
@@ -1680,7 +1681,8 @@ const ResultGenerator: React.FC = () => {
                 schoolAddress={schoolDetails.address}
                 examName={`${student.term} ${student.year}`}
                 daysAbsent={student.daysAbsent}
-                onClose={() => {}} // This is required but not used in this context
+                onClose={() => {}}
+                isEmbedded={true}
               />
             )}
           </div>
