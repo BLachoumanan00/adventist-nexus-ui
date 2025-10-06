@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -25,10 +25,11 @@ import "./App.css";
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <NotificationProvider>
-        <Routes>
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
@@ -152,11 +153,12 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </NotificationProvider>
-      </AuthProvider>
-    </ThemeProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 }
 
