@@ -9,12 +9,13 @@ interface GradeThreshold {
 }
 
 interface GradeCriteriaProps {
-  onChange: (gradeNumber: number, criteria: GradeThreshold[], isMain?: boolean) => void;
+  onChange: (gradeNumber: number, criteria: GradeThreshold[], isMain?: boolean, totalMarks?: number) => void;
   initialCriteria: {
     [key: number]: {
       main?: GradeThreshold[];
       sub?: GradeThreshold[];
       default?: GradeThreshold[];
+      totalMarks?: number;
     };
   };
 }
@@ -31,9 +32,19 @@ const defaultCriteria: GradeThreshold[] = [
 const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCriteria }) => {
   const [activeGrade, setActiveGrade] = useState<number>(7);
   const [activeType, setActiveType] = useState<"main" | "sub" | "default">("default");
+  const [totalMarks, setTotalMarks] = useState<{ [key: number]: number }>({});
   
   // Prepare grade levels array (7-13)
   const gradeLevels = Array.from({ length: 7 }, (_, i) => i + 7);
+  
+  // Initialize total marks from initialCriteria
+  React.useEffect(() => {
+    const marks: { [key: number]: number } = {};
+    gradeLevels.forEach(grade => {
+      marks[grade] = initialCriteria[grade]?.totalMarks || 100;
+    });
+    setTotalMarks(marks);
+  }, []);
   
   // Get criteria for the current grade and type
   const getCurrentCriteria = (grade: number, type: "main" | "sub" | "default"): GradeThreshold[] => {
@@ -65,9 +76,23 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
     
     // Call the onChange callback based on active type
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
-      onChange(activeGrade, newCriteria, activeType === "main");
+      onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
     } else {
-      onChange(activeGrade, newCriteria);
+      onChange(activeGrade, newCriteria, undefined, totalMarks[activeGrade]);
+    }
+  };
+  
+  // Handle total marks change
+  const handleTotalMarksChange = (grade: number, value: number) => {
+    const newTotalMarks = { ...totalMarks, [grade]: value };
+    setTotalMarks(newTotalMarks);
+    
+    // Notify parent of the change
+    const criteria = getCurrentCriteria(grade, activeType);
+    if (grade >= 12 && (activeType === "main" || activeType === "sub")) {
+      onChange(grade, criteria, activeType === "main", value);
+    } else {
+      onChange(grade, criteria, undefined, value);
     }
   };
   
@@ -87,9 +112,9 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
     newCriteria[newCriteria.length - 2].min = middleValue + 1;
     
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
-      onChange(activeGrade, newCriteria, activeType === "main");
+      onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
     } else {
-      onChange(activeGrade, newCriteria);
+      onChange(activeGrade, newCriteria, undefined, totalMarks[activeGrade]);
     }
   };
   
@@ -106,9 +131,9 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
     }
     
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
-      onChange(activeGrade, newCriteria, activeType === "main");
+      onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
     } else {
-      onChange(activeGrade, newCriteria);
+      onChange(activeGrade, newCriteria, undefined, totalMarks[activeGrade]);
     }
   };
   
@@ -130,6 +155,22 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
         
         {gradeLevels.map(grade => (
           <TabsContent key={grade} value={grade.toString()}>
+            <div className="mb-4 glass rounded-lg p-4">
+              <label className="block text-sm font-medium mb-2">Total Marks for Grade {grade}</label>
+              <input
+                type="number"
+                min="1"
+                max="1000"
+                value={totalMarks[grade] || 100}
+                onChange={(e) => handleTotalMarksChange(grade, parseInt(e.target.value) || 100)}
+                className="glass px-4 py-2 rounded-lg w-full max-w-xs"
+                placeholder="Enter total marks (e.g., 50, 100)"
+              />
+              <p className="text-xs text-foreground/60 mt-1">
+                Set the maximum marks for assessments in Grade {grade} (e.g., 50, 100, 200)
+              </p>
+            </div>
+            
             {grade >= 12 ? (
               <div className="mb-4">
                 <Tabs defaultValue="default" className="w-full">
