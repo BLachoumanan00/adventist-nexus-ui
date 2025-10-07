@@ -66,13 +66,7 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
     const newCriteria = [...currentCriteria];
     newCriteria[index] = { ...newCriteria[index], [field]: typeof value === 'string' ? value : Number(value) };
     
-    // Sort criteria by max value in descending order
-    newCriteria.sort((a, b) => b.max - a.max);
-    
-    // Update min values to ensure there are no gaps
-    for (let i = 1; i < newCriteria.length; i++) {
-      newCriteria[i].max = newCriteria[i-1].min - 1;
-    }
+    // Don't auto-sort, let users control the order
     
     // Call the onChange callback based on active type
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
@@ -99,17 +93,13 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
   // Add a new threshold
   const addThreshold = () => {
     const newCriteria = [...currentCriteria];
-    const lastItem = newCriteria[newCriteria.length - 1];
-    const middleValue = Math.floor(lastItem.min / 2);
     
+    // Add a new threshold with default values
     newCriteria.push({
       min: 0,
-      max: lastItem.min - 1,
-      grade: "F-"
+      max: 10,
+      grade: "New"
     });
-    
-    // Update the previous last item
-    newCriteria[newCriteria.length - 2].min = middleValue + 1;
     
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
       onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
@@ -120,15 +110,10 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
   
   // Remove a threshold
   const removeThreshold = (index: number) => {
-    if (currentCriteria.length <= 2) return; // Prevent removing if only 2 or fewer thresholds
+    if (currentCriteria.length <= 1) return; // Prevent removing if only 1 threshold
     
     const newCriteria = [...currentCriteria];
     newCriteria.splice(index, 1);
-    
-    // Update min values to ensure there are no gaps
-    for (let i = 1; i < newCriteria.length; i++) {
-      newCriteria[i].max = newCriteria[i-1].min - 1;
-    }
     
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
       onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
@@ -304,14 +289,13 @@ const GradeCriteriaEditor: React.FC<GradeCriteriaEditorProps> = ({
                     value={threshold.max}
                     onChange={(e) => onChange(index, "max", parseInt(e.target.value))}
                     className="glass px-2 py-1 rounded w-20"
-                    disabled={index === 0} // First threshold max is always 100
                   />
                 </td>
                 <td className="p-2">
                   <button
                     onClick={() => onRemove(index)}
-                    className="text-red-500 hover:text-red-400 px-2 py-1 rounded-lg glass"
-                    disabled={criteria.length <= 2}
+                    className="text-red-500 hover:text-red-400 px-2 py-1 rounded-lg glass disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={criteria.length <= 1}
                   >
                     Remove
                   </button>

@@ -595,6 +595,9 @@ const TeacherPanel: React.FC = () => {
                 <tr className="border-b border-white/10">
                   <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student Name</th>
                   <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Marks</th>
+                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
+                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Subject Remarks</th>
+                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">General Remarks</th>
                 </tr>
               </thead>
               <tbody>
@@ -611,6 +614,29 @@ const TeacherPanel: React.FC = () => {
                         className="glass rounded p-1 w-16 border-none"
                       />
                     </td>
+                    <td className="py-3">
+                      <span className={getMarkStyle(student.marks)}>
+                        {student.grade || "—"}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <input
+                        type="text"
+                        value={student.remarks}
+                        onChange={(e) => handleRemarksChange(student.id, e.target.value)}
+                        className="glass rounded p-1 w-full border-none min-w-[200px]"
+                        placeholder="Enter remarks"
+                      />
+                    </td>
+                    <td className="py-3">
+                      <textarea
+                        value={student.generalRemarks}
+                        onChange={(e) => handleGeneralRemarksChange(student.id, e.target.value)}
+                        className="glass rounded p-1 w-full border-none min-w-[250px]"
+                        rows={2}
+                        placeholder="Enter general remarks"
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -622,7 +648,7 @@ const TeacherPanel: React.FC = () => {
                 onClick={handleBulkSave}
               >
                 <Save size={18} />
-                <span>Save All Marks</span>
+                <span>Save All Changes</span>
               </button>
             </div>
           </div>
