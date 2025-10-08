@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -71,66 +71,19 @@ const SubjectGradeCriteriaTab: React.FC<SubjectGradeCriteriaProps> = ({ onChange
     fetchSubjects();
   }, [toast]);
   
-  // Get criteria for the current subject
-  const getCurrentCriteria = (subjectId: string): GradeThreshold[] => {
-    return initialCriteria[subjectId]?.criteria || defaultCriteria;
-  };
-  
-  // Get total marks for the current subject
-  const getTotalMarks = (subjectId: string): number => {
-    return initialCriteria[subjectId]?.totalMarks || 100;
-  };
-  
-  // Handle criteria changes
-  const handleCriteriaChange = (index: number, field: keyof GradeThreshold, value: string | number) => {
-    const currentCriteria = getCurrentCriteria(activeSubject);
-    const currentTotalMarks = getTotalMarks(activeSubject);
-    const newCriteria = [...currentCriteria];
-    newCriteria[index] = { ...newCriteria[index], [field]: typeof value === 'string' ? value : Number(value) };
-    
-    onChange(activeSubject, newCriteria, currentTotalMarks);
-  };
-  
-  // Handle total marks change
-  const handleTotalMarksChange = (value: number) => {
-    const currentCriteria = getCurrentCriteria(activeSubject);
-    onChange(activeSubject, currentCriteria, value);
-  };
-  
-  // Add a new threshold
-  const addThreshold = () => {
-    const currentCriteria = getCurrentCriteria(activeSubject);
-    const currentTotalMarks = getTotalMarks(activeSubject);
-    const newCriteria = [...currentCriteria];
-    newCriteria.push({
-      min: 0,
-      max: 10,
-      grade: "New"
-    });
-    
-    onChange(activeSubject, newCriteria, currentTotalMarks);
-  };
-  
-  // Remove a threshold
-  const removeThreshold = (index: number) => {
-    const currentCriteria = getCurrentCriteria(activeSubject);
-    const currentTotalMarks = getTotalMarks(activeSubject);
-    
-    if (currentCriteria.length <= 1) {
-      toast({
-        title: "Cannot Remove",
-        description: "At least one grade threshold is required",
-        variant: "destructive"
-      });
-      return;
+  // Get criteria for a specific subject - always fresh from props
+  const getCriteriaForSubject = useCallback((subjectId: string): GradeThreshold[] => {
+    if (!initialCriteria[subjectId]?.criteria) {
+      return JSON.parse(JSON.stringify(defaultCriteria));
     }
-    
-    const newCriteria = [...currentCriteria];
-    newCriteria.splice(index, 1);
-    
-    onChange(activeSubject, newCriteria, currentTotalMarks);
-  };
+    return initialCriteria[subjectId].criteria;
+  }, [initialCriteria]);
   
+  // Get total marks for a specific subject - always fresh from props
+  const getTotalMarksForSubject = useCallback((subjectId: string): number => {
+    return initialCriteria[subjectId]?.totalMarks || 100;
+  }, [initialCriteria]);
+
   if (loading) {
     return <div className="glass p-4 rounded-lg">Loading subjects...</div>;
   }
@@ -158,40 +111,84 @@ const SubjectGradeCriteriaTab: React.FC<SubjectGradeCriteriaProps> = ({ onChange
           ))}
         </TabsList>
         
-        {subjects.map(subject => (
-          <TabsContent key={subject.id} value={subject.id}>
-            <div className="mb-4 glass rounded-lg p-4">
-              <h3 className="font-medium mb-2">{subject.name}</h3>
-              <label className="block text-sm font-medium mb-2">Total Marks for {subject.name}</label>
-              <input
-                type="number"
-                min="1"
-                max="1000"
-                value={getTotalMarks(subject.id)}
-                onChange={(e) => handleTotalMarksChange(parseInt(e.target.value) || 100)}
-                className="glass px-4 py-2 rounded-lg w-full max-w-xs"
-                placeholder="Enter total marks (e.g., 50, 100)"
+        {subjects.map(subject => {
+          const subjectCriteria = getCriteriaForSubject(subject.id);
+          const subjectTotalMarks = getTotalMarksForSubject(subject.id);
+          
+          return (
+            <TabsContent key={subject.id} value={subject.id}>
+              <div className="mb-4 glass rounded-lg p-4">
+                <h3 className="font-medium mb-2">{subject.name}</h3>
+                <label className="block text-sm font-medium mb-2">Total Marks for {subject.name}</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="1000"
+                  value={subjectTotalMarks}
+                  onChange={(e) => {
+                    const newTotalMarks = parseInt(e.target.value) || 100;
+                    onChange(subject.id, subjectCriteria, newTotalMarks);
+                  }}
+                  className="glass px-4 py-2 rounded-lg w-full max-w-xs"
+                  placeholder="Enter total marks (e.g., 50, 100)"
+                />
+                <p className="text-xs text-foreground/60 mt-1">
+                  Set the maximum marks for {subject.name} assessments (e.g., 50, 100, 200)
+                </p>
+              </div>
+              
+              <GradeCriteriaEditor 
+                subjectId={subject.id}
+                criteria={subjectCriteria}
+                totalMarks={subjectTotalMarks}
+                onChange={(index, field, value) => {
+                  const currentCriteria = getCriteriaForSubject(subject.id);
+                  const currentTotalMarks = getTotalMarksForSubject(subject.id);
+                  const newCriteria = [...currentCriteria];
+                  newCriteria[index] = { 
+                    ...newCriteria[index], 
+                    [field]: typeof value === 'string' ? value : Number(value) 
+                  };
+                  onChange(subject.id, newCriteria, currentTotalMarks);
+                }}
+                onAdd={() => {
+                  const currentCriteria = getCriteriaForSubject(subject.id);
+                  const currentTotalMarks = getTotalMarksForSubject(subject.id);
+                  const newCriteria = [...currentCriteria, {
+                    min: 0,
+                    max: 10,
+                    grade: "New"
+                  }];
+                  onChange(subject.id, newCriteria, currentTotalMarks);
+                }}
+                onRemove={(index) => {
+                  const currentCriteria = getCriteriaForSubject(subject.id);
+                  const currentTotalMarks = getTotalMarksForSubject(subject.id);
+                  
+                  if (currentCriteria.length <= 1) {
+                    toast({
+                      title: "Cannot Remove",
+                      description: "At least one grade threshold is required",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  const newCriteria = [...currentCriteria];
+                  newCriteria.splice(index, 1);
+                  onChange(subject.id, newCriteria, currentTotalMarks);
+                }}
               />
-              <p className="text-xs text-foreground/60 mt-1">
-                Set the maximum marks for {subject.name} assessments (e.g., 50, 100, 200)
-              </p>
-            </div>
-            
-            <GradeCriteriaEditor 
-              criteria={getCurrentCriteria(subject.id)}
-              totalMarks={getTotalMarks(subject.id)}
-              onChange={(index, field, value) => handleCriteriaChange(index, field, value)}
-              onAdd={addThreshold}
-              onRemove={removeThreshold}
-            />
-          </TabsContent>
-        ))}
+            </TabsContent>
+          );
+        })}
       </Tabs>
     </div>
   );
 };
 
 interface GradeCriteriaEditorProps {
+  subjectId: string;
   criteria: GradeThreshold[];
   totalMarks: number;
   onChange: (index: number, field: keyof GradeThreshold, value: string | number) => void;
@@ -200,6 +197,7 @@ interface GradeCriteriaEditorProps {
 }
 
 const GradeCriteriaEditor: React.FC<GradeCriteriaEditorProps> = ({ 
+  subjectId,
   criteria, 
   totalMarks,
   onChange, 
@@ -226,7 +224,7 @@ const GradeCriteriaEditor: React.FC<GradeCriteriaEditorProps> = ({
               const maxPercent = totalMarks > 0 ? ((threshold.max / totalMarks) * 100).toFixed(1) : 0;
               
               return (
-                <tr key={index} className="border-b border-white/10">
+                <tr key={`${subjectId}-${index}`} className="border-b border-white/10">
                   <td className="p-2">
                     <input
                       type="text"
@@ -239,19 +237,19 @@ const GradeCriteriaEditor: React.FC<GradeCriteriaEditorProps> = ({
                     <input
                       type="number"
                       min="0"
-                      max={threshold.max - 1}
+                      max={totalMarks}
                       value={threshold.min}
-                      onChange={(e) => onChange(index, "min", parseInt(e.target.value))}
+                      onChange={(e) => onChange(index, "min", parseInt(e.target.value) || 0)}
                       className="glass px-2 py-1 rounded w-20"
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
-                      min={threshold.min + 1}
+                      min="0"
                       max={totalMarks}
                       value={threshold.max}
-                      onChange={(e) => onChange(index, "max", parseInt(e.target.value))}
+                      onChange={(e) => onChange(index, "max", parseInt(e.target.value) || 0)}
                       className="glass px-2 py-1 rounded w-20"
                     />
                   </td>
