@@ -55,16 +55,49 @@ const TeacherPanel: React.FC = () => {
   // State for editing passing criteria
   const [editingGradeCriteria, setEditingGradeCriteria] = useState<number | null>(null);
   
-  const [students, setStudents] = useState<Student[]>([
-    { id: 1, name: "John Smith", marks: 78, grade: "B+", remarks: "Good performance", generalRemarks: "Cooperative student. Shows good attitude in class." },
-    { id: 2, name: "Sarah Johnson", marks: 92, grade: "A", remarks: "Excellent work", generalRemarks: "Outstanding student. Goes above and beyond requirements." },
-    { id: 3, name: "Michael Brown", marks: 65, grade: "C", remarks: "Needs improvement", generalRemarks: "Often distracted in class. Needs to focus more on studies." },
-    { id: 4, name: "Emily Davis", marks: 88, grade: "B+", remarks: "Very good progress", generalRemarks: "Cheerful and participative in all activities." },
-    { id: 5, name: "Robert Wilson", marks: 75, grade: "B", remarks: "Consistent work", generalRemarks: "Steady improvement over the term. Keep it up." },
-    { id: 6, name: "Jessica Lee", marks: null, grade: "", remarks: "", generalRemarks: "New transfer student. Assessment pending." },
-    { id: 7, name: "William Taylor", marks: 81, grade: "B+", remarks: "Good participation", generalRemarks: "Very involved in class discussions. Good teamwork." },
-    { id: 8, name: "Olivia Martin", marks: 94, grade: "A", remarks: "Outstanding work", generalRemarks: "Helpful to other students. Shows leadership qualities." },
-  ]);
+  // Base student list (without marks - marks are subject-specific)
+  const baseStudents: Omit<Student, 'marks' | 'grade' | 'remarks'>[] = [
+    { id: 1, name: "John Smith", generalRemarks: "Cooperative student. Shows good attitude in class." },
+    { id: 2, name: "Sarah Johnson", generalRemarks: "Outstanding student. Goes above and beyond requirements." },
+    { id: 3, name: "Michael Brown", generalRemarks: "Often distracted in class. Needs to focus more on studies." },
+    { id: 4, name: "Emily Davis", generalRemarks: "Cheerful and participative in all activities." },
+    { id: 5, name: "Robert Wilson", generalRemarks: "Steady improvement over the term. Keep it up." },
+    { id: 6, name: "Jessica Lee", generalRemarks: "New transfer student. Assessment pending." },
+    { id: 7, name: "William Taylor", generalRemarks: "Very involved in class discussions. Good teamwork." },
+    { id: 8, name: "Olivia Martin", generalRemarks: "Helpful to other students. Shows leadership qualities." },
+  ];
+
+  // Store marks per subject - key format: "Grade-Section-Subject"
+  const [subjectMarks, setSubjectMarks] = useState<Record<string, Record<number, { marks: number | null; grade: string; remarks: string }>>>({});
+  
+  // Store general remarks per student (not subject-specific)
+  const [generalRemarksData, setGeneralRemarksData] = useState<Record<number, string>>({
+    1: "Cooperative student. Shows good attitude in class.",
+    2: "Outstanding student. Goes above and beyond requirements.",
+    3: "Often distracted in class. Needs to focus more on studies.",
+    4: "Cheerful and participative in all activities.",
+    5: "Steady improvement over the term. Keep it up.",
+    6: "New transfer student. Assessment pending.",
+    7: "Very involved in class discussions. Good teamwork.",
+    8: "Helpful to other students. Shows leadership qualities.",
+  });
+  
+  // Get current subject key
+  const getCurrentSubjectKey = () => `${selectedClass}-${selectedSection}-${selectedSubject}`;
+  
+  // Get students with marks for current subject
+  const students: Student[] = baseStudents.map(base => {
+    const subjectKey = getCurrentSubjectKey();
+    const subjectData = subjectMarks[subjectKey]?.[base.id];
+    
+    return {
+      ...base,
+      marks: subjectData?.marks ?? null,
+      grade: subjectData?.grade ?? "",
+      remarks: subjectData?.remarks ?? "",
+      generalRemarks: generalRemarksData[base.id] ?? "",
+    };
+  });
 
   // Focus on the remarks field when editing
   useEffect(() => {
@@ -94,35 +127,40 @@ const TeacherPanel: React.FC = () => {
 
   const handleMarksChange = (id: number, value: string) => {
     const numValue = value === "" ? null : Math.min(100, Math.max(0, parseInt(value) || 0));
+    const subjectKey = getCurrentSubjectKey();
+    const currentStudent = students.find(s => s.id === id);
     
-    setStudents(
-      students.map(student => 
-        student.id === id 
-          ? { 
-              ...student, 
-              marks: numValue,
-              grade: calculateGrade(numValue),
-              // Auto-generate remarks if feature is enabled
-              remarks: useAutoRemarks ? getAutoRemark(numValue) : student.remarks
-            } 
-          : student
-      )
-    );
+    setSubjectMarks(prev => ({
+      ...prev,
+      [subjectKey]: {
+        ...prev[subjectKey],
+        [id]: {
+          marks: numValue,
+          grade: calculateGrade(numValue),
+          remarks: useAutoRemarks ? getAutoRemark(numValue) : (currentStudent?.remarks ?? "")
+        }
+      }
+    }));
   };
 
   const handleBulkMarksChange = (value: string, index: number) => {
-    const updatedStudents = [...students];
     const numValue = value === "" ? null : Math.min(100, Math.max(0, parseInt(value) || 0));
+    const student = students[index];
+    if (!student) return;
     
-    if (updatedStudents[index]) {
-      updatedStudents[index].marks = numValue;
-      updatedStudents[index].grade = calculateGrade(numValue);
-      if (useAutoRemarks) {
-        updatedStudents[index].remarks = getAutoRemark(numValue);
+    const subjectKey = getCurrentSubjectKey();
+    
+    setSubjectMarks(prev => ({
+      ...prev,
+      [subjectKey]: {
+        ...prev[subjectKey],
+        [student.id]: {
+          marks: numValue,
+          grade: calculateGrade(numValue),
+          remarks: useAutoRemarks ? getAutoRemark(numValue) : (student.remarks ?? "")
+        }
       }
-    }
-    
-    setStudents(updatedStudents);
+    }));
   };
 
   const handleRemarksChange = (id: number, value: string) => {
@@ -153,15 +191,20 @@ const TeacherPanel: React.FC = () => {
       });
     }
     
-    setStudents(
-      students.map(student => 
-        student.id === id ? { 
-          ...student, 
-          remarks: value,
-          hasSpellingErrors: hasErrors
-        } : student
-      )
-    );
+    const subjectKey = getCurrentSubjectKey();
+    const currentStudent = students.find(s => s.id === id);
+    
+    setSubjectMarks(prev => ({
+      ...prev,
+      [subjectKey]: {
+        ...prev[subjectKey],
+        [id]: {
+          marks: currentStudent?.marks ?? null,
+          grade: currentStudent?.grade ?? "",
+          remarks: value
+        }
+      }
+    }));
   };
 
   const handleGeneralRemarksChange = (id: number, value: string) => {
@@ -176,15 +219,10 @@ const TeacherPanel: React.FC = () => {
       }
     }
     
-    setStudents(
-      students.map(student => 
-        student.id === id ? { 
-          ...student, 
-          generalRemarks: value,
-          hasSpellingErrors: hasErrors || student.hasSpellingErrors
-        } : student
-      )
-    );
+    setGeneralRemarksData(prev => ({
+      ...prev,
+      [id]: value
+    }));
   };
 
   const calculateGrade = (marks: number | null): string => {
@@ -224,13 +262,23 @@ const TeacherPanel: React.FC = () => {
   };
 
   const handleApplyAutoRemarks = () => {
-    setStudents(
-      students.map(student => ({
-        ...student,
-        remarks: student.marks !== null ? getAutoRemark(student.marks) : student.remarks,
-        hasSpellingErrors: false
-      }))
-    );
+    const subjectKey = getCurrentSubjectKey();
+    const updated = { ...subjectMarks[subjectKey] };
+    
+    students.forEach(student => {
+      if (student.marks !== null) {
+        updated[student.id] = {
+          marks: student.marks,
+          grade: student.grade,
+          remarks: getAutoRemark(student.marks)
+        };
+      }
+    });
+    
+    setSubjectMarks(prev => ({
+      ...prev,
+      [subjectKey]: updated
+    }));
   };
 
   const getMarkStyle = (marks: number | null): string => {
@@ -298,6 +346,9 @@ const TeacherPanel: React.FC = () => {
           const newStudents = [...students];
           
           // Process each row (skip header)
+          const subjectKey = getCurrentSubjectKey();
+          const updated = { ...subjectMarks[subjectKey] };
+          
           for (let i = 1; i < rows.length; i++) {
             const columns = rows[i].split(',');
             if (columns.length >= 4) {
@@ -305,17 +356,22 @@ const TeacherPanel: React.FC = () => {
               const marks = parseInt(columns[2]);
               const remarks = columns[3].trim();
               
-              // Find and update the student
-              const studentIndex = newStudents.findIndex(s => s.id === id);
-              if (studentIndex !== -1) {
-                newStudents[studentIndex].marks = isNaN(marks) ? null : marks;
-                newStudents[studentIndex].grade = calculateGrade(marks);
-                newStudents[studentIndex].remarks = remarks || (useAutoRemarks ? getAutoRemark(marks) : '');
+              // Find the student in base list
+              const studentExists = baseStudents.find(s => s.id === id);
+              if (studentExists) {
+                updated[id] = {
+                  marks: isNaN(marks) ? null : marks,
+                  grade: calculateGrade(marks),
+                  remarks: remarks || (useAutoRemarks ? getAutoRemark(marks) : '')
+                };
               }
             }
           }
           
-          setStudents(newStudents);
+          setSubjectMarks(prev => ({
+            ...prev,
+            [subjectKey]: updated
+          }));
           toast({
             title: "Import Successful",
             description: "Student marks have been imported"
