@@ -81,11 +81,10 @@ const SubjectGradeCriteriaTab: React.FC<SubjectGradeCriteriaProps> = ({ onChange
     return initialCriteria[subjectId]?.totalMarks || 100;
   };
   
-  const currentCriteria = getCurrentCriteria(activeSubject);
-  const currentTotalMarks = getTotalMarks(activeSubject);
-  
   // Handle criteria changes
   const handleCriteriaChange = (index: number, field: keyof GradeThreshold, value: string | number) => {
+    const currentCriteria = getCurrentCriteria(activeSubject);
+    const currentTotalMarks = getTotalMarks(activeSubject);
     const newCriteria = [...currentCriteria];
     newCriteria[index] = { ...newCriteria[index], [field]: typeof value === 'string' ? value : Number(value) };
     
@@ -94,11 +93,14 @@ const SubjectGradeCriteriaTab: React.FC<SubjectGradeCriteriaProps> = ({ onChange
   
   // Handle total marks change
   const handleTotalMarksChange = (value: number) => {
+    const currentCriteria = getCurrentCriteria(activeSubject);
     onChange(activeSubject, currentCriteria, value);
   };
   
   // Add a new threshold
   const addThreshold = () => {
+    const currentCriteria = getCurrentCriteria(activeSubject);
+    const currentTotalMarks = getTotalMarks(activeSubject);
     const newCriteria = [...currentCriteria];
     newCriteria.push({
       min: 0,
@@ -111,6 +113,9 @@ const SubjectGradeCriteriaTab: React.FC<SubjectGradeCriteriaProps> = ({ onChange
   
   // Remove a threshold
   const removeThreshold = (index: number) => {
+    const currentCriteria = getCurrentCriteria(activeSubject);
+    const currentTotalMarks = getTotalMarks(activeSubject);
+    
     if (currentCriteria.length <= 1) {
       toast({
         title: "Cannot Remove",
