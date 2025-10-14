@@ -3,6 +3,7 @@ import { Bell, Check, FileSpreadsheet, Shield, User, UserCog, Settings as Settin
 import { useTheme } from "../hooks/useTheme";
 import { useToast } from "../hooks/use-toast";
 import SendNotification from "../components/SendNotification";
+import SubjectMarksConfig from "../components/SubjectMarksConfig";
 
 // Mock settings structure
 interface AppSettings {
@@ -273,6 +274,9 @@ const Settings: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 gap-6">
+            {/* Subject Marks Configuration */}
+            <SubjectMarksConfig />
+            
             <SendNotification />
             
             <div className="glass rounded-xl p-4">
