@@ -9,13 +9,12 @@ interface GradeThreshold {
 }
 
 interface GradeCriteriaProps {
-  onChange: (gradeNumber: number, criteria: GradeThreshold[], isMain?: boolean, totalMarks?: number) => void;
+  onChange: (gradeNumber: number, criteria: GradeThreshold[], isMain?: boolean) => void;
   initialCriteria: {
     [key: number]: {
       main?: GradeThreshold[];
       sub?: GradeThreshold[];
       default?: GradeThreshold[];
-      totalMarks?: number;
     };
   };
 }
@@ -32,19 +31,9 @@ const defaultCriteria: GradeThreshold[] = [
 const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCriteria }) => {
   const [activeGrade, setActiveGrade] = useState<number>(7);
   const [activeType, setActiveType] = useState<"main" | "sub" | "default">("default");
-  const [totalMarks, setTotalMarks] = useState<{ [key: number]: number }>({});
   
   // Prepare grade levels array (7-13)
   const gradeLevels = Array.from({ length: 7 }, (_, i) => i + 7);
-  
-  // Initialize total marks from initialCriteria
-  React.useEffect(() => {
-    const marks: { [key: number]: number } = {};
-    gradeLevels.forEach(grade => {
-      marks[grade] = initialCriteria[grade]?.totalMarks || 100;
-    });
-    setTotalMarks(marks);
-  }, []);
   
   // Get criteria for the current grade and type
   const getCurrentCriteria = (grade: number, type: "main" | "sub" | "default"): GradeThreshold[] => {
@@ -66,66 +55,67 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
     const newCriteria = [...currentCriteria];
     newCriteria[index] = { ...newCriteria[index], [field]: typeof value === 'string' ? value : Number(value) };
     
-    // Don't auto-sort, let users control the order
+    // Sort criteria by max value in descending order
+    newCriteria.sort((a, b) => b.max - a.max);
+    
+    // Update min values to ensure there are no gaps
+    for (let i = 1; i < newCriteria.length; i++) {
+      newCriteria[i].max = newCriteria[i-1].min - 1;
+    }
     
     // Call the onChange callback based on active type
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
-      onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
+      onChange(activeGrade, newCriteria, activeType === "main");
     } else {
-      onChange(activeGrade, newCriteria, undefined, totalMarks[activeGrade]);
-    }
-  };
-  
-  // Handle total marks change
-  const handleTotalMarksChange = (grade: number, value: number) => {
-    const newTotalMarks = { ...totalMarks, [grade]: value };
-    setTotalMarks(newTotalMarks);
-    
-    // Notify parent of the change
-    const criteria = getCurrentCriteria(grade, activeType);
-    if (grade >= 12 && (activeType === "main" || activeType === "sub")) {
-      onChange(grade, criteria, activeType === "main", value);
-    } else {
-      onChange(grade, criteria, undefined, value);
+      onChange(activeGrade, newCriteria);
     }
   };
   
   // Add a new threshold
   const addThreshold = () => {
     const newCriteria = [...currentCriteria];
+    const lastItem = newCriteria[newCriteria.length - 1];
+    const middleValue = Math.floor(lastItem.min / 2);
     
-    // Add a new threshold with default values
     newCriteria.push({
       min: 0,
-      max: 10,
-      grade: "New"
+      max: lastItem.min - 1,
+      grade: "F-"
     });
     
+    // Update the previous last item
+    newCriteria[newCriteria.length - 2].min = middleValue + 1;
+    
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
-      onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
+      onChange(activeGrade, newCriteria, activeType === "main");
     } else {
-      onChange(activeGrade, newCriteria, undefined, totalMarks[activeGrade]);
+      onChange(activeGrade, newCriteria);
     }
   };
   
   // Remove a threshold
   const removeThreshold = (index: number) => {
-    if (currentCriteria.length <= 1) return; // Prevent removing if only 1 threshold
+    if (currentCriteria.length <= 2) return; // Prevent removing if only 2 or fewer thresholds
     
     const newCriteria = [...currentCriteria];
     newCriteria.splice(index, 1);
     
+    // Update min values to ensure there are no gaps
+    for (let i = 1; i < newCriteria.length; i++) {
+      newCriteria[i].max = newCriteria[i-1].min - 1;
+    }
+    
     if (activeGrade >= 12 && (activeType === "main" || activeType === "sub")) {
-      onChange(activeGrade, newCriteria, activeType === "main", totalMarks[activeGrade]);
+      onChange(activeGrade, newCriteria, activeType === "main");
     } else {
-      onChange(activeGrade, newCriteria, undefined, totalMarks[activeGrade]);
+      onChange(activeGrade, newCriteria);
     }
   };
   
   return (
     <div className="glass p-4 rounded-lg">
       <Tabs defaultValue="7">
-        <TabsList className="w-full flex overflow-x-auto mb-4 bg-secondary/50 p-1 rounded-lg">
+        <TabsList className="w-full flex overflow-x-auto mb-4 bg-white/10 p-1 rounded-lg">
           {gradeLevels.map(grade => (
             <TabsTrigger 
               key={grade} 
@@ -140,22 +130,6 @@ const GradeCriteriaTab: React.FC<GradeCriteriaProps> = ({ onChange, initialCrite
         
         {gradeLevels.map(grade => (
           <TabsContent key={grade} value={grade.toString()}>
-            <div className="mb-4 glass rounded-lg p-4">
-              <label className="block text-sm font-medium mb-2">Total Marks for Grade {grade}</label>
-              <input
-                type="number"
-                min="1"
-                max="1000"
-                value={totalMarks[grade] || 100}
-                onChange={(e) => handleTotalMarksChange(grade, parseInt(e.target.value) || 100)}
-                className="glass px-4 py-2 rounded-lg w-full max-w-xs"
-                placeholder="Enter total marks (e.g., 50, 100)"
-              />
-              <p className="text-xs text-foreground/60 mt-1">
-                Set the maximum marks for assessments in Grade {grade} (e.g., 50, 100, 200)
-              </p>
-            </div>
-            
             {grade >= 12 ? (
               <div className="mb-4">
                 <Tabs defaultValue="default" className="w-full">
@@ -253,7 +227,7 @@ const GradeCriteriaEditor: React.FC<GradeCriteriaEditorProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full mb-4">
           <thead>
-            <tr className="bg-secondary/30">
+            <tr className="bg-white/10">
               <th className="p-2 text-left">Grade</th>
               <th className="p-2 text-left">Min %</th>
               <th className="p-2 text-left">Max %</th>
@@ -289,13 +263,14 @@ const GradeCriteriaEditor: React.FC<GradeCriteriaEditorProps> = ({
                     value={threshold.max}
                     onChange={(e) => onChange(index, "max", parseInt(e.target.value))}
                     className="glass px-2 py-1 rounded w-20"
+                    disabled={index === 0} // First threshold max is always 100
                   />
                 </td>
                 <td className="p-2">
                   <button
                     onClick={() => onRemove(index)}
-                    className="text-red-500 hover:text-red-400 px-2 py-1 rounded-lg glass disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={criteria.length <= 1}
+                    className="text-red-500 hover:text-red-400 px-2 py-1 rounded-lg glass"
+                    disabled={criteria.length <= 2}
                   >
                     Remove
                   </button>

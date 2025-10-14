@@ -196,7 +196,7 @@ const CertificateGenerator: React.FC = () => {
                 )}
               </div>
               {schoolLogo && (
-                <div className="mt-2 p-2 bg-secondary/50 rounded-lg">
+                <div className="mt-2 p-2 bg-white/10 rounded-lg">
                   <img src={schoolLogo} alt="School Logo" className="h-12 object-contain" />
                 </div>
               )}
@@ -230,7 +230,7 @@ const CertificateGenerator: React.FC = () => {
                 )}
               </div>
               {signature && (
-                <div className="mt-2 p-2 bg-secondary/50 rounded-lg">
+                <div className="mt-2 p-2 bg-white/10 rounded-lg">
                   <img src={signature} alt="Signature" className="h-12 object-contain" />
                 </div>
               )}
@@ -291,7 +291,7 @@ const CertificateGenerator: React.FC = () => {
           <h3 className="font-medium mb-4">Certificate Preview</h3>
           
           {showPreview ? (
-            <div className="bg-card text-card-foreground p-6 rounded-lg shadow-lg border border-border">
+            <div className="bg-white text-black p-6 rounded-lg shadow-lg">
               <div className="flex justify-between items-center mb-6">
                 {schoolLogo && (
                   <div>

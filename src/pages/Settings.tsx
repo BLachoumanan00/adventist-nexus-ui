@@ -3,8 +3,6 @@ import { Bell, Check, FileSpreadsheet, Shield, User, UserCog, Settings as Settin
 import { useTheme } from "../hooks/useTheme";
 import { useToast } from "../hooks/use-toast";
 import SendNotification from "../components/SendNotification";
-import GradeCriteriaTab from "../components/GradeCriteriaTab";
-import SubjectGradeCriteriaTab from "../components/SubjectGradeCriteriaTab";
 
 // Mock settings structure
 interface AppSettings {
@@ -15,8 +13,6 @@ interface AppSettings {
   defaultTermEndDate: string;
   passMark: number;
   distinctionMark: number;
-  gradeCriteria?: any;
-  subjectGradeCriteria?: any;
 }
 
 const Settings: React.FC = () => {
@@ -32,9 +28,7 @@ const Settings: React.FC = () => {
     defaultTermStartDate: "2025-01-01",
     defaultTermEndDate: "2025-04-30",
     passMark: 35,
-    distinctionMark: 75,
-    gradeCriteria: {},
-    subjectGradeCriteria: {}
+    distinctionMark: 75
   });
 
   // Load user from localStorage
@@ -74,37 +68,6 @@ const Settings: React.FC = () => {
       title: "Settings Saved",
       description: "Your settings have been updated successfully.",
     });
-  };
-  
-  const handleGradeCriteriaChange = (gradeNumber: number, criteria: any[], isMain?: boolean, totalMarks?: number) => {
-    const newGradeCriteria = { ...settings.gradeCriteria };
-    
-    if (!newGradeCriteria[gradeNumber]) {
-      newGradeCriteria[gradeNumber] = {};
-    }
-    
-    if (gradeNumber >= 12 && isMain !== undefined) {
-      newGradeCriteria[gradeNumber][isMain ? 'main' : 'sub'] = criteria;
-    } else {
-      newGradeCriteria[gradeNumber].default = criteria;
-    }
-    
-    if (totalMarks !== undefined) {
-      newGradeCriteria[gradeNumber].totalMarks = totalMarks;
-    }
-    
-    setSettings({ ...settings, gradeCriteria: newGradeCriteria });
-  };
-  
-  const handleSubjectGradeCriteriaChange = (subjectId: string, criteria: any[], totalMarks: number) => {
-    const newSubjectGradeCriteria = { ...settings.subjectGradeCriteria };
-    
-    newSubjectGradeCriteria[subjectId] = {
-      criteria,
-      totalMarks
-    };
-    
-    setSettings({ ...settings, subjectGradeCriteria: newSubjectGradeCriteria });
   };
 
   const isAdmin = user?.role === 'Admin' || user?.isSuperUser;
@@ -311,28 +274,6 @@ const Settings: React.FC = () => {
           
           <div className="grid grid-cols-1 gap-6">
             <SendNotification />
-            
-            <div className="glass rounded-xl p-4">
-              <h3 className="font-medium mb-4">Subject-wise Grade Criteria Configuration</h3>
-              <p className="text-sm text-foreground/60 mb-4">
-                Configure grading thresholds and total marks for each subject. You can set different mark scales (e.g., 50, 100) per subject.
-              </p>
-              <SubjectGradeCriteriaTab 
-                onChange={handleSubjectGradeCriteriaChange}
-                initialCriteria={settings.subjectGradeCriteria || {}}
-              />
-            </div>
-            
-            <div className="glass rounded-xl p-4">
-              <h3 className="font-medium mb-4">Grade Level Criteria Configuration (Legacy)</h3>
-              <p className="text-sm text-foreground/60 mb-4">
-                Configure grading thresholds and total marks for each grade level. You can set different mark scales (e.g., 50, 100) per grade.
-              </p>
-              <GradeCriteriaTab 
-                onChange={handleGradeCriteriaChange}
-                initialCriteria={settings.gradeCriteria || {}}
-              />
-            </div>
             
             <div className="glass rounded-xl p-4">
               <h3 className="font-medium mb-4">CSV Templates</h3>

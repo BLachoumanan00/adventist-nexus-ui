@@ -121,31 +121,31 @@ const StudentAttendance: React.FC = () => {
   return (
     <div className="glass-card mb-6">
       <div className="flex items-center gap-3 mb-6">
-        <Calendar size={24} className="text-primary" />
+        <Calendar size={24} className="text-theme-purple" />
         <h2 className="text-xl font-semibold">Student Attendance</h2>
       </div>
       
       <div className="glass rounded-xl p-4 mb-6">
-        <div className="flex flex-col gap-4 mb-4">
-          <div className="w-full">
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex-1">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search by name or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 text-base rounded-lg glass border-none focus:ring-2 ring-primary/30 outline-none touch-manipulation"
+                className="w-full pl-9 pr-4 py-2 rounded-lg glass border-none focus:ring-2 ring-primary/30 outline-none"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" size={16} />
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 min-w-0">
+          <div className="flex gap-4">
+            <div className="w-40">
               <select
                 value={selectedGrade}
                 onChange={(e) => setSelectedGrade(e.target.value)}
-                className="w-full rounded-lg glass border-none px-4 py-3 text-base touch-manipulation"
+                className="w-full rounded-lg glass border-none px-4 py-2"
               >
                 <option value="All">All Grades</option>
                 <option value="7">Grade 7</option>
@@ -157,11 +157,11 @@ const StudentAttendance: React.FC = () => {
               </select>
             </div>
             
-            <div className="flex-1 min-w-0">
+            <div className="w-40">
               <select
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
-                className="w-full rounded-lg glass border-none px-4 py-3 text-base touch-manipulation"
+                className="w-full rounded-lg glass border-none px-4 py-2"
               >
                 <option value="All">All Sections</option>
                 <option value="A">Section A</option>
@@ -171,10 +171,10 @@ const StudentAttendance: React.FC = () => {
             </div>
             
             <button 
-              className="flex items-center justify-center gap-2 glass px-4 py-3 rounded-lg touch-manipulation hover:bg-white/10 transition-colors min-h-[48px]"
+              className="flex items-center gap-2 glass px-3 py-1.5 rounded-lg"
               onClick={handleBulkEditToggle}
             >
-              <span className="text-sm sm:text-base">{bulkEditMode ? "Single Edit" : "Bulk Edit"}</span>
+              {bulkEditMode ? "Single Edit" : "Bulk Edit"}
             </button>
           </div>
         </div>
@@ -185,144 +185,27 @@ const StudentAttendance: React.FC = () => {
       </div>
       
       {!bulkEditMode ? (
-        <>
-          {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
-                  <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Absences</th>
-                  <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.map((student) => (
-                  <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="py-3">{student.id}</td>
-                    <td className="py-3">{student.name}</td>
-                    <td className="py-3">Grade {student.grade}</td>
-                    <td className="py-3">Section {student.section}</td>
-                    <td className="py-3 text-center">
-                      {editingStudent === student.id ? (
-                        <input
-                          type="number"
-                          min="0"
-                          value={editValues[student.id] || 0}
-                          onChange={(e) => handleAbsenceChange(student.id, e.target.value)}
-                          className="w-16 text-center glass rounded px-2 py-1"
-                        />
-                      ) : (
-                        <span className={getAbsenceStyle(student.absences)}>
-                          {student.absences}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 text-center">
-                      {editingStudent === student.id ? (
-                        <button 
-                          onClick={() => handleSave(student)}
-                          className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors touch-manipulation"
-                        >
-                          <Save size={16} className="text-primary" />
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleEdit(student)}
-                          className="p-2 rounded-full hover:bg-white/10 transition-colors touch-manipulation"
-                        >
-                          <Check size={16} className="text-foreground/70" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Mobile Card Layout */}
-          <div className="block md:hidden space-y-4">
-            {filteredStudents.map((student) => (
-              <div key={student.id} className="glass rounded-lg p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-lg">{student.name}</h3>
-                    <p className="text-sm text-foreground/60">{student.id}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm text-foreground/60">Grade {student.grade} - Section {student.section}</span>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">Absences:</span>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Absences</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="py-3">{student.id}</td>
+                  <td className="py-3">{student.name}</td>
+                  <td className="py-3">Grade {student.grade}</td>
+                  <td className="py-3">Section {student.section}</td>
+                  <td className="py-3 text-center">
                     {editingStudent === student.id ? (
-                      <input
-                        type="number"
-                        min="0"
-                        value={editValues[student.id] || 0}
-                        onChange={(e) => handleAbsenceChange(student.id, e.target.value)}
-                        className="w-20 text-center glass rounded px-2 py-2 text-base"
-                      />
-                    ) : (
-                      <span className={`text-lg font-semibold ${getAbsenceStyle(student.absences)}`}>
-                        {student.absences}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div>
-                    {editingStudent === student.id ? (
-                      <button 
-                        onClick={() => handleSave(student)}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg touch-manipulation min-h-[44px]"
-                      >
-                        <Save size={18} />
-                        <span>Save</span>
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => handleEdit(student)}
-                        className="flex items-center gap-2 glass px-4 py-2 rounded-lg hover:bg-white/10 transition-colors touch-manipulation min-h-[44px]"
-                      >
-                        <Check size={18} />
-                        <span>Edit</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        // Bulk edit mode
-        <>
-          {/* Desktop Bulk Edit Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
-                  <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
-                  <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Absences</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredStudents.map((student) => (
-                  <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <td className="py-3">{student.id}</td>
-                    <td className="py-3">{student.name}</td>
-                    <td className="py-3">Grade {student.grade}</td>
-                    <td className="py-3">Section {student.section}</td>
-                    <td className="py-3 text-center">
                       <input
                         type="number"
                         min="0"
@@ -330,59 +213,86 @@ const StudentAttendance: React.FC = () => {
                         onChange={(e) => handleAbsenceChange(student.id, e.target.value)}
                         className="w-16 text-center glass rounded px-2 py-1"
                       />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Mobile Bulk Edit Cards */}
-          <div className="block md:hidden space-y-4">
-            {filteredStudents.map((student) => (
-              <div key={student.id} className="glass rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-semibold text-lg">{student.name}</h3>
-                    <p className="text-sm text-foreground/60">{student.id}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm text-foreground/60">Grade {student.grade} - Section {student.section}</span>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                  <span className="text-sm font-medium">Absences:</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={editValues[student.id] || 0}
-                    onChange={(e) => handleAbsenceChange(student.id, e.target.value)}
-                    className="w-24 text-center glass rounded px-3 py-2 text-base touch-manipulation"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
+                    ) : (
+                      <span className={getAbsenceStyle(student.absences)}>
+                        {student.absences}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 text-center">
+                    {editingStudent === student.id ? (
+                      <button 
+                        onClick={() => handleSave(student)}
+                        className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+                      >
+                        <Save size={16} className="text-primary" />
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleEdit(student)}
+                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                      >
+                        <Check size={16} className="text-foreground/70" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        // Bulk edit mode table
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Student ID</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Name</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Grade</th>
+                <th className="pb-3 text-left font-medium text-foreground/70 text-sm">Section</th>
+                <th className="pb-3 text-center font-medium text-foreground/70 text-sm">Absences</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="py-3">{student.id}</td>
+                  <td className="py-3">{student.name}</td>
+                  <td className="py-3">Grade {student.grade}</td>
+                  <td className="py-3">Section {student.section}</td>
+                  <td className="py-3 text-center">
+                    <input
+                      type="number"
+                      min="0"
+                      value={editValues[student.id] || 0}
+                      onChange={(e) => handleAbsenceChange(student.id, e.target.value)}
+                      className="w-16 text-center glass rounded px-2 py-1"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       
-      <div className="mt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="mt-6 flex justify-between items-center">
         <div className="text-sm text-foreground/60">
-          <span className="hidden sm:inline">Tip:</span> {bulkEditMode ? "Enter absences for all students at once" : "Tap Edit to update individual absences"}
+          Tip: {bulkEditMode ? "Enter absences for all students at once" : "Click on the check icon to update absences"}
         </div>
         {bulkEditMode ? (
           <button 
-            className="bg-primary text-primary-foreground px-6 py-3 rounded-lg flex items-center gap-2 touch-manipulation hover:opacity-90 transition-opacity min-h-[48px] w-full sm:w-auto justify-center"
+            className="btn-primary flex items-center gap-2"
             onClick={handleBulkSave}
           >
-            <Save size={20} />
+            <Save size={18} />
             <span>Save All Changes</span>
           </button>
         ) : (
-          <button className="bg-secondary text-secondary-foreground px-6 py-3 rounded-lg flex items-center gap-2 touch-manipulation hover:opacity-90 transition-opacity min-h-[48px] w-full sm:w-auto justify-center">
-            <Save size={20} />
-            <span>Export Attendance</span>
+          <button className="btn-primary flex items-center gap-2">
+            <Save size={18} />
+            <span>Save All Changes</span>
           </button>
         )}
       </div>

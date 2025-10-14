@@ -1,5 +1,6 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -19,17 +20,56 @@ import CertificateGenerator from "./components/CertificateGenerator";
 import ResultGenerator from "./components/ResultGenerator";
 import UserActivityLog from "./components/UserActivityLog";
 import { ThemeProvider } from "./hooks/useTheme";
-import { AuthProvider } from "./components/AuthProvider";
 
 import "./App.css";
 
 function App() {
+  useEffect(() => {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    
+    const superUserEmail = "blachoumanan@adventistcollege.mu";
+    
+    if (users.length === 0) {
+      const defaultAdmin = {
+        name: "Billy Lachoumanan",
+        email: superUserEmail,
+        password: "Admin0000*",
+        role: "Admin",
+        isSuperUser: true,
+        createdAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('users', JSON.stringify([defaultAdmin]));
+    } else {
+      const updatedUsers = users.map((user: any) => {
+        if (user.email.toLowerCase() === "blackhoumanan@adventistcollege.mu") {
+          return {
+            ...user,
+            isSuperUser: false,
+            role: "Admin"
+          };
+        }
+        
+        if (user.email.toLowerCase() === superUserEmail.toLowerCase()) {
+          return {
+            ...user,
+            password: "Admin0000*",
+            role: "Admin",
+            isSuperUser: true
+          };
+        }
+        
+        return user;
+      });
+      
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    }
+  }, []);
+
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <NotificationProvider>
-            <Routes>
+    <ThemeProvider>
+      <NotificationProvider>
+        <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
@@ -153,12 +193,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </NotificationProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </NotificationProvider>
+    </ThemeProvider>
   );
 }
 

@@ -27,8 +27,8 @@ const Dashboard: React.FC = () => {
   ];
   
   return (
-    <div className="animate-fade-in w-full overflow-x-hidden">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6">
+    <div className="animate-fade-in">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         <div className="dashboard-card flex items-center">
           <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50 mr-4">
             <Users className="text-theme-blue" />
@@ -60,11 +60,11 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="glass-card lg:col-span-2">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg font-semibold">Performance Overview</h2>
-            <select className="glass border-none rounded-lg px-3 py-2 sm:py-1.5 text-sm w-full sm:w-auto min-h-[44px] sm:min-h-[36px] touch-manipulation">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-semibold">Performance Overview</h2>
+            <select className="glass border-none rounded-lg px-3 py-1.5 text-sm">
               <option>This Term</option>
               <option>Last Term</option>
               <option>This Year</option>
@@ -123,29 +123,29 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mt-4 sm:mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
         <div className="glass-card">
-          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Subject Distribution</h2>
-          <div className="h-40 sm:h-48 flex items-center justify-center">
+          <h2 className="text-lg font-semibold mb-4">Subject Distribution</h2>
+          <div className="h-48 flex items-center justify-center">
             <PieChart size={36} className="text-theme-purple/40" />
           </div>
         </div>
         
         <div className="glass-card">
-          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Recent Activities</h2>
-          <ul className="space-y-2 sm:space-y-3">
+          <h2 className="text-lg font-semibold mb-4">Recent Activities</h2>
+          <ul className="space-y-3">
             {['Grade sheets updated', 'New student registered', 'Report generated'].map((activity, i) => (
-              <li key={i} className="text-xs sm:text-sm flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-theme-blue flex-shrink-0"></span>
-                <span className="truncate">{activity}</span>
+              <li key={i} className="text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-theme-blue"></span>
+                {activity}
               </li>
             ))}
           </ul>
         </div>
         
         <div className="glass-card sm:col-span-2 lg:col-span-2">
-          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Access</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+          <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
               { label: 'Add Student', icon: Users, path: '/admin', action: 'Student Management' },
               { label: 'Enter Marks', icon: LineChart, path: '/teacher', action: 'Teacher Panel' },
@@ -154,10 +154,10 @@ const Dashboard: React.FC = () => {
             ].map((item, i) => (
               <button 
                 key={i} 
-                className="p-3 sm:p-4 rounded-xl bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 active:bg-white/70 dark:active:bg-white/15 flex flex-col items-center justify-center gap-2 transition-all touch-manipulation min-h-[80px] sm:min-h-[100px]"
+                className="p-3 sm:p-4 rounded-xl bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10 active:bg-white/70 dark:active:bg-white/15 flex flex-col items-center gap-2 transition-colors touch-manipulation"
                 onClick={() => handleQuickAccess(item.path, item.action)}
               >
-                <item.icon size={20} className="text-theme-purple flex-shrink-0" />
+                <item.icon size={20} className="text-theme-purple" />
                 <span className="text-xs font-medium text-center leading-tight">{item.label}</span>
               </button>
             ))}

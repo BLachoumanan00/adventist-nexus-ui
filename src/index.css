@@ -1,82 +1,71 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* iOS-inspired color palette - Light Mode */
-    --background: 0 0% 95%;
-    --foreground: 0 0% 13%;
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    /* iOS Blue */
-    --primary: 211 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 221.2 83% 53.9%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 20% 98%;
-    --secondary-foreground: 0 0% 13%;
+    --secondary: 252 100% 79%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 46%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 211 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 252 100% 79%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 96%;
-    --ring: 211 100% 50%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83% 53.9%;
     
-    /* iOS-style rounded corners */
-    --radius: 1.25rem;
-    
-    /* iOS-specific elevated shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
-    --shadow-xl: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
+    --radius: 1rem;
   }
 
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 95%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 209 100% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 217.2 32.6% 25%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 209 100% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 209 100% 55%;
-    
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.6);
-    --shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.7);
-    --shadow-xl: 0 12px 40px 0 rgba(0, 0, 0, 0.8);
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
@@ -85,51 +74,29 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
 @layer components {
-  /* iOS-style glass effect */
-  .ios-glass {
-    @apply bg-card/80 dark:bg-card/40 backdrop-blur-xl border border-border/50;
-    box-shadow: var(--shadow-lg);
+  .glass {
+    @apply bg-white/60 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/5 shadow-lg;
   }
   
-  .ios-card {
-    @apply bg-card rounded-3xl border border-border/50 shadow-md;
-    box-shadow: var(--shadow-md);
+  .glass-card {
+    @apply glass rounded-2xl p-4 sm:p-6;
   }
   
-  /* iOS-style buttons */
-  .ios-button {
-    @apply px-6 py-3.5 bg-primary text-primary-foreground rounded-2xl font-semibold shadow-sm hover:shadow-md hover:opacity-95 active:scale-[0.96] transition-all touch-manipulation min-h-[50px] text-base;
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-foreground/80 hover:text-foreground hover:bg-white/20 dark:hover:bg-white/10 transition-all touch-manipulation;
   }
   
-  .ios-button-secondary {
-    @apply px-6 py-3.5 bg-secondary/80 backdrop-blur-sm text-secondary-foreground rounded-2xl font-semibold hover:bg-secondary active:scale-[0.96] transition-all touch-manipulation min-h-[50px] text-base border border-border/50;
+  .nav-item.active {
+    @apply bg-primary/10 text-primary font-medium;
   }
   
-  /* iOS-style inputs */
-  .ios-input {
-    @apply w-full px-4 py-3.5 bg-input/50 backdrop-blur-sm rounded-2xl border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-input transition-all min-h-[50px] text-base;
-  }
-  
-  /* iOS-style navigation */
-  .ios-nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-2xl text-foreground/70 hover:text-foreground hover:bg-secondary/60 backdrop-blur-sm transition-all touch-manipulation min-h-[44px];
-  }
-  
-  .ios-nav-item.active {
-    @apply bg-primary/15 backdrop-blur-sm text-primary font-semibold border border-primary/20;
-  }
-  
-  /* iOS-style section header */
-  .ios-section-header {
-    @apply text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-4 pt-4;
+  .btn-primary {
+    @apply px-4 py-2 bg-primary text-primary-foreground rounded-lg shadow hover:opacity-90 active:opacity-80 transition-opacity touch-manipulation;
   }
   
   .card-hover {
@@ -139,194 +106,15 @@
   .dashboard-card {
     @apply glass-card card-hover;
   }
-
-  /* Enhanced mobile responsiveness */
-  .mobile-responsive-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6;
-  }
-
-  .mobile-form-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4;
-  }
-
-  .mobile-button-group {
-    @apply flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto;
-  }
-
-  .mobile-dialog {
-    @apply w-[95vw] max-w-md sm:max-w-lg lg:max-w-4xl max-h-[95vh] overflow-hidden;
-  }
-
-  .mobile-scroll-area {
-    @apply max-h-[60vh] sm:max-h-[70vh] lg:max-h-[80vh] overflow-y-auto;
-  }
   
   /* Mobile optimizations */
   @media (max-width: 768px) {
     .glass-card {
-      @apply p-3;
+      @apply p-4;
     }
     
     .touch-manipulation {
       @apply select-none;
-    }
-    
-    /* Ensure minimum touch target sizes */
-    button, 
-    input[type="button"], 
-    input[type="submit"], 
-    input[type="reset"], 
-    [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
-    }
-    
-    /* Better spacing for mobile forms */
-    input, 
-    select, 
-    textarea {
-      font-size: 16px; /* Prevents zoom on iOS */
-      min-height: 44px;
-    }
-
-    /* Mobile-specific table styles */
-    .mobile-table {
-      @apply block;
-    }
-
-    .mobile-table thead {
-      @apply hidden;
-    }
-
-    .mobile-table tr {
-      @apply block border border-border rounded-lg mb-3 p-3;
-    }
-
-    .mobile-table td {
-      @apply block text-left;
-    }
-
-    .mobile-table td:before {
-      content: attr(data-label) ": ";
-      @apply font-medium text-foreground/70;
-    }
-  }
-
-  /* Enhanced mobile components */
-  .mobile-select {
-    @apply w-full min-h-[48px] touch-manipulation;
-  }
-
-  .mobile-textarea {
-    @apply w-full min-h-[120px] p-4 text-base touch-manipulation;
-  }
-
-  .touch-button {
-    @apply min-h-[48px] px-6 py-3 touch-manipulation;
-  }
-
-  .mobile-card-responsive {
-    @apply w-full max-w-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl;
-  }
-
-  /* Status badges */
-  .status-active {
-    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
-  }
-
-  .status-warning {
-    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
-  }
-
-  .status-error {
-    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
-  }
-
-  /* Responsive container improvements */
-  .container-responsive {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-
-  .full-width-mobile {
-    @apply w-full sm:w-auto;
-  }
-
-  /* Tablet optimizations */
-  @media (min-width: 768px) and (max-width: 1024px) {
-    .tablet-responsive {
-      @apply px-4 py-3;
-    }
-
-    .tablet-grid {
-      @apply grid-cols-2 lg:grid-cols-3;
-    }
-  }
-
-  /* Desktop optimizations */
-  @media (min-width: 1024px) {
-    .desktop-responsive {
-      @apply px-6 py-4;
-    }
-
-    .desktop-grid {
-      @apply grid-cols-3 xl:grid-cols-4;
-    }
-  }
-  
-  /* Mobile-first responsive utilities */
-  .mobile-card-stack {
-    @apply flex flex-col gap-4;
-  }
-  
-  .mobile-button {
-    @apply w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg touch-manipulation min-h-[48px];
-  }
-  
-  .mobile-input {
-    @apply w-full px-4 py-3 rounded-lg text-base touch-manipulation;
-  }
-  
-  /* Improved mobile table alternatives */
-  .mobile-table-card {
-    @apply block lg:hidden space-y-4;
-  }
-  
-  .desktop-table {
-    @apply hidden lg:block;
-  }
-  
-  /* Touch-friendly navigation */
-  .mobile-nav {
-    @apply flex flex-col sm:flex-row gap-2 sm:gap-4;
-  }
-  
-  /* Better mobile modals */
-  .mobile-modal {
-    @apply w-full h-full sm:w-auto sm:h-auto sm:max-w-lg sm:max-h-[90vh];
-  }
-  
-  /* Touch-friendly improvements */
-  .touch-manipulation {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  button, a, input, select, textarea {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Ensure all interactive elements are touch-friendly on mobile */
-  @media (max-width: 768px) {
-    button:not(.no-min-height), 
-    a.button, 
-    [role="button"]:not(.no-min-height) {
-      min-height: 48px;
-    }
-    
-    input, select, textarea {
-      min-height: 48px;
-      font-size: 16px; /* Prevents zoom on iOS */
     }
   }
 }

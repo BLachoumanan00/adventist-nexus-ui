@@ -30,7 +30,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-background/60 backdrop-blur-sm" 
+        className="absolute inset-0 bg-black/20 backdrop-blur-sm" 
         onClick={onClose}
       />
       
@@ -41,8 +41,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
             <Bell size={18} />
             <span>Notifications</span>
           </h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary">
-            <X size={20} />
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-white/10">
+            <X size={18} />
           </button>
         </div>
         
@@ -50,15 +50,15 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
           <div className="flex gap-2">
             <button 
               onClick={() => setFilter('all')} 
-              className={`px-3 py-1 rounded-full text-sm ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}
+              className={`px-3 py-1 rounded-full text-sm ${filter === 'all' ? 'bg-primary text-background' : 'bg-white/10'}`}
             >
               All
             </button>
             <button 
               onClick={() => setFilter('unread')} 
-              className={`px-3 py-1 rounded-full text-sm ${filter === 'unread' ? 'bg-primary text-primary-foreground' : 'bg-secondary'}`}
+              className={`px-3 py-1 rounded-full text-sm ${filter === 'unread' ? 'bg-primary text-background' : 'bg-white/10'}`}
             >
-              Unread ({notifications.filter(n => !n.isRead).length})
+              Unread
             </button>
           </div>
           
@@ -82,7 +82,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
               {displayedNotifications.map((notification) => (
                 <div 
                   key={notification.id} 
-                  className={`p-4 hover:bg-secondary/50 transition-colors ${!notification.isRead ? 'bg-primary/5' : ''}`}
+                  className={`p-4 hover:bg-white/5 transition-colors ${!notification.isRead ? 'bg-primary/5' : ''}`}
                 >
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium">{capitalizeFirstLetter(notification.title)}</h3>
@@ -90,7 +90,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                       {!notification.isRead && (
                         <button 
                           onClick={() => markAsRead(notification.id)}
-                          className="p-1 rounded-full hover:bg-secondary text-primary"
+                          className="p-1 rounded-full hover:bg-white/10 text-primary"
                           title="Mark as read"
                         >
                           <Check size={14} />
@@ -98,7 +98,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ isOpen, onClose }
                       )}
                       <button 
                         onClick={() => clearNotification(notification.id)}
-                        className="p-1 rounded-full hover:bg-secondary text-destructive"
+                        className="p-1 rounded-full hover:bg-white/10 text-red-400"
                         title="Delete"
                       >
                         <Trash size={14} />

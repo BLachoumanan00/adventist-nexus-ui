@@ -37,13 +37,13 @@ const SidebarLink: React.FC<SidebarLinkProps & { onClick?: () => void }> = ({ to
       to={to}
       onClick={onClick}
       className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors touch-manipulation ${
-        isActive ? "bg-primary/20 text-primary" : "hover:bg-secondary active:bg-secondary/80"
+        isActive ? "bg-primary/20 text-primary" : "hover:bg-white/10 active:bg-white/20"
       }`}
     >
       {icon}
       <span className="whitespace-nowrap overflow-hidden text-ellipsis">{text}</span>
       {badge !== undefined && badge > 0 && (
-        <div className="ml-auto bg-primary text-primary-foreground text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+        <div className="ml-auto bg-primary text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
           {badge > 99 ? "99+" : badge}
         </div>
       )}

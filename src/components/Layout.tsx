@@ -28,11 +28,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-blue-950">
       {/* Mobile backdrop */}
       {isMobile && sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/50 z-40"
           onClick={handleBackdropClick}
         />
       )}
@@ -47,8 +47,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         isMobile={isMobile}
       />
-      <main className="pt-16 pb-4 px-3 sm:px-4 lg:px-6 xl:px-8 ml-0 md:ml-[var(--sidebar-width)] transition-all duration-300 min-h-[calc(100vh-4rem)] overflow-x-hidden">
-        <div className="w-full max-w-full lg:max-w-7xl xl:max-w-full mx-auto">
+      <main className="pt-16 pb-6 px-3 sm:px-6 ml-0 md:ml-[var(--sidebar-width)] transition-all duration-300">
+        <div className="max-w-7xl mx-auto">
           {children}
         </div>
       </main>

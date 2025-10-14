@@ -1,6 +1,6 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuthContext } from './AuthProvider';
+
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,28 +11,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRole = [] 
 }) => {
-  const { isAuthenticated, profile, loading } = useAuthContext();
+  const location = useLocation();
+  // Use consistent key naming for getting user data
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
   
-  // Show loading state while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // If not authenticated, redirect to login
-  if (!isAuthenticated) {
+  // If no user, redirect to login
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role requirements
-  if (requiredRole.length > 0 && profile) {
-    const hasRequiredRole = requiredRole.includes(profile.role || '');
-    if (!hasRequiredRole) {
-      return <Navigate to="/dashboard" replace />;
-    }
+  // Check for superuser status directly from user object
+  const isSuperUser = user.isSuperUser === true;
+  
+  // If role requirement exists and user doesn't have that role
+  if (requiredRole.length > 0 && !requiredRole.includes(user.role) && !isSuperUser) {
+    // Superusers bypass role restrictions
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
